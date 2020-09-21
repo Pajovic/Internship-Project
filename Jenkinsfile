@@ -6,5 +6,20 @@ pipeline {
         disableConcurrentBuilds()
     }
     stages {
+        stage('Build') {
+            echo 'Building'
+            sh 'go build'
+        }
+        stage('TestPullRequestDevelop') {
+            when {
+               allOf {
+                    changeRequest()
+                }
+            }
+        	steps {
+        		echo 'Running tests'
+                sh 'make test'
+        	}
+        }
     }
 }
