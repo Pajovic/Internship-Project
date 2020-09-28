@@ -9,7 +9,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building'
-                sh 'go build'
+               // sh 'go build'
             }
         }
         stage('TestPullRequestDevelop') {
@@ -20,7 +20,7 @@ pipeline {
             }
         	steps {
         		echo 'Running tests'
-                sh 'make test'
+              //  sh 'make test'
         	}
         }
     }
