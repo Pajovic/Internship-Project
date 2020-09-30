@@ -15,6 +15,8 @@ func main() {
 
 	r.HandleFunc("/company", controllers.AddCompany).Methods("POST")
 
+	r.HandleFunc("/company/{id}", controllers.UpdateCompany).Methods("PUT")
+
 	http.ListenAndServe(":8000", r)
 }
 

@@ -6,8 +6,16 @@ import (
 
 var companies []models.Company = []models.Company{}
 
-func AddNewCompany(newCompany models.Company) []models.Company {
-	companies = append(companies, newCompany)
+func AddNewCompany(newCompany *models.Company) []models.Company {
+	newCompany.Id = len(companies)
+	companies = append(companies, *newCompany)
 
 	return companies
+}
+
+func UpdateCompany(id int, updateCompany *models.Company) models.Company {
+	updateCompany.Id = id
+	companies[id] = *updateCompany
+
+	return companies[id]
 }
