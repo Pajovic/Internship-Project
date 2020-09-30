@@ -1,8 +1,8 @@
 package main
 
 import (
-	"Internship-Project/controllers"
 	"fmt"
+	"internship_project/controllers"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,6 +14,8 @@ func main() {
 	r.HandleFunc("/", homeHandler)
 
 	r.HandleFunc("/company", controllers.GetAllCompanies).Methods("GET")
+
+	r.HandleFunc("/company/{id}", controllers.GetCompanyById).Methods("GET")
 
 	r.HandleFunc("/company", controllers.AddCompany).Methods("POST")
 

@@ -1,13 +1,17 @@
 package services
 
 import (
-	"Internship-Project/models"
+	"internship_project/models"
 )
 
 var companies []models.Company = []models.Company{}
 
 func GetAllCompanies() []models.Company {
 	return companies
+}
+
+func GetCompany(id int) models.Company {
+	return companies[id]
 }
 
 func AddNewCompany(newCompany *models.Company) []models.Company {
