@@ -23,3 +23,7 @@ func UpdateCompany(id int, updateCompany *models.Company) models.Company {
 
 	return companies[id]
 }
+
+func DeleteCompany(id int) {
+	companies = append(companies[:id], companies[id+1:]...)
+}

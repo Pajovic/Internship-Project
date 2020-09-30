@@ -38,3 +38,16 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(services.UpdateCompany(id, &updateCompany))
 
 }
+
+func DeleteCompany(w http.ResponseWriter, r *http.Request) {
+	var idParam string = mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("ID could not be converted to integer"))
+		return
+	}
+
+	services.DeleteCompany(id)
+	w.WriteHeader(200)
+}
