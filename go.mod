@@ -1,4 +1,4 @@
-module Internship-Project
+module internship_project
 
 go 1.15
 
