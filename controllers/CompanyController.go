@@ -10,6 +10,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func GetAllCompanies(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(services.GetAllCompanies())
+}
+
 func AddCompany(w http.ResponseWriter, r *http.Request) {
 	var newCompany models.Company
 	json.NewDecoder(r.Body).Decode(&newCompany)

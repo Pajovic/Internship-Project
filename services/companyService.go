@@ -6,6 +6,10 @@ import (
 
 var companies []models.Company = []models.Company{}
 
+func GetAllCompanies() []models.Company {
+	return companies
+}
+
 func AddNewCompany(newCompany *models.Company) []models.Company {
 	newCompany.Id = len(companies)
 	companies = append(companies, *newCompany)

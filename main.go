@@ -13,6 +13,8 @@ func main() {
 
 	r.HandleFunc("/", homeHandler)
 
+	r.HandleFunc("/company", controllers.GetAllCompanies).Methods("GET")
+
 	r.HandleFunc("/company", controllers.AddCompany).Methods("POST")
 
 	r.HandleFunc("/company/{id}", controllers.UpdateCompany).Methods("PUT")
