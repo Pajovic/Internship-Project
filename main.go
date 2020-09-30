@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Internship-Project/controllers"
 	"fmt"
 	"net/http"
 
@@ -9,8 +10,11 @@ import (
 
 func main() {
 	r := mux.NewRouter()
+
 	r.HandleFunc("/", homeHandler)
-	http.Handle("/", r)
+
+	r.HandleFunc("/company", controllers.AddCompany).Methods("POST")
+
 	http.ListenAndServe(":8000", r)
 }
 
