@@ -39,9 +39,13 @@ func main() {
 		controllers.GetAllCompanies(w, r, connection)
 	}).Methods("GET")
 
-	r.HandleFunc("/company/{id}", controllers.GetCompanyById).Methods("GET")
+	r.HandleFunc("/company/{id}", func(w http.ResponseWriter, r *http.Request) {
+		controllers.GetCompanyById(w, r, connection)
+	}).Methods("GET")
 
-	r.HandleFunc("/company", controllers.AddCompany).Methods("POST")
+	r.HandleFunc("/company", func(w http.ResponseWriter, r *http.Request) {
+		controllers.AddCompany(w, r, connection)
+	}).Methods("POST")
 
 	r.HandleFunc("/company/{id}", controllers.UpdateCompany).Methods("PUT")
 

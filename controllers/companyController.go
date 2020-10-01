@@ -14,31 +14,38 @@ import (
 func GetAllCompanies(w http.ResponseWriter, r *http.Request, connection *pgx.Conn) {
 	companies, err := services.GetAllCompanies(connection)
 	if err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte("Internal server error"))
+		w.WriteHeader(400)
+		w.Write([]byte("Error while getting companies"))
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(companies)
 }
 
-func GetCompanyById(w http.ResponseWriter, r *http.Request) {
-	var idParam string = mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idParam)
+func GetCompanyById(w http.ResponseWriter, r *http.Request, connection *pgx.Conn) {
+	idParam := mux.Vars(r)["id"]
+
+	company, err := services.GetCompany(idParam, connection)
 	if err != nil {
 		w.WriteHeader(400)
-		w.Write([]byte("ID could not be converted to integer"))
+		w.Write([]byte("There is no company with this id"))
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(services.GetCompany(id))
+	json.NewEncoder(w).Encode(company)
 }
 
-func AddCompany(w http.ResponseWriter, r *http.Request) {
+func AddCompany(w http.ResponseWriter, r *http.Request, connection *pgx.Conn) {
 	var newCompany models.Company
 	json.NewDecoder(r.Body).Decode(&newCompany)
+	err := services.AddNewCompany(&newCompany, connection)
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("Error while inserting company"))
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(services.AddNewCompany(&newCompany))
+	json.NewEncoder(w).Encode(newCompany)
 }
 
 func UpdateCompany(w http.ResponseWriter, r *http.Request) {
