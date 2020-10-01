@@ -1,7 +1,7 @@
 package models
 
 type Company struct {
-	Id     int
+	Id     string
 	Name   string
 	IsMain bool
 }

@@ -2,12 +2,15 @@ package services
 
 import (
 	"internship_project/models"
+	"internship_project/repositories"
+
+	"github.com/jackc/pgx/v4"
 )
 
 var companies []models.Company = []models.Company{}
 
-func GetAllCompanies() []models.Company {
-	return companies
+func GetAllCompanies(connection *pgx.Conn) ([]models.Company, error) {
+	return repositories.GetAllCompanies(connection)
 }
 
 func GetCompany(id int) models.Company {
@@ -15,14 +18,14 @@ func GetCompany(id int) models.Company {
 }
 
 func AddNewCompany(newCompany *models.Company) []models.Company {
-	newCompany.Id = len(companies)
+	//newCompany.Id = len(companies)
 	companies = append(companies, *newCompany)
 
 	return companies
 }
 
 func UpdateCompany(id int, updateCompany *models.Company) models.Company {
-	updateCompany.Id = id
+	//updateCompany.Id = id
 	companies[id] = *updateCompany
 
 	return companies[id]

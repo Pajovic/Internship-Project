@@ -8,11 +8,17 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v4"
 )
 
-func GetAllCompanies(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(services.GetAllCompanies())
+func GetAllCompanies(w http.ResponseWriter, r *http.Request, connection *pgx.Conn) {
+	companies, err := services.GetAllCompanies(connection)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte("Internal server error"))
+		return
+	}
+	json.NewEncoder(w).Encode(companies)
 }
 
 func GetCompanyById(w http.ResponseWriter, r *http.Request) {
