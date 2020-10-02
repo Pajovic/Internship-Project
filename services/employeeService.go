@@ -1,54 +1,33 @@
 package services
 
-import "internship_project/models"
+import (
+	"internship_project/models"
+	"internship_project/repositories"
+
+	"github.com/jackc/pgx/v4"
+)
 
 // GetAllEmployees is used to return all employees
-func GetAllEmployees(employees []models.Employee) []models.Employee {
-	return employees
+func GetAllEmployees(conn *pgx.Conn) ([]models.Employee, error) {
+	return repositories.GetAllEmployees(conn)
 }
 
 // AddNewEmployee is used to return all employees
-func AddNewEmployee(employees *[]models.Employee, newEmployee models.Employee) (*[]models.Employee, error) {
-	*employees = append(*employees, newEmployee)
-	return employees, nil
+func AddNewEmployee(conn *pgx.Conn, newEmployee *models.Employee) error {
+	return repositories.AddEmployee(conn, newEmployee)
 }
 
 // GetEmployeeByID is used to find a specific employee
-func GetEmployeeByID(employees []models.Employee, id string) models.Employee {
-	employee := models.Employee{}
-
-	for i := range employees {
-		if employees[i].ID == id {
-			employee = employees[i]
-			break
-		}
-	}
-
-	return employee
+func GetEmployeeByID(conn *pgx.Conn, id string) (models.Employee, error) {
+	return repositories.GetEmployeeByID(conn, id)
 }
 
 // UpdateEmployee is used to update a specific employee
-func UpdateEmployee(employees *[]models.Employee, updatedEmployee models.Employee, id string) []models.Employee {
-	for i := range *employees {
-		if (*employees)[i].ID == id {
-			(*employees)[i] = updatedEmployee
-			break
-		}
-	}
-
-	return *employees
+func UpdateEmployee(conn *pgx.Conn, updatedEmployee models.Employee) error {
+	return repositories.UpdateEmployee(conn, updatedEmployee)
 }
 
 // DeleteEmployee is used to update a specific employee
-func DeleteEmployee(employees []models.Employee, id string) []models.Employee {
-	var index int
-
-	for i := range employees {
-		if employees[i].ID == id {
-			index = i
-			break
-		}
-	}
-
-	return append(employees[:index], employees[index+1:]...)
+func DeleteEmployee(conn *pgx.Conn, id string) error {
+	return repositories.DeleteEmployee(conn, id)
 }

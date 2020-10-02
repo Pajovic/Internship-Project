@@ -5,14 +5,20 @@ import (
 	"internship_project/models"
 	"internship_project/services"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v4"
 )
 
 // GetAllEmployees is used for getting all employees from the database
-func GetAllEmployees(w http.ResponseWriter, r *http.Request, e []models.Employee) {
-	allEmployees := services.GetAllEmployees(e)
+func GetAllEmployees(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+	allEmployees, err := services.GetAllEmployees(conn)
+
+	if err != nil {
+		w.WriteHeader(404)
+		w.Write([]byte("An error has occured while getting all employees."))
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -20,11 +26,11 @@ func GetAllEmployees(w http.ResponseWriter, r *http.Request, e []models.Employee
 }
 
 // AddNewEmployee is used to add a new employee
-func AddNewEmployee(w http.ResponseWriter, r *http.Request, e *[]models.Employee) {
+func AddNewEmployee(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	var newEmployee models.Employee
 	json.NewDecoder(r.Body).Decode(&newEmployee)
 
-	e, err := services.AddNewEmployee(e, newEmployee)
+	err := services.AddNewEmployee(conn, &newEmployee)
 
 	if err != nil {
 		w.WriteHeader(404)
@@ -32,27 +38,26 @@ func AddNewEmployee(w http.ResponseWriter, r *http.Request, e *[]models.Employee
 		return
 	}
 
+	w.WriteHeader(200)
 	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(e)
+	json.NewEncoder(w).Encode(newEmployee)
 }
 
 // GetEmployeeByID is used to find a specific employee
-func GetEmployeeByID(w http.ResponseWriter, r *http.Request, e []models.Employee) {
-	idString := mux.Vars(r)["id"]   // Because ID is string in database
-	id, _ := strconv.Atoi(idString) // Temporarily, for now, to check if ID is invalid (larger than slice length)
+func GetEmployeeByID(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+	id := mux.Vars(r)["id"] // Because ID is string in database
 
-	if id < 0 || id > len(e) {
+	employee, err := services.GetEmployeeByID(conn, id)
+
+	if err != nil {
 		w.WriteHeader(404)
-		w.Write([]byte("Invalid Employee ID"))
+		w.Write([]byte("An error has occured while getting the employee"))
 		return
 	}
 
-	employee := services.GetEmployeeByID(e, idString)
-
 	if employee == (models.Employee{}) {
 		w.WriteHeader(404)
-		w.Write([]byte("There is no Employee with ID " + idString))
+		w.Write([]byte("There is no Employee with ID " + id))
 		return
 	}
 
@@ -62,41 +67,30 @@ func GetEmployeeByID(w http.ResponseWriter, r *http.Request, e []models.Employee
 }
 
 // UpdateEmployee is used to update employee's info
-func UpdateEmployee(w http.ResponseWriter, r *http.Request, e *[]models.Employee) {
+func UpdateEmployee(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 	var updatedEmployee models.Employee
 	json.NewDecoder(r.Body).Decode(&updatedEmployee)
 
-	idString := updatedEmployee.ID
-	id, _ := strconv.Atoi(idString)
+	err := services.UpdateEmployee(conn, updatedEmployee)
 
-	if id < 0 || id > len(*e) {
-		w.WriteHeader(404)
-		w.Write([]byte("Invalid Employee ID"))
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("An error has occured while updating."))
 		return
 	}
-
-	*e = services.UpdateEmployee(e, updatedEmployee, idString)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(e)
+	w.WriteHeader(200)
 }
 
 // DeleteEmployee is used to delete employee
-func DeleteEmployee(w http.ResponseWriter, r *http.Request, e *[]models.Employee) {
-	idString := mux.Vars(r)["id"]
-	id, _ := strconv.Atoi(idString)
+func DeleteEmployee(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+	id := mux.Vars(r)["id"]
 
-	if id < 0 || id > len(*e) {
-		w.WriteHeader(404)
-		w.Write([]byte("Invalid Employee ID"))
+	err := services.DeleteEmployee(conn, id)
+
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("An error has occured while deleting."))
 		return
 	}
-
-	*e = services.DeleteEmployee(*e, idString)
-
 	w.WriteHeader(204)
-	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(*e)
 }
