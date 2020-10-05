@@ -4,11 +4,14 @@ go 1.15
 
 require (
 	github.com/araddon/gou v0.0.0-20190110011759-c797efecbb61 // indirect
+	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgconn v1.7.0
+	github.com/jackc/pgtype v1.5.0
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v4 v4.9.0
 	github.com/lib/pq v1.3.0
 	github.com/lytics/confl v0.0.0-20200313154245-08c6aed5f53f
 	github.com/satori/go.uuid v1.2.0
+	github.com/stretchr/testify v1.6.1
 )

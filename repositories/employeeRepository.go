@@ -42,9 +42,15 @@ func GetEmployeeByID(connection *pgxpool.Pool, id string) (models.Employee, erro
 // AddEmployee .
 func AddEmployee(connection *pgxpool.Pool, employee *models.Employee) error {
 	u := uuid.NewV4()
-	employee.ID = u.String()
+	var id interface{}
+	if employee.ID == "" {
+		employee.ID = u.String()
+		id = u.Bytes()
+	} else {
+		id = uuid.FromStringOrNil(employee.ID)
+	}
 	_, err := connection.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
-		u.Bytes(), employee.FirstName, employee.LastName, employee.CompanyID, employee.C, employee.R, employee.U, employee.D)
+		id, employee.FirstName, employee.LastName, employee.CompanyID, employee.C, employee.R, employee.U, employee.D)
 	if err != nil {
 		fmt.Println(err)
 		return err
