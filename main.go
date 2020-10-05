@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lytics/confl"
 )
 
@@ -24,37 +24,38 @@ func main() {
 		panic(err)
 	}
 
-	connection, err := pgx.Connect(context.Background(), conf.DatabaseURL)
+	poolConfig, _ := pgxpool.ParseConfig(conf.DatabaseURL)
+
+	connection, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	defer connection.Close(context.Background())
+	defer connection.Close()
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", homeHandler)
+	companyRouter := r.PathPrefix("/company").Subrouter()
 
-	r.HandleFunc("/company", func(w http.ResponseWriter, r *http.Request) {
+	companyRouter.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		controllers.GetAllCompanies(w, r, connection)
 	}).Methods("GET")
 
-	r.HandleFunc("/company/{id}", func(w http.ResponseWriter, r *http.Request) {
+	companyRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		controllers.GetCompanyById(w, r, connection)
 	}).Methods("GET")
 
-	r.HandleFunc("/company", func(w http.ResponseWriter, r *http.Request) {
+	companyRouter.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		controllers.AddCompany(w, r, connection)
 	}).Methods("POST")
 
-	r.HandleFunc("/company/{id}", controllers.UpdateCompany).Methods("PUT")
+	companyRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		controllers.UpdateCompany(w, r, connection)
+	}).Methods("PUT")
 
-	r.HandleFunc("/company/{id}", controllers.DeleteCompany).Methods("DELETE")
+	companyRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		controllers.DeleteCompany(w, r, connection)
+	}).Methods("DELETE")
 
 	http.ListenAndServe(":8000", r)
-}
-
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Hello world from Gorilla Mux")
 }

@@ -4,30 +4,27 @@ import (
 	"internship_project/models"
 	"internship_project/repositories"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 var companies []models.Company = []models.Company{}
 
-func GetAllCompanies(connection *pgx.Conn) ([]models.Company, error) {
+func GetAllCompanies(connection *pgxpool.Pool) ([]models.Company, error) {
 	return repositories.GetAllCompanies(connection)
 }
 
-func GetCompany(id string, connection *pgx.Conn) (models.Company, error) {
+func GetCompany(id string, connection *pgxpool.Pool) (models.Company, error) {
 	return repositories.GetCompany(id, connection)
 }
 
-func AddNewCompany(newCompany *models.Company, connection *pgx.Conn) error {
+func AddNewCompany(newCompany *models.Company, connection *pgxpool.Pool) error {
 	return repositories.AddCompany(newCompany, connection)
 }
 
-func UpdateCompany(id int, updateCompany *models.Company) models.Company {
-	//updateCompany.Id = id
-	companies[id] = *updateCompany
-
-	return companies[id]
+func UpdateCompany(updateCompany models.Company, connection *pgxpool.Pool) error {
+	return repositories.UpdateCompany(updateCompany, connection)
 }
 
-func DeleteCompany(id int) {
-	companies = append(companies[:id], companies[id+1:]...)
+func DeleteCompany(id string, connection *pgxpool.Pool) error {
+	return repositories.DeleteCompany(id, connection)
 }

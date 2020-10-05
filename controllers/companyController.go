@@ -2,78 +2,82 @@ package controllers
 
 import (
 	"encoding/json"
+	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func GetAllCompanies(w http.ResponseWriter, r *http.Request, connection *pgx.Conn) {
+func GetAllCompanies(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
 	companies, err := services.GetAllCompanies(connection)
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("Error while getting companies"))
+		writeErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(companies)
 }
 
-func GetCompanyById(w http.ResponseWriter, r *http.Request, connection *pgx.Conn) {
+func GetCompanyById(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
 	idParam := mux.Vars(r)["id"]
 
 	company, err := services.GetCompany(idParam, connection)
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("There is no company with this id"))
+		writeErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(company)
 }
 
-func AddCompany(w http.ResponseWriter, r *http.Request, connection *pgx.Conn) {
+func AddCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
 	var newCompany models.Company
 	json.NewDecoder(r.Body).Decode(&newCompany)
 	err := services.AddNewCompany(&newCompany, connection)
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("Error while inserting company"))
+		writeErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(newCompany)
 }
 
-func UpdateCompany(w http.ResponseWriter, r *http.Request) {
+func UpdateCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
 	var idParam string = mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("ID could not be converted to integer"))
-		return
-	}
 
 	var updateCompany models.Company
 	json.NewDecoder(r.Body).Decode(&updateCompany)
 
+	updateCompany.Id = idParam
+
+	err := services.UpdateCompany(updateCompany, connection)
+
+	if err != nil {
+		writeErrToClient(w, err)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(services.UpdateCompany(id, &updateCompany))
+	json.NewEncoder(w).Encode(updateCompany)
 
 }
 
-func DeleteCompany(w http.ResponseWriter, r *http.Request) {
+func DeleteCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
 	var idParam string = mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idParam)
+
+	err := services.DeleteCompany(idParam, connection)
+
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("ID could not be converted to integer"))
+		writeErrToClient(w, err)
 		return
 	}
-
-	services.DeleteCompany(id)
 	w.WriteHeader(200)
+}
+
+func writeErrToClient(w http.ResponseWriter, err error) {
+	errMsg, code := errorhandler.GetErrorMsg(err)
+	w.WriteHeader(code)
+	w.Write([]byte(errMsg))
 }
