@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lytics/confl"
 )
 
@@ -24,12 +24,14 @@ func main() {
 		panic(err)
 	}
 
-	connection, err := pgx.Connect(context.Background(), conf.DatabaseURL)
+	poolConfig, _ := pgxpool.ParseConfig(conf.DatabaseURL)
+
+	db, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	defer connection.Close(context.Background())
+	defer db.Close()
 
 	r := mux.NewRouter()
 
@@ -37,23 +39,23 @@ func main() {
 	employeeRouter := r.PathPrefix("/employees").Subrouter()
 
 	employeeRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		controllers.GetAllEmployees(w, r, connection)
+		controllers.GetAllEmployees(w, r, db)
 	}).Methods("GET")
 
 	employeeRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		controllers.GetEmployeeByID(w, r, connection)
+		controllers.GetEmployeeByID(w, r, db)
 	}).Methods("GET")
 
 	employeeRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		controllers.AddNewEmployee(w, r, connection)
+		controllers.AddNewEmployee(w, r, db)
 	}).Methods("POST")
 
 	employeeRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		controllers.UpdateEmployee(w, r, connection)
+		controllers.UpdateEmployee(w, r, db)
 	}).Methods("PUT")
 
 	employeeRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		controllers.DeleteEmployee(w, r, connection)
+		controllers.DeleteEmployee(w, r, db)
 	}).Methods("DELETE")
 
 	http.Handle("/", r)

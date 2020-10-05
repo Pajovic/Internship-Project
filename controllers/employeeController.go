@@ -2,21 +2,21 @@ package controllers
 
 import (
 	"encoding/json"
+	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // GetAllEmployees is used for getting all employees from the database
-func GetAllEmployees(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+func GetAllEmployees(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
 	allEmployees, err := services.GetAllEmployees(conn)
 
 	if err != nil {
-		w.WriteHeader(404)
-		w.Write([]byte("An error has occured while getting all employees."))
+		writeErrToClient(w, err)
 		return
 	}
 
@@ -26,15 +26,14 @@ func GetAllEmployees(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 }
 
 // AddNewEmployee is used to add a new employee
-func AddNewEmployee(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+func AddNewEmployee(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
 	var newEmployee models.Employee
 	json.NewDecoder(r.Body).Decode(&newEmployee)
 
 	err := services.AddNewEmployee(conn, &newEmployee)
 
 	if err != nil {
-		w.WriteHeader(404)
-		w.Write([]byte("An error has occured while adding employee."))
+		writeErrToClient(w, err)
 		return
 	}
 
@@ -44,20 +43,13 @@ func AddNewEmployee(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 }
 
 // GetEmployeeByID is used to find a specific employee
-func GetEmployeeByID(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+func GetEmployeeByID(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
 	id := mux.Vars(r)["id"] // Because ID is string in database
 
 	employee, err := services.GetEmployeeByID(conn, id)
 
 	if err != nil {
-		w.WriteHeader(404)
-		w.Write([]byte("An error has occured while getting the employee"))
-		return
-	}
-
-	if employee == (models.Employee{}) {
-		w.WriteHeader(404)
-		w.Write([]byte("There is no Employee with ID " + id))
+		writeErrToClient(w, err)
 		return
 	}
 
@@ -67,30 +59,34 @@ func GetEmployeeByID(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
 }
 
 // UpdateEmployee is used to update employee's info
-func UpdateEmployee(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+func UpdateEmployee(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
 	var updatedEmployee models.Employee
 	json.NewDecoder(r.Body).Decode(&updatedEmployee)
 
 	err := services.UpdateEmployee(conn, updatedEmployee)
 
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("An error has occured while updating."))
+		writeErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(200)
 }
 
 // DeleteEmployee is used to delete employee
-func DeleteEmployee(w http.ResponseWriter, r *http.Request, conn *pgx.Conn) {
+func DeleteEmployee(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
 	id := mux.Vars(r)["id"]
 
 	err := services.DeleteEmployee(conn, id)
 
 	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("An error has occured while deleting."))
+		writeErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(204)
+}
+
+func writeErrToClient(w http.ResponseWriter, err error) {
+	errMsg, code := errorhandler.GetErrorMsg(err)
+	w.WriteHeader(code)
+	w.Write([]byte(errMsg))
 }
