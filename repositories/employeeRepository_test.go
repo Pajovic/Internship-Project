@@ -4,26 +4,14 @@ import (
 	"internship_project/models"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAddEmployee(t *testing.T) {
 	assert := assert.New(t)
 
-	newEmployee := models.Employee{
-		FirstName: "Test Name",
-		LastName:  "Test Surname",
-		CompanyID: "153fac6d-760d-4841-87e9-15aee2f25182", // ID from database
-		C:         false,
-		R:         true,
-		U:         false,
-		D:         false,
-	}
-
 	oldEmployees, _ := GetAllEmployees(DbInstance)
-	err := AddEmployee(DbInstance, &newEmployee)
+	err := AddEmployee(DbInstance, &testEmployee)
 	newEmployees, _ := GetAllEmployees(DbInstance)
 
 	assert.NoError(err)
@@ -41,30 +29,21 @@ func TestGetAllEmployees(t *testing.T) {
 
 func TestGetEmployeeByID(t *testing.T) {
 	assert := assert.New(t)
+	testID := testEmployee.ID
 
-	allEmployees, _ := GetAllEmployees(DbInstance)
-	if len(allEmployees) == 0 {
-		require.Fail(t, "There are no employees to get.")
-	}
-	employeeID := allEmployees[0].ID
-
-	employee, err := GetEmployeeByID(DbInstance, employeeID)
+	employee, err := GetEmployeeByID(DbInstance, testID)
 
 	assert.NoError(err)
 	assert.NotNil(employee)
 	assert.NotEmpty(employee)
 
-	assert.Equal(employeeID, employee.ID)
+	assert.Equal(testID, employee.ID)
 }
 
 func TestUpdateEmployee(t *testing.T) {
 	assert := assert.New(t)
 
-	allEmployees, _ := GetAllEmployees(DbInstance)
-	if len(allEmployees) == 0 {
-		require.Fail(t, "There are no employees for update.")
-	}
-	employeeForUpdate := allEmployees[0]
+	employeeForUpdate, _ := GetEmployeeByID(DbInstance, testEmployee.ID)
 	employeeForUpdate.LastName = "UPDATED Last Name"
 
 	err := UpdateEmployee(DbInstance, employeeForUpdate)
@@ -75,13 +54,7 @@ func TestUpdateEmployee(t *testing.T) {
 func TestDeleteEmployee(t *testing.T) {
 	assert := assert.New(t)
 
-	allEmployees, _ := GetAllEmployees(DbInstance)
-	if len(allEmployees) == 0 {
-		require.Fail(t, "There are no employees for deletion.")
-	}
-	employeeForDeletion := allEmployees[0]
-
-	err := DeleteEmployee(DbInstance, employeeForDeletion.ID)
+	err := DeleteEmployee(DbInstance, testEmployee.ID)
 
 	assert.NoError(err)
 }
