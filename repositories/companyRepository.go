@@ -10,9 +10,13 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func GetAllCompanies(connection *pgxpool.Pool) ([]models.Company, error) {
+type CompanyRepository struct {
+	DB *pgxpool.Pool
+}
+
+func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error) {
 	var companies []models.Company = []models.Company{}
-	rows, err := connection.Query(context.Background(), "select * from companies")
+	rows, err := repository.DB.Query(context.Background(), "select * from companies")
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -28,30 +32,29 @@ func GetAllCompanies(connection *pgxpool.Pool) ([]models.Company, error) {
 	return companies, nil
 }
 
-func GetCompany(id string, connection *pgxpool.Pool) (models.Company, error) {
+func (repository *CompanyRepository) GetCompany(id string) (models.Company, error) {
 	var company models.Company
-	err := connection.QueryRow(context.Background(), "select * from companies where id=$1", id).Scan(&company.Id, &company.Name, &company.IsMain)
+	err := repository.DB.QueryRow(context.Background(), "select * from companies where id=$1", id).Scan(&company.Id, &company.Name, &company.IsMain)
 	if err != nil {
 		return company, err
 	}
 	return company, nil
 }
 
-func AddCompany(company *models.Company, connection *pgxpool.Pool) error {
+func (repository *CompanyRepository) AddCompany(company *models.Company) error {
 	u := uuid.NewV4()
 	company.Id = u.String()
-	_, err := connection.Exec(context.Background(), "insert into public.companies (id, name, ismain) values ($1, $2, $3)", u.Bytes(), company.Name, company.IsMain)
+	_, err := repository.DB.Exec(context.Background(), "insert into public.companies (id, name, ismain) values ($1, $2, $3)", u.Bytes(), company.Name, company.IsMain)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func UpdateCompany(company models.Company, conn *pgxpool.Pool) error {
-	commandTag, err := conn.Exec(context.Background(),
+func (repository *CompanyRepository) UpdateCompany(company models.Company) error {
+	commandTag, err := repository.DB.Exec(context.Background(),
 		"UPDATE public.companies SET name=$1, ismain=$2 WHERE id=$3",
 		company.Name, company.IsMain, company.Id)
-
 	if err != nil {
 		return err
 	}
@@ -61,8 +64,8 @@ func UpdateCompany(company models.Company, conn *pgxpool.Pool) error {
 	return nil
 }
 
-func DeleteCompany(id string, conn *pgxpool.Pool) error {
-	commandTag, err := conn.Exec(context.Background(), "DELETE FROM public.companies WHERE id=$1;", id)
+func (repository *CompanyRepository) DeleteCompany(id string) error {
+	commandTag, err := repository.DB.Exec(context.Background(), "DELETE FROM public.companies WHERE id=$1;", id)
 	if err != nil {
 		fmt.Println(err)
 		return err

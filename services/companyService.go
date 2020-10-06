@@ -3,28 +3,28 @@ package services
 import (
 	"internship_project/models"
 	"internship_project/repositories"
-
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-var companies []models.Company = []models.Company{}
-
-func GetAllCompanies(connection *pgxpool.Pool) ([]models.Company, error) {
-	return repositories.GetAllCompanies(connection)
+type CompanyService struct {
+	Repository repositories.CompanyRepository
 }
 
-func GetCompany(id string, connection *pgxpool.Pool) (models.Company, error) {
-	return repositories.GetCompany(id, connection)
+func (service *CompanyService) GetAllCompanies() ([]models.Company, error) {
+	return service.Repository.GetAllCompanies()
 }
 
-func AddNewCompany(newCompany *models.Company, connection *pgxpool.Pool) error {
-	return repositories.AddCompany(newCompany, connection)
+func (service *CompanyService) GetCompany(id string) (models.Company, error) {
+	return service.Repository.GetCompany(id)
 }
 
-func UpdateCompany(updateCompany models.Company, connection *pgxpool.Pool) error {
-	return repositories.UpdateCompany(updateCompany, connection)
+func (service *CompanyService) AddNewCompany(newCompany *models.Company) error {
+	return service.Repository.AddCompany(newCompany)
 }
 
-func DeleteCompany(id string, connection *pgxpool.Pool) error {
-	return repositories.DeleteCompany(id, connection)
+func (service *CompanyService) UpdateCompany(updateCompany models.Company) error {
+	return service.Repository.UpdateCompany(updateCompany)
+}
+
+func (service *CompanyService) DeleteCompany(id string) error {
+	return service.Repository.DeleteCompany(id)
 }

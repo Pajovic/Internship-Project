@@ -8,11 +8,14 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func GetAllCompanies(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
-	companies, err := services.GetAllCompanies(connection)
+type CompanyController struct {
+	Service services.CompanyService
+}
+
+func (controller *CompanyController) GetAllCompanies(w http.ResponseWriter, r *http.Request) {
+	companies, err := controller.Service.GetAllCompanies()
 	if err != nil {
 		writeErrToClient(w, err)
 		return
@@ -21,10 +24,10 @@ func GetAllCompanies(w http.ResponseWriter, r *http.Request, connection *pgxpool
 	json.NewEncoder(w).Encode(companies)
 }
 
-func GetCompanyById(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
+func (controller *CompanyController) GetCompanyById(w http.ResponseWriter, r *http.Request) {
 	idParam := mux.Vars(r)["id"]
 
-	company, err := services.GetCompany(idParam, connection)
+	company, err := controller.Service.GetCompany(idParam)
 	if err != nil {
 		writeErrToClient(w, err)
 		return
@@ -33,10 +36,10 @@ func GetCompanyById(w http.ResponseWriter, r *http.Request, connection *pgxpool.
 	json.NewEncoder(w).Encode(company)
 }
 
-func AddCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
+func (controller *CompanyController) AddCompany(w http.ResponseWriter, r *http.Request) {
 	var newCompany models.Company
 	json.NewDecoder(r.Body).Decode(&newCompany)
-	err := services.AddNewCompany(&newCompany, connection)
+	err := controller.Service.AddNewCompany(&newCompany)
 	if err != nil {
 		writeErrToClient(w, err)
 		return
@@ -45,7 +48,7 @@ func AddCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool
 	json.NewEncoder(w).Encode(newCompany)
 }
 
-func UpdateCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
+func (controller *CompanyController) UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	var idParam string = mux.Vars(r)["id"]
 
 	var updateCompany models.Company
@@ -53,7 +56,7 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.P
 
 	updateCompany.Id = idParam
 
-	err := services.UpdateCompany(updateCompany, connection)
+	err := controller.Service.UpdateCompany(updateCompany)
 
 	if err != nil {
 		writeErrToClient(w, err)
@@ -64,10 +67,10 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.P
 
 }
 
-func DeleteCompany(w http.ResponseWriter, r *http.Request, connection *pgxpool.Pool) {
+func (controller *CompanyController) DeleteCompany(w http.ResponseWriter, r *http.Request) {
 	var idParam string = mux.Vars(r)["id"]
 
-	err := services.DeleteCompany(idParam, connection)
+	err := controller.Service.DeleteCompany(idParam)
 
 	if err != nil {
 		writeErrToClient(w, err)
