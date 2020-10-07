@@ -25,7 +25,7 @@ var testEmployee models.Employee
 func TestMain(m *testing.M) {
 	DbInstance = instantiateDb()
 	testEmployee = models.Employee{
-		ID:        "517a9da1-ba1a-492f-8df2-e695df582bf9",
+		ID:        "",
 		FirstName: "Test Name",
 		LastName:  "Test Surname",
 		CompanyID: "153fac6d-760d-4841-87e9-15aee2f25182", // ID from database
