@@ -22,11 +22,24 @@ type config struct {
 
 func main() {
 	connpool := getConnectionPool()
+	productController := getProductController(connpool)
 	companyController := getController(connpool)
 	employeeController := getEmployeeController(connpool)
 	defer connpool.Close()
 
 	r := mux.NewRouter()
+
+	productRouter := r.PathPrefix("/product").Subrouter()
+
+	productRouter.HandleFunc("", productController.GetAllProducts).Methods("GET")
+
+	productRouter.HandleFunc("/{id}", productController.GetProductById).Methods("GET")
+
+	productRouter.HandleFunc("", productController.AddProduct).Methods("POST")
+
+	productRouter.HandleFunc("/{id}", productController.UpdateProduct).Methods("PUT")
+
+	productRouter.HandleFunc("/{id}", productController.DeleteProduct).Methods("DELETE")
 
 	companyRouter := r.PathPrefix("/company").Subrouter()
 
@@ -70,6 +83,17 @@ func getConnectionPool() *pgxpool.Pool {
 	fmt.Println("Connected to database.")
 
 	return connection
+}
+
+func getProductController(connpool *pgxpool.Pool) controllers.ProductController {
+
+	productRepository := repositories.ProductRepository{DB: connpool}
+	productService := services.ProductService{Repository: productRepository}
+	productController := controllers.ProductController{Service: productService}
+
+	fmt.Println("Employee controller up and running.")
+
+	return productController
 }
 
 func getController(connpool *pgxpool.Pool) controllers.CompanyController {

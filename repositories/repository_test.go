@@ -22,10 +22,24 @@ type config struct {
 	TestDatabaseURL string `json:"test_database_url"`
 }
 
+var repository ProductRepository
+
+var testProduct models.Product
+
 func TestMain(m *testing.M) {
 	connection := instantiateRepository()
 	defer connection.Close()
 
+	testProduct = models.Product{
+		ID:       "",
+		Name:     "TEST_PRODUCT",
+		Price:    99,
+		Quantity: 10,
+		IDC:      "5f46ed8c-03d1-11eb-adc1-0242ac120002",
+	}
+
+	ClearTable(connection)
+	defer ClearTable(connection)
 	testCompany = models.Company{
 		Id:     "",
 		Name:   "SpaceX",
@@ -52,6 +66,13 @@ func instantiateRepository() *pgxpool.Pool {
 		os.Exit(1)
 	}
 
+	repository = ProductRepository{DB: dbtest}
+	return dbtest
+}
+
+func ClearTable(db *pgxpool.Pool) {
+	db.Exec(context.Background(),
+		"DELETE FROM products")
 	repository = CompanyRepository{DB: dbtest}
 	return dbtest
 }
