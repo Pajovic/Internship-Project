@@ -22,10 +22,23 @@ type config struct {
 
 func main() {
 	connpool := getConnectionPool()
+	companyController := getController(connpool)
 	employeeController := getEmployeeController(connpool)
 	defer connpool.Close()
 
 	r := mux.NewRouter()
+
+	companyRouter := r.PathPrefix("/company").Subrouter()
+
+	companyRouter.HandleFunc("", companyController.GetAllCompanies).Methods("GET")
+
+	companyRouter.HandleFunc("/{id}", companyController.GetCompanyById).Methods("GET")
+
+	companyRouter.HandleFunc("", companyController.AddCompany).Methods("POST")
+
+	companyRouter.HandleFunc("/{id}", companyController.UpdateCompany).Methods("PUT")
+
+	companyRouter.HandleFunc("/{id}", companyController.DeleteCompany).Methods("DELETE")
 
 	// Employee Routes
 	employeeRouter := r.PathPrefix("/employees").Subrouter()
@@ -48,7 +61,7 @@ func getConnectionPool() *pgxpool.Pool {
 
 	poolConfig, _ := pgxpool.ParseConfig(conf.DatabaseURL)
 
-	connpool, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
+	connection, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
@@ -56,7 +69,17 @@ func getConnectionPool() *pgxpool.Pool {
 
 	fmt.Println("Connected to database.")
 
-	return connpool
+	return connection
+}
+
+func getController(connpool *pgxpool.Pool) controllers.CompanyController {
+	companyRepository := repositories.CompanyRepository{DB: connpool}
+	companyService := services.CompanyService{Repository: companyRepository}
+	companyController := controllers.CompanyController{Service: companyService}
+
+	fmt.Println("Employee controller up and running.")
+
+	return companyController
 }
 
 func getEmployeeController(connpool *pgxpool.Pool) controllers.EmployeeController {
