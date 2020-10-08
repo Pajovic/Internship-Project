@@ -23,6 +23,7 @@ type config struct {
 func main() {
 	connpool := getConnectionPool()
 	companyController := getController(connpool)
+	employeeController := getEmployeeController(connpool)
 	defer connpool.Close()
 
 	r := mux.NewRouter()
@@ -39,6 +40,16 @@ func main() {
 
 	companyRouter.HandleFunc("/{id}", companyController.DeleteCompany).Methods("DELETE")
 
+	// Employee Routes
+	employeeRouter := r.PathPrefix("/employees").Subrouter()
+
+	employeeRouter.HandleFunc("/", employeeController.GetAllEmployees).Methods("GET")
+	employeeRouter.HandleFunc("/{id}", employeeController.GetEmployeeByID).Methods("GET")
+	employeeRouter.HandleFunc("/", employeeController.AddNewEmployee).Methods("POST")
+	employeeRouter.HandleFunc("/", employeeController.UpdateEmployee).Methods("PUT")
+	employeeRouter.HandleFunc("/{id}", employeeController.DeleteEmployee).Methods("DELETE")
+
+	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
 }
 
@@ -69,4 +80,14 @@ func getController(connpool *pgxpool.Pool) controllers.CompanyController {
 	fmt.Println("Employee controller up and running.")
 
 	return companyController
+}
+
+func getEmployeeController(connpool *pgxpool.Pool) controllers.EmployeeController {
+	employeeRepository := repositories.EmployeeRepository{DB: connpool}
+	employeeService := services.EmployeeService{Repository: employeeRepository}
+	employeeController := controllers.EmployeeController{Service: employeeService}
+
+	fmt.Println("Employee controller up and running.")
+
+	return employeeController
 }
