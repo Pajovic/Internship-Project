@@ -21,8 +21,9 @@ type config struct {
 }
 
 func main() {
-	companyController, connection := getController()
-	defer connection.Close()
+	connpool := getConnectionPool()
+	companyController := getController(connpool)
+	defer connpool.Close()
 
 	r := mux.NewRouter()
 
@@ -41,7 +42,7 @@ func main() {
 	http.ListenAndServe(":8000", r)
 }
 
-func getController() (controllers.CompanyController, *pgxpool.Pool) {
+func getConnectionPool() *pgxpool.Pool {
 	var conf config
 	if _, err := confl.DecodeFile("database.conf", &conf); err != nil {
 		panic(err)
@@ -55,9 +56,17 @@ func getController() (controllers.CompanyController, *pgxpool.Pool) {
 		os.Exit(1)
 	}
 
-	companyRepository := repositories.CompanyRepository{DB: connection}
+	fmt.Println("Connected to database.")
+
+	return connection
+}
+
+func getController(connpool *pgxpool.Pool) controllers.CompanyController {
+	companyRepository := repositories.CompanyRepository{DB: connpool}
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := controllers.CompanyController{Service: companyService}
 
-	return companyController, connection
+	fmt.Println("Employee controller up and running.")
+
+	return companyController
 }
