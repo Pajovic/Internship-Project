@@ -11,6 +11,10 @@ import (
 	"github.com/lytics/confl"
 )
 
+var repository CompanyRepository
+
+var testCompany models.Company
+
 type config struct {
 	Username        string `json:"username"`
 	Password        string `json:"password"`
@@ -36,6 +40,14 @@ func TestMain(m *testing.M) {
 
 	ClearTable(connection)
 	defer ClearTable(connection)
+	testCompany = models.Company{
+		Id:     "",
+		Name:   "SpaceX",
+		IsMain: false,
+	}
+
+	clearTable(connection)
+	defer clearTable(connection)
 
 	os.Exit(m.Run())
 }
@@ -61,4 +73,11 @@ func instantiateRepository() *pgxpool.Pool {
 func ClearTable(db *pgxpool.Pool) {
 	db.Exec(context.Background(),
 		"DELETE FROM products")
+	repository = CompanyRepository{DB: dbtest}
+	return dbtest
+}
+
+func clearTable(db *pgxpool.Pool) {
+	db.Exec(context.Background(),
+		"DELETE FROM companies")
 }

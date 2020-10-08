@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
 	"net/http"
@@ -77,10 +76,4 @@ func (controller *ProductController) DeleteProduct(w http.ResponseWriter, r *htt
 		return
 	}
 	w.WriteHeader(200)
-}
-
-func writeErrToClient(w http.ResponseWriter, err error) {
-	errMsg, code := errorhandler.GetErrorMsg(err)
-	w.WriteHeader(code)
-	w.Write([]byte(errMsg))
 }
