@@ -3,31 +3,34 @@ package services
 import (
 	"internship_project/models"
 	"internship_project/repositories"
-
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+//EmployeeService .
+type EmployeeService struct {
+	Repository repositories.EmployeeRepository
+}
+
 // GetAllEmployees is used to return all employees
-func GetAllEmployees(conn *pgxpool.Pool) ([]models.Employee, error) {
-	return repositories.GetAllEmployees(conn)
+func (service *EmployeeService) GetAllEmployees() ([]models.Employee, error) {
+	return service.Repository.GetAllEmployees()
 }
 
 // AddNewEmployee is used to return all employees
-func AddNewEmployee(conn *pgxpool.Pool, newEmployee *models.Employee) error {
-	return repositories.AddEmployee(conn, newEmployee)
+func (service *EmployeeService) AddNewEmployee(newEmployee *models.Employee) error {
+	return service.Repository.AddEmployee(newEmployee)
 }
 
 // GetEmployeeByID is used to find a specific employee
-func GetEmployeeByID(conn *pgxpool.Pool, id string) (models.Employee, error) {
-	return repositories.GetEmployeeByID(conn, id)
+func (service *EmployeeService) GetEmployeeByID(id string) (models.Employee, error) {
+	return service.Repository.GetEmployeeByID(id)
 }
 
 // UpdateEmployee is used to update a specific employee
-func UpdateEmployee(conn *pgxpool.Pool, updatedEmployee models.Employee) error {
-	return repositories.UpdateEmployee(conn, updatedEmployee)
+func (service *EmployeeService) UpdateEmployee(updatedEmployee models.Employee) error {
+	return service.Repository.UpdateEmployee(updatedEmployee)
 }
 
 // DeleteEmployee is used to update a specific employee
-func DeleteEmployee(conn *pgxpool.Pool, id string) error {
-	return repositories.DeleteEmployee(conn, id)
+func (service *EmployeeService) DeleteEmployee(id string) error {
+	return service.Repository.DeleteEmployee(id)
 }

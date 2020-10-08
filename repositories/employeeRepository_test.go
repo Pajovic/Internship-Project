@@ -10,9 +10,9 @@ import (
 func TestAddEmployee(t *testing.T) {
 	assert := assert.New(t)
 
-	oldEmployees, _ := GetAllEmployees(DbInstance)
-	err := AddEmployee(DbInstance, &testEmployee)
-	newEmployees, _ := GetAllEmployees(DbInstance)
+	oldEmployees, _ := EmployeeRepo.GetAllEmployees()
+	err := EmployeeRepo.AddEmployee(&testEmployee)
+	newEmployees, _ := EmployeeRepo.GetAllEmployees()
 
 	assert.NoError(err)
 	assert.Equal(len(newEmployees)-len(oldEmployees), 1)
@@ -20,7 +20,7 @@ func TestAddEmployee(t *testing.T) {
 
 func TestGetAllEmployees(t *testing.T) {
 	assert := assert.New(t)
-	allEmployees, err := GetAllEmployees(DbInstance)
+	allEmployees, err := EmployeeRepo.GetAllEmployees()
 
 	assert.NoError(err)
 	assert.NotNil(allEmployees)
@@ -31,7 +31,7 @@ func TestGetEmployeeByID(t *testing.T) {
 	assert := assert.New(t)
 	testID := testEmployee.ID
 
-	employee, err := GetEmployeeByID(DbInstance, testID)
+	employee, err := EmployeeRepo.GetEmployeeByID(testID)
 
 	assert.NoError(err)
 	assert.NotNil(employee)
@@ -43,10 +43,10 @@ func TestGetEmployeeByID(t *testing.T) {
 func TestUpdateEmployee(t *testing.T) {
 	assert := assert.New(t)
 
-	employeeForUpdate, _ := GetEmployeeByID(DbInstance, testEmployee.ID)
+	employeeForUpdate, _ := EmployeeRepo.GetEmployeeByID(testEmployee.ID)
 	employeeForUpdate.LastName = "UPDATED Last Name"
 
-	err := UpdateEmployee(DbInstance, employeeForUpdate)
+	err := EmployeeRepo.UpdateEmployee(employeeForUpdate)
 
 	assert.NoError(err)
 }
@@ -54,7 +54,7 @@ func TestUpdateEmployee(t *testing.T) {
 func TestDeleteEmployee(t *testing.T) {
 	assert := assert.New(t)
 
-	err := DeleteEmployee(DbInstance, testEmployee.ID)
+	err := EmployeeRepo.DeleteEmployee(testEmployee.ID)
 
 	assert.NoError(err)
 }

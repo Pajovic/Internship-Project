@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"internship_project/controllers"
+	"internship_project/repositories"
+	"internship_project/services"
 	"net/http"
 	"os"
 
@@ -19,6 +21,27 @@ type config struct {
 }
 
 func main() {
+	employeeController, connpool := getEmployeeController()
+	defer connpool.Close()
+
+	fmt.Println("Controller up and running.")
+
+	r := mux.NewRouter()
+
+	// Employee Routes
+	employeeRouter := r.PathPrefix("/employees").Subrouter()
+
+	employeeRouter.HandleFunc("/", employeeController.GetAllEmployees).Methods("GET")
+	employeeRouter.HandleFunc("/{id}", employeeController.GetEmployeeByID).Methods("GET")
+	employeeRouter.HandleFunc("/", employeeController.AddNewEmployee).Methods("POST")
+	employeeRouter.HandleFunc("/", employeeController.UpdateEmployee).Methods("PUT")
+	employeeRouter.HandleFunc("/{id}", employeeController.DeleteEmployee).Methods("DELETE")
+
+	http.Handle("/", r)
+	http.ListenAndServe(":8000", r)
+}
+
+func getEmployeeController() (controllers.EmployeeController, *pgxpool.Pool) {
 	var conf config
 	if _, err := confl.DecodeFile("database.conf", &conf); err != nil {
 		panic(err)
@@ -26,38 +49,17 @@ func main() {
 
 	poolConfig, _ := pgxpool.ParseConfig(conf.DatabaseURL)
 
-	db, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
+	connpool, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	defer db.Close()
 
-	r := mux.NewRouter()
+	fmt.Println("Connected to database.")
 
-	// Employee Routes
-	employeeRouter := r.PathPrefix("/employees").Subrouter()
+	employeeRepository := repositories.EmployeeRepository{DB: connpool}
+	employeeService := services.EmployeeService{Repository: employeeRepository}
+	employeeController := controllers.EmployeeController{Service: employeeService}
 
-	employeeRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		controllers.GetAllEmployees(w, r, db)
-	}).Methods("GET")
-
-	employeeRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		controllers.GetEmployeeByID(w, r, db)
-	}).Methods("GET")
-
-	employeeRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		controllers.AddNewEmployee(w, r, db)
-	}).Methods("POST")
-
-	employeeRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		controllers.UpdateEmployee(w, r, db)
-	}).Methods("PUT")
-
-	employeeRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		controllers.DeleteEmployee(w, r, db)
-	}).Methods("DELETE")
-
-	http.Handle("/", r)
-	http.ListenAndServe(":8000", r)
+	return employeeController, connpool
 }

@@ -8,12 +8,16 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+//EmployeeController .
+type EmployeeController struct {
+	Service services.EmployeeService
+}
+
 // GetAllEmployees is used for getting all employees from the database
-func GetAllEmployees(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
-	allEmployees, err := services.GetAllEmployees(conn)
+func (controller *EmployeeController) GetAllEmployees(w http.ResponseWriter, r *http.Request) {
+	allEmployees, err := controller.Service.GetAllEmployees()
 
 	if err != nil {
 		writeErrToClient(w, err)
@@ -26,11 +30,11 @@ func GetAllEmployees(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool)
 }
 
 // AddNewEmployee is used to add a new employee
-func AddNewEmployee(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
+func (controller *EmployeeController) AddNewEmployee(w http.ResponseWriter, r *http.Request) {
 	var newEmployee models.Employee
 	json.NewDecoder(r.Body).Decode(&newEmployee)
 
-	err := services.AddNewEmployee(conn, &newEmployee)
+	err := controller.Service.AddNewEmployee(&newEmployee)
 
 	if err != nil {
 		writeErrToClient(w, err)
@@ -43,10 +47,10 @@ func AddNewEmployee(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) 
 }
 
 // GetEmployeeByID is used to find a specific employee
-func GetEmployeeByID(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
+func (controller *EmployeeController) GetEmployeeByID(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"] // Because ID is string in database
 
-	employee, err := services.GetEmployeeByID(conn, id)
+	employee, err := controller.Service.GetEmployeeByID(id)
 
 	if err != nil {
 		writeErrToClient(w, err)
@@ -59,11 +63,11 @@ func GetEmployeeByID(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool)
 }
 
 // UpdateEmployee is used to update employee's info
-func UpdateEmployee(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
+func (controller *EmployeeController) UpdateEmployee(w http.ResponseWriter, r *http.Request) {
 	var updatedEmployee models.Employee
 	json.NewDecoder(r.Body).Decode(&updatedEmployee)
 
-	err := services.UpdateEmployee(conn, updatedEmployee)
+	err := controller.Service.UpdateEmployee(updatedEmployee)
 
 	if err != nil {
 		writeErrToClient(w, err)
@@ -73,10 +77,10 @@ func UpdateEmployee(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) 
 }
 
 // DeleteEmployee is used to delete employee
-func DeleteEmployee(w http.ResponseWriter, r *http.Request, conn *pgxpool.Pool) {
+func (controller *EmployeeController) DeleteEmployee(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	err := services.DeleteEmployee(conn, id)
+	err := controller.Service.DeleteEmployee(id)
 
 	if err != nil {
 		writeErrToClient(w, err)

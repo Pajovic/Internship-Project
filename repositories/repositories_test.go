@@ -18,12 +18,12 @@ type config struct {
 	TestDatabaseURL string `json:"test_database_url"`
 }
 
-var DbInstance *pgxpool.Pool
+var EmployeeRepo EmployeeRepository
 
 var testEmployee models.Employee
 
 func TestMain(m *testing.M) {
-	DbInstance = instantiateDb()
+	EmployeeRepo = EmployeeRepository{DB: getConnPool()}
 	testEmployee = models.Employee{
 		ID:        "",
 		FirstName: "Test Name",
@@ -35,17 +35,17 @@ func TestMain(m *testing.M) {
 		D:         false,
 	}
 
-	testCleanup(DbInstance)
-	defer testCleanup(DbInstance)
+	testCleanup(EmployeeRepo.DB)
+	defer testCleanup(EmployeeRepo.DB)
 
-	setupTables(DbInstance)
+	setupTables(EmployeeRepo.DB)
 
 	code := m.Run()
 
 	os.Exit(code)
 }
 
-func instantiateDb() *pgxpool.Pool {
+func getConnPool() *pgxpool.Pool {
 	var conf config
 	if _, err := confl.DecodeFile("./../database.conf", &conf); err != nil {
 		panic(err)
