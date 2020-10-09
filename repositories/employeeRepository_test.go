@@ -10,38 +10,66 @@ import (
 func TestAddEmployee(t *testing.T) {
 	assert := assert.New(t)
 
-	assert.True(DoesTableExist("employees", EmployeeRepo.DB), "Table does not exist.")
+	t.Run("table does not exist", func(t *testing.T) {
+		DropTables(EmployeeRepo.DB)
+		defer SetupTables(EmployeeRepo.DB)
+		assert.False(DoesTableExist("employees", EmployeeRepo.DB))
+	})
 
-	oldEmployees, _ := EmployeeRepo.GetAllEmployees()
-	err := EmployeeRepo.AddEmployee(&testEmployee)
-	newEmployees, _ := EmployeeRepo.GetAllEmployees()
+	t.Run("table was added back", func(t *testing.T) {
+		SetupTables(EmployeeRepo.DB)
+		assert.True(DoesTableExist("employees", EmployeeRepo.DB))
+	})
 
-	assert.NoError(err)
-	assert.Equal(len(newEmployees)-len(oldEmployees), 1, "Employee was not added.")
+	t.Run("successful query", func(t *testing.T) {
+		oldEmployees, _ := EmployeeRepo.GetAllEmployees()
+		err := EmployeeRepo.AddEmployee(&testEmployee)
+		newEmployees, _ := EmployeeRepo.GetAllEmployees()
+
+		assert.NoError(err)
+		assert.Equal(len(newEmployees)-len(oldEmployees), 1, "Employee was not added.")
+	})
 }
 
 func TestGetAllEmployees(t *testing.T) {
 	assert := assert.New(t)
-	allEmployees, err := EmployeeRepo.GetAllEmployees()
 
-	assert.NoError(err)
-	assert.NotNil(allEmployees, "Employees returned were nil.")
-	assert.IsType(allEmployees, []models.Employee{})
+	t.Run("successful GetAll query", func(t *testing.T) {
+		allEmployees, err := EmployeeRepo.GetAllEmployees()
+		assert.NoError(err)
+		assert.NotNil(allEmployees, "Employees returned were nil.")
+		assert.IsType(allEmployees, []models.Employee{})
+	})
+
 }
 
 func TestGetEmployeeByID(t *testing.T) {
 	assert := assert.New(t)
-	testID := testEmployee.ID
 
-	assert.True(IsValidUUID(testID), "Employee ID is not valid.")
+	t.Run("invalid id", func(t *testing.T) {
+		invalidID := "123-asd-321"
+		assert.False(IsValidUUID(invalidID))
+		_, err := EmployeeRepo.GetEmployeeByID(invalidID)
+		assert.Error(err)
+	})
 
-	employee, err := EmployeeRepo.GetEmployeeByID(testID)
+	t.Run("id does not exist", func(t *testing.T) {
+		randomUUID := "c5ef08c6-60eb-4687-bcbb-df37ebc9e105"
+		assert.True(IsValidUUID(randomUUID))
+		_, err := EmployeeRepo.GetEmployeeByID(randomUUID)
+		assert.Error(err)
+	})
 
-	assert.NoError(err)
-	assert.NotNil(employee, "Employee returned was nil.")
-	assert.NotEmpty(employee, "Employee ID does not exist.") // ID does not exist
+	t.Run("successful query", func(t *testing.T) {
+		testID := testEmployee.ID
+		employee, err := EmployeeRepo.GetEmployeeByID(testID)
 
-	assert.Equal(testID, employee.ID, "Employee ID and test ID do not match.")
+		assert.NoError(err)
+		assert.NotNil(employee, "Employee returned was nil.")
+		assert.NotEmpty(employee, "Employee ID does not exist.") // ID does not exist
+
+		assert.Equal(testID, employee.ID, "Employee ID and test ID do not match.")
+	})
 }
 
 func TestUpdateEmployee(t *testing.T) {

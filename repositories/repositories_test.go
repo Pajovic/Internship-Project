@@ -61,10 +61,8 @@ func TestMain(m *testing.M) {
 		IDC:      "153fac6d-760d-4841-87e9-15aee2f25182",
 	}
 
-	testCleanup(connpool)
-	defer testCleanup(connpool)
-
-	setupTables(connpool)
+	SetupTables(connpool)
+	defer SetupTables(connpool)
 
 	code := m.Run()
 
@@ -105,13 +103,54 @@ func getConnPool() *pgxpool.Pool {
 	return dbtest
 }
 
-func setupTables(db *pgxpool.Pool) {
+func insertMockData(db *pgxpool.Pool) {
 	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
 		"153fac6d-760d-4841-87e9-15aee2f25182", "Test Kompanija", true)
 }
 
-func testCleanup(db *pgxpool.Pool) {
+func SetupTables(db *pgxpool.Pool) {
+	CreateTables(db)
 	db.Exec(context.Background(), "DELETE FROM products;")
 	db.Exec(context.Background(), "DELETE FROM employees;")
 	db.Exec(context.Background(), "DELETE FROM companies;")
+	insertMockData(db)
+}
+
+func CreateTables(db *pgxpool.Pool) {
+	db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS public.companies (
+		id uuid NOT NULL,
+		"name" varchar(30) NOT NULL,
+		ismain bool NOT NULL,
+		CONSTRAINT companies_pk PRIMARY KEY (id)
+	);`)
+
+	db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS public.employees (
+		id uuid NOT NULL,
+		firstname varchar(30) NOT NULL,
+		lastname varchar(30) NOT NULL,
+		idc uuid NOT NULL,
+		c bool NOT NULL,
+		r bool NOT NULL,
+		u bool NOT NULL,
+		d bool NOT NULL,
+		CONSTRAINT employees_pk PRIMARY KEY (id)
+	);
+	ALTER TABLE public.employees ADD CONSTRAINT employees_fk FOREIGN KEY (idc) REFERENCES companies(id);
+	`)
+
+	db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS public.products (
+		id uuid NOT NULL,
+		"name" varchar(30) NOT NULL,
+		price float4 NOT NULL,
+		quantity int4 NOT NULL,
+		idc uuid NOT NULL,
+		CONSTRAINT products_pk PRIMARY KEY (id)
+	);
+	ALTER TABLE public.products ADD CONSTRAINT products_fk FOREIGN KEY (idc) REFERENCES companies(id);`)
+}
+
+func DropTables(db *pgxpool.Pool) {
+	db.Exec(context.Background(), "DROP TABLE IF EXISTS products;")
+	db.Exec(context.Background(), "DROP TABLE IF EXISTS employees;")
+	db.Exec(context.Background(), "DROP TABLE IF EXISTS companies;")
 }
