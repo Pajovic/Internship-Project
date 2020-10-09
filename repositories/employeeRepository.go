@@ -77,7 +77,6 @@ func (repository *EmployeeRepository) DeleteEmployee(id string) error {
 	commandTag, err := repository.DB.Exec(context.Background(), "DELETE FROM employees WHERE id=$1;", id)
 
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	if commandTag.RowsAffected() != 1 {
