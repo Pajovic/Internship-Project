@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"internship_project/models"
 	"internship_project/services"
 	"net/http"
@@ -10,7 +11,8 @@ import (
 )
 
 type ProductController struct {
-	Service services.ProductService
+	Service         services.ProductService
+	EmployeeService services.EmployeeService
 }
 
 func (controller *ProductController) GetAllProducts(w http.ResponseWriter, r *http.Request) {
@@ -25,8 +27,15 @@ func (controller *ProductController) GetAllProducts(w http.ResponseWriter, r *ht
 
 func (controller *ProductController) GetProductById(w http.ResponseWriter, r *http.Request) {
 	idParam := mux.Vars(r)["id"]
+	idEmployee := mux.Vars(r)["employeeId"]
 
 	product, err := controller.Service.GetProduct(idParam)
+
+	employeeRights := controller.Service.GetEmployeePermissions(idEmployee, idParam)
+
+	fmt.Println("Controller fmt")
+	fmt.Println(employeeRights)
+
 	if err != nil {
 		writeErrToClient(w, err)
 		return

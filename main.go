@@ -22,9 +22,10 @@ type config struct {
 
 func main() {
 	connpool := getConnectionPool()
-	productController := getProductController(connpool)
-	companyController := getController(connpool)
 	employeeController := getEmployeeController(connpool)
+	productController := getProductController(connpool, &employeeController.Service.Repository)
+	companyController := getController(connpool)
+
 	defer connpool.Close()
 
 	r := mux.NewRouter()
@@ -32,25 +33,17 @@ func main() {
 	productRouter := r.PathPrefix("/product").Subrouter()
 
 	productRouter.HandleFunc("", productController.GetAllProducts).Methods("GET")
-
-	productRouter.HandleFunc("/{id}", productController.GetProductById).Methods("GET")
-
+	productRouter.HandleFunc("/{id}/{employeeId}", productController.GetProductById).Methods("GET")
 	productRouter.HandleFunc("", productController.AddProduct).Methods("POST")
-
 	productRouter.HandleFunc("/{id}", productController.UpdateProduct).Methods("PUT")
-
 	productRouter.HandleFunc("/{id}", productController.DeleteProduct).Methods("DELETE")
 
 	companyRouter := r.PathPrefix("/company").Subrouter()
 
 	companyRouter.HandleFunc("", companyController.GetAllCompanies).Methods("GET")
-
 	companyRouter.HandleFunc("/{id}", companyController.GetCompanyById).Methods("GET")
-
 	companyRouter.HandleFunc("", companyController.AddCompany).Methods("POST")
-
 	companyRouter.HandleFunc("/{id}", companyController.UpdateCompany).Methods("PUT")
-
 	companyRouter.HandleFunc("/{id}", companyController.DeleteCompany).Methods("DELETE")
 
 	// Employee Routes
@@ -61,14 +54,13 @@ func main() {
 	employeeRouter.HandleFunc("/", employeeController.AddNewEmployee).Methods("POST")
 	employeeRouter.HandleFunc("/", employeeController.UpdateEmployee).Methods("PUT")
 	employeeRouter.HandleFunc("/{id}", employeeController.DeleteEmployee).Methods("DELETE")
-
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
 }
 
 func getConnectionPool() *pgxpool.Pool {
 	var conf config
-	if _, err := confl.DecodeFile("database.conf", &conf); err != nil {
+	if _, err := confl.DecodeFile("dbconfig.conf", &conf); err != nil {
 		panic(err)
 	}
 
@@ -85,10 +77,10 @@ func getConnectionPool() *pgxpool.Pool {
 	return connection
 }
 
-func getProductController(connpool *pgxpool.Pool) controllers.ProductController {
+func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) controllers.ProductController {
 
 	productRepository := repositories.ProductRepository{DB: connpool}
-	productService := services.ProductService{Repository: productRepository}
+	productService := services.ProductService{Repository: productRepository, EmployeeRepository: *employeeRepo}
 	productController := controllers.ProductController{Service: productService}
 
 	fmt.Println("Employee controller up and running.")

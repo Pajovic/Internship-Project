@@ -85,3 +85,49 @@ func (repository *EmployeeRepository) DeleteEmployee(id string) error {
 	}
 	return nil
 }
+
+// GetEmployeeExternalPermissions .
+func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceivingCompany string, product models.Product) (models.ExternalRights, error) {
+	var allRights []models.ExternalRights
+	var rights models.ExternalRights
+
+	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
+	tx, err := repository.DB.Begin(context.Background())
+	if err != nil {
+		return rights, err
+	}
+
+	defer tx.Rollback(context.Background())
+
+	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2;"
+	rows, err := tx.Query(context.Background(), queryExternalAccess, idReceivingCompany, product.IDC)
+
+	if err != nil {
+		return rights, err
+	}
+	for rows.Next() {
+		var right models.ExternalRights
+		err := rows.Scan(&right.ID, &right.Read, &right.Update, &right.Delete, &right.Approved, &right.IDSC, &right.IDRC)
+		if err != nil {
+			return rights, err
+		}
+		allRights = append(allRights, right)
+	}
+	rows.Close()
+
+	fmt.Println("Repo fmt")
+	fmt.Println(allRights)
+
+	// 2a. If there is only 1 row returned, it means there are no constraints and we can return safely
+	// 2b. Otherwise, we need to acquire constraints, using ID of all constraints
+
+	// 3. foreach constraint -> product.quantity *constraint.operator* *constraint.value* ? take current rule : continue
+
+	err = tx.Commit(context.Background())
+
+	if err != nil {
+		return rights, err
+	}
+
+	return rights, nil
+}
