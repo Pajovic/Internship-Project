@@ -107,7 +107,7 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 	}
 	for rows.Next() {
 		var right models.ExternalRights
-		err := rows.Scan(&right.ID, &right.Read, &right.Update, &right.Delete, &right.Approved, &right.IDSC, &right.IDRC)
+		err := rows.Scan(&right.ID, &right.IDSC, &right.IDRC, &right.Read, &right.Update, &right.Delete, &right.Approved)
 		if err != nil {
 			return rights, err
 		}
@@ -115,13 +115,26 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 	}
 	rows.Close()
 
-	fmt.Println("Repo fmt")
-	fmt.Println(allRights)
-
-	// 2a. If there is only 1 row returned, it means there are no constraints and we can return safely
-	// 2b. Otherwise, we need to acquire constraints, using ID of all constraints
-
-	// 3. foreach constraint -> product.quantity *constraint.operator* *constraint.value* ? take current rule : continue
+	if len(allRights) == 0 {
+		// 2a. If there is no rows returned employees from this company can't interact with this product
+		return rights, errors.New("You don't have any permission for this product")
+	} else if len(allRights) == 1 {
+		// 2b. If there is only 1 row returned, it means there are no constraints and we can return safely
+		rights = allRights[0]
+	} else {
+		// 2c. Otherwise, we need to acquire constraints, using ID of all constraints
+		for _, right := range allRights {
+			var accessConstraint models.AccessConstraint
+			err := tx.QueryRow(context.Background(), "select * from access_constraints where idear=$1", right.ID).
+				Scan(&accessConstraint.ID, &accessConstraint.IDEAR, &accessConstraint.OperatorID, &accessConstraint.PropertyID, &accessConstraint.PropertyValue)
+			if err != nil {
+				return rights, err
+			}
+			if checkConstraint(accessConstraint, product) {
+				rights = right
+			}
+		}
+	}
 
 	err = tx.Commit(context.Background())
 
@@ -130,4 +143,33 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 	}
 
 	return rights, nil
+}
+
+func checkConstraint(accessConstraint models.AccessConstraint, product models.Product) bool {
+	var quantity int32 = int32(accessConstraint.PropertyValue)
+	if accessConstraint.OperatorID == 1 {
+		if product.Quantity > quantity {
+			return true
+		} else {
+			return false
+		}
+	} else if accessConstraint.OperatorID == 2 {
+		if product.Quantity >= quantity {
+			return true
+		} else {
+			return false
+		}
+	} else if accessConstraint.OperatorID == 3 {
+		if product.Quantity < quantity {
+			return true
+		} else {
+			return false
+		}
+	} else {
+		if product.Quantity <= quantity {
+			return true
+		} else {
+			return false
+		}
+	}
 }

@@ -31,9 +31,10 @@ func main() {
 	r := mux.NewRouter()
 
 	productRouter := r.PathPrefix("/product").Subrouter()
+	productRouter.Headers("employeeID")
 
 	productRouter.HandleFunc("", productController.GetAllProducts).Methods("GET")
-	productRouter.HandleFunc("/{id}/{employeeId}", productController.GetProductById).Methods("GET")
+	productRouter.HandleFunc("/{id}", productController.GetProductById).Methods("GET")
 	productRouter.HandleFunc("", productController.AddProduct).Methods("POST")
 	productRouter.HandleFunc("/{id}", productController.UpdateProduct).Methods("PUT")
 	productRouter.HandleFunc("/{id}", productController.DeleteProduct).Methods("DELETE")
@@ -80,10 +81,10 @@ func getConnectionPool() *pgxpool.Pool {
 func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) controllers.ProductController {
 
 	productRepository := repositories.ProductRepository{DB: connpool}
-	productService := services.ProductService{Repository: productRepository, EmployeeRepository: *employeeRepo}
+	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: *employeeRepo}
 	productController := controllers.ProductController{Service: productService}
 
-	fmt.Println("Employee controller up and running.")
+	fmt.Println("Product controller up and running.")
 
 	return productController
 }
@@ -93,7 +94,7 @@ func getController(connpool *pgxpool.Pool) controllers.CompanyController {
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := controllers.CompanyController{Service: companyService}
 
-	fmt.Println("Employee controller up and running.")
+	fmt.Println("Company controller up and running.")
 
 	return companyController
 }
