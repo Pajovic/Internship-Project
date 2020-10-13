@@ -49,9 +49,10 @@ func (controller *EmployeeController) AddNewEmployee(w http.ResponseWriter, r *h
 
 // GetEmployeeByID is used to find a specific employee
 func (controller *EmployeeController) GetEmployeeByID(w http.ResponseWriter, r *http.Request) {
+	idEmployee := r.Header.Get("employeeID")
 	id := mux.Vars(r)["id"] // Because ID is string in database
 
-	employee, err := controller.Service.GetEmployeeByID(id)
+	employee, err := controller.Service.GetEmployeeByID(id, idEmployee)
 
 	if err != nil {
 		writeErrToClient(w, err)

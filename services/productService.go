@@ -71,12 +71,9 @@ func (service *ProductService) GetProduct(productID string, employeeID string) (
 	}
 
 	if employee.CompanyID != product.IDC {
-		externalAccessRights, err := service.EmployeeRepository.GetEmployeeExternalPermissions(employee.CompanyID, product)
+		_, err := service.EmployeeRepository.GetEmployeeExternalPermissions(employee.CompanyID, product)
 		if err != nil {
 			return product, err
-		}
-		if !externalAccessRights.Read {
-			return product, errors.New("You can't see this product")
 		}
 	}
 

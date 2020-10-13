@@ -130,7 +130,7 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 			if err != nil {
 				return rights, err
 			}
-			if checkConstraint(accessConstraint, product) {
+			if checkConstraint(accessConstraint, product) && right.Approved {
 				rights = right
 			}
 		}
@@ -175,10 +175,20 @@ func (repository *EmployeeRepository) CheckCompaniesSharingEmployeeData(idReceiv
 
 	if len(allRights) == 0 {
 		// 2a. If there is no rows returned employees from this company can't see employees from other companies
-		return false, errors.New("You don't have any permission to view these employees")
+		return false, errors.New("Your company does not have rights needed")
 	}
-	// else if len(allRights) > 0
-	// 2b. If there is any sharing right, companies have enabled sharing employee data
+	// 2b. If there is any sharing right, we must check if the sharing has been approved
+	rightsApproved := false
+	for _, right := range allRights {
+		if right.Approved {
+			rightsApproved = true
+			break
+		}
+	}
+
+	if !rightsApproved {
+		return false, errors.New("Sharing between your companies has not been approved")
+	}
 
 	err = tx.Commit(context.Background())
 

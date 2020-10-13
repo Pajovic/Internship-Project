@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"internship_project/models"
 	"internship_project/repositories"
 )
@@ -49,8 +50,28 @@ func (service *EmployeeService) AddNewEmployee(newEmployee *models.Employee) err
 }
 
 // GetEmployeeByID is used to find a specific employee
-func (service *EmployeeService) GetEmployeeByID(id string) (models.Employee, error) {
-	return service.Repository.GetEmployeeByID(id)
+func (service *EmployeeService) GetEmployeeByID(id string, idEmployee string) (models.Employee, error) {
+	employee, err := service.Repository.GetEmployeeByID(idEmployee)
+	if err != nil {
+		return models.Employee{}, err
+	}
+
+	employeeRequested, err := service.Repository.GetEmployeeByID(id)
+	if err != nil {
+		return models.Employee{}, err
+	}
+
+	if employee.CompanyID != employeeRequested.CompanyID {
+		companiesSharingEmployeeData, err := service.Repository.CheckCompaniesSharingEmployeeData(employee.CompanyID, employeeRequested.CompanyID)
+		if err != nil {
+			return models.Employee{}, err
+		}
+		if !companiesSharingEmployeeData {
+			return models.Employee{}, errors.New("You have no permissions to preview this employee")
+		}
+	}
+
+	return employeeRequested, nil
 }
 
 // UpdateEmployee is used to update a specific employee
