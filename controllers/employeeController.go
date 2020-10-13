@@ -17,7 +17,8 @@ type EmployeeController struct {
 
 // GetAllEmployees is used for getting all employees from the database
 func (controller *EmployeeController) GetAllEmployees(w http.ResponseWriter, r *http.Request) {
-	allEmployees, err := controller.Service.GetAllEmployees()
+	idEmployee := r.Header.Get("employeeID")
+	allEmployees, err := controller.Service.GetAllEmployees(idEmployee)
 
 	if err != nil {
 		writeErrToClient(w, err)

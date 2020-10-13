@@ -145,6 +145,50 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 	return rights, nil
 }
 
+// CheckCompaniesSharingEmployeeData .
+func (repository *EmployeeRepository) CheckCompaniesSharingEmployeeData(idReceivingCompany string, idSharingCompany string) (bool, error) {
+	var allRights []models.ExternalRights
+
+	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
+	tx, err := repository.DB.Begin(context.Background())
+	if err != nil {
+		return false, err
+	}
+
+	defer tx.Rollback(context.Background())
+
+	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2;"
+	rows, err := tx.Query(context.Background(), queryExternalAccess, idReceivingCompany, idSharingCompany)
+
+	if err != nil {
+		return false, err
+	}
+	for rows.Next() {
+		var right models.ExternalRights
+		err := rows.Scan(&right.ID, &right.IDSC, &right.IDRC, &right.Read, &right.Update, &right.Delete, &right.Approved)
+		if err != nil {
+			return false, err
+		}
+		allRights = append(allRights, right)
+	}
+	rows.Close()
+
+	if len(allRights) == 0 {
+		// 2a. If there is no rows returned employees from this company can't see employees from other companies
+		return false, errors.New("You don't have any permission to view these employees")
+	}
+	// else if len(allRights) > 0
+	// 2b. If there is any sharing right, companies have enabled sharing employee data
+
+	err = tx.Commit(context.Background())
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func checkConstraint(accessConstraint models.AccessConstraint, product models.Product) bool {
 	var quantity int32 = int32(accessConstraint.PropertyValue)
 	if accessConstraint.OperatorID == 1 {
