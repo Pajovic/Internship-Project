@@ -14,7 +14,8 @@ type ProductController struct {
 }
 
 func (controller *ProductController) GetAllProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := controller.Service.GetAllProducts()
+	idEmployee := r.Header.Get("employeeID")
+	products, err := controller.Service.GetAllProducts(idEmployee)
 	if err != nil {
 		writeErrToClient(w, err)
 		return

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"internship_project/models"
 	"internship_project/repositories"
 )
@@ -11,8 +12,47 @@ type ProductService struct {
 	EmployeeRepository repositories.EmployeeRepository
 }
 
-func (service *ProductService) GetAllProducts() ([]models.Product, error) {
-	return service.ProductRepository.GetAllProducts()
+func (service *ProductService) GetAllProducts(employeeID string) ([]models.Product, error) {
+	var accessibleProducts []models.Product
+
+	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeID)
+	if err != nil {
+		fmt.Println("Error getting employee")
+		return accessibleProducts, err
+	}
+
+	if !employee.R {
+		return accessibleProducts, errors.New("You can't see products")
+	}
+
+	allProducts, err := service.ProductRepository.GetAllProducts()
+
+	if err != nil {
+		fmt.Println("Error getting products")
+		return accessibleProducts, err
+	}
+
+	for _, product := range allProducts {
+		if employee.CompanyID == product.IDC {
+			// Product is within employee's company
+			accessibleProducts = append(accessibleProducts, product)
+		} else {
+			// Product is owned by another company, we need to check access rights
+			externalAccessRights, err := service.EmployeeRepository.GetEmployeeExternalPermissions(employee.CompanyID, product)
+			if err != nil {
+				//fmt.Println(err.Error() != "You don't have any permission for this product")
+				if err.Error() != "You don't have any permission for this product" {
+					return []models.Product{}, err
+				}
+				continue
+			}
+			if externalAccessRights.Read {
+				accessibleProducts = append(accessibleProducts, product)
+			}
+		}
+	}
+
+	return accessibleProducts, nil
 }
 
 func (service *ProductService) GetProduct(productID string, employeeID string) (models.Product, error) {
