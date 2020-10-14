@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"internship_project/models"
 	"internship_project/repositories"
 )
@@ -17,7 +16,6 @@ func (service *ProductService) GetAllProducts(employeeID string) ([]models.Produ
 
 	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeID)
 	if err != nil {
-		fmt.Println("Error getting employee")
 		return accessibleProducts, err
 	}
 
@@ -28,7 +26,6 @@ func (service *ProductService) GetAllProducts(employeeID string) ([]models.Produ
 	allProducts, err := service.ProductRepository.GetAllProducts()
 
 	if err != nil {
-		fmt.Println("Error getting products")
 		return accessibleProducts, err
 	}
 
@@ -40,7 +37,6 @@ func (service *ProductService) GetAllProducts(employeeID string) ([]models.Produ
 			// Product is owned by another company, we need to check access rights
 			externalAccessRights, err := service.EmployeeRepository.GetEmployeeExternalPermissions(employee.CompanyID, product)
 			if err != nil {
-				//fmt.Println(err.Error() != "You don't have any permission for this product")
 				if err.Error() != "You don't have any permission for this product" {
 					return []models.Product{}, err
 				}
