@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
@@ -96,9 +95,6 @@ func (controller *CompanyController) ApproveExternalAccess(w http.ResponseWriter
 func (controller *CompanyController) DisapproveExternalAccess(w http.ResponseWriter, r *http.Request) {
 	var idear string = mux.Vars(r)["idear"]
 	companyID := r.Header.Get("companyID")
-
-	fmt.Println(idear)
-	fmt.Println(companyID)
 
 	err := controller.Service.DisapproveExternalAccess(companyID, idear)
 
