@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"errors"
-	"fmt"
 	"internship_project/models"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -67,11 +66,32 @@ func (repository *CompanyRepository) UpdateCompany(company models.Company) error
 func (repository *CompanyRepository) DeleteCompany(id string) error {
 	commandTag, err := repository.DB.Exec(context.Background(), "DELETE FROM public.companies WHERE id=$1;", id)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	if commandTag.RowsAffected() != 1 {
 		return errors.New("No row found to delete")
+	}
+	return nil
+}
+
+func (repository *CompanyRepository) ApproveExternalAccess(idear string) error {
+	commandTag, err := repository.DB.Exec(context.Background(), "UPDATE external_access_rights SET approved = true WHERE id = $1;", idear)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() != 1 {
+		return errors.New("No row found to update")
+	}
+	return nil
+}
+
+func (repository *CompanyRepository) DisapproveExternalAccess(idear string) error {
+	commandTag, err := repository.DB.Exec(context.Background(), "UPDATE external_access_rights SET approved = false WHERE id = $1;", idear)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() != 1 {
+		return errors.New("No row found to update")
 	}
 	return nil
 }

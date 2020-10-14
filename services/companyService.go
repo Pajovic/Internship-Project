@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"internship_project/models"
 	"internship_project/repositories"
 )
@@ -27,4 +28,30 @@ func (service *CompanyService) UpdateCompany(updateCompany models.Company) error
 
 func (service *CompanyService) DeleteCompany(id string) error {
 	return service.Repository.DeleteCompany(id)
+}
+
+func (service *CompanyService) ApproveExternalAccess(companyID string, idear string) error {
+	approvingCompany, err := service.Repository.GetCompany(companyID)
+	if err != nil {
+		return err
+	}
+
+	if !approvingCompany.IsMain {
+		return errors.New("Your company does not have permission to approve sharing")
+	}
+
+	return service.Repository.ApproveExternalAccess(idear)
+}
+
+func (service *CompanyService) DisapproveExternalAccess(companyID string, idear string) error {
+	approvingCompany, err := service.Repository.GetCompany(companyID)
+	if err != nil {
+		return err
+	}
+
+	if !approvingCompany.IsMain {
+		return errors.New("Your company does not have permission to disapprove sharing")
+	}
+
+	return service.Repository.DisapproveExternalAccess(idear)
 }

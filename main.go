@@ -30,6 +30,7 @@ func main() {
 
 	r := mux.NewRouter()
 
+	// Product Routes
 	productRouter := r.PathPrefix("/product").Subrouter()
 	productRouter.Headers("employeeID")
 
@@ -39,13 +40,17 @@ func main() {
 	productRouter.HandleFunc("/{id}", productController.UpdateProduct).Methods("PUT")
 	productRouter.HandleFunc("/{id}", productController.DeleteProduct).Methods("DELETE")
 
+	// Company Routes
 	companyRouter := r.PathPrefix("/company").Subrouter()
+	companyRouter.Headers("companyID")
 
 	companyRouter.HandleFunc("", companyController.GetAllCompanies).Methods("GET")
 	companyRouter.HandleFunc("/{id}", companyController.GetCompanyById).Methods("GET")
 	companyRouter.HandleFunc("", companyController.AddCompany).Methods("POST")
 	companyRouter.HandleFunc("/{id}", companyController.UpdateCompany).Methods("PUT")
 	companyRouter.HandleFunc("/{id}", companyController.DeleteCompany).Methods("DELETE")
+	companyRouter.HandleFunc("/approve/{idear}", companyController.ApproveExternalAccess).Methods("PATCH")
+	companyRouter.HandleFunc("/disapprove/{idear}", companyController.DisapproveExternalAccess).Methods("PATCH")
 
 	// Employee Routes
 	employeeRouter := r.PathPrefix("/employees").Subrouter()
