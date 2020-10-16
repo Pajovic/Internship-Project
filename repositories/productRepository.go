@@ -6,6 +6,7 @@ import (
 	"internship_project/models"
 	"internship_project/persistence"
 	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
@@ -38,19 +39,21 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 		earConstraints = append(earConstraints, earConstraint)
 	}
 
-	finalQuery := "select * from products p where p.idc = $1"
+	var finalQuery strings.Builder
+
+	finalQuery.WriteString("select * from products p where p.idc = $1")
 
 	for _, earc := range earConstraints {
-		finalQuery += " union select * from products p where p.idc = '" + earc.Idsc + "' "
+		finalQuery.WriteString(" union select * from products p where p.idc = '" + earc.Idsc + "' ")
 		if earc.Operator != "" && earc.Property != "" {
-			finalQuery += "and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue)
+			finalQuery.WriteString("and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue))
 		}
 	}
-	finalQuery += ";"
+	finalQuery.WriteString(";")
 
 	products := []models.Product{}
 
-	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery, employeeIdc)
+	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery.String(), employeeIdc)
 	defer rowsProducts.Close()
 	if err != nil {
 		return nil, err
