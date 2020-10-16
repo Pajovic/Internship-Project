@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"internship_project/models"
+	"strconv"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
@@ -13,21 +14,55 @@ type ProductRepository struct {
 	DB *pgxpool.Pool
 }
 
-func (repository *ProductRepository) GetAllProducts() ([]models.Product, error) {
-	var products []models.Product = []models.Product{}
-	rows, err := repository.DB.Query(context.Background(), "SELECT * FROM products")
+func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]models.Product, error) {
+	earConstraints := []models.EarConstraint{}
+
+	query := `select ear.id "idear", ear.idrc, ear.idsc, p.name "property", o2.name "operator", ac.property_value from external_access_rights ear
+	left outer join access_constraints ac on ear.id = ac.idear
+	left outer join operators o2 on o2.id = ac.operator_id 
+	left outer join properties p on p.id = ac.property_id 
+	where ear.idrc = $1 and ear.r = true and ear.approved = true;`
+
+	rows, err := repository.DB.Query(context.Background(), query, employeeIdc)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
 	for rows.Next() {
+		var earConstraint models.EarConstraint
+		err := rows.Scan(&earConstraint.Idear, &earConstraint.Idrc, &earConstraint.Idsc, &earConstraint.Property, &earConstraint.Operator, &earConstraint.PropertyValue)
+		if err != nil {
+			return nil, err
+		}
+		earConstraints = append(earConstraints, earConstraint)
+	}
+
+	finalQuery := "select * from products p where p.idc = $1"
+
+	for _, earc := range earConstraints {
+		finalQuery += " union select * from products p where p.idc = '" + earc.Idsc + "' "
+		if earc.Operator != "" && earc.Property != "" {
+			finalQuery += "and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue)
+		}
+	}
+	finalQuery += ";"
+
+	products := []models.Product{}
+
+	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery, employeeIdc)
+	defer rowsProducts.Close()
+	if err != nil {
+		return nil, err
+	}
+	for rowsProducts.Next() {
 		var product models.Product
-		err := rows.Scan(&product.ID, &product.Name, &product.Price, &product.Quantity, &product.IDC)
+		err := rowsProducts.Scan(&product.ID, &product.Name, &product.Price, &product.Quantity, &product.IDC)
 		if err != nil {
 			return nil, err
 		}
 		products = append(products, product)
 	}
+
 	return products, nil
 }
 

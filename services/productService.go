@@ -12,43 +12,25 @@ type ProductService struct {
 }
 
 func (service *ProductService) GetAllProducts(employeeID string) ([]models.Product, error) {
-	var accessibleProducts []models.Product
+
+	allProducts := []models.Product{}
 
 	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeID)
 	if err != nil {
-		return accessibleProducts, err
+		return allProducts, err
 	}
 
 	if !employee.R {
-		return accessibleProducts, errors.New("You can't see products")
+		return allProducts, errors.New("You can't see products")
 	}
 
-	allProducts, err := service.ProductRepository.GetAllProducts()
+	allProducts, err = service.ProductRepository.GetAllProducts(employee.CompanyID)
 
 	if err != nil {
-		return accessibleProducts, err
+		return allProducts, err
 	}
 
-	for _, product := range allProducts {
-		if employee.CompanyID == product.IDC {
-			// Product is within employee's company
-			accessibleProducts = append(accessibleProducts, product)
-		} else {
-			// Product is owned by another company, we need to check access rights
-			externalAccessRights, err := service.EmployeeRepository.GetEmployeeExternalPermissions(employee.CompanyID, product)
-			if err != nil {
-				if err.Error() != "You don't have any permission for this product" {
-					return []models.Product{}, err
-				}
-				continue
-			}
-			if externalAccessRights.Read {
-				accessibleProducts = append(accessibleProducts, product)
-			}
-		}
-	}
-
-	return accessibleProducts, nil
+	return allProducts, nil
 }
 
 func (service *ProductService) GetProduct(productID string, employeeID string) (models.Product, error) {
