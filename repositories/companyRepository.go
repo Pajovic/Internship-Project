@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"internship_project/models"
+	"internship_project/persistence"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
@@ -14,61 +15,125 @@ type CompanyRepository struct {
 }
 
 func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error) {
-	var companies []models.Company = []models.Company{}
-	rows, err := repository.DB.Query(context.Background(), "select * from companies")
+	companies := []models.Company{}
+	rows, err := repository.DB.Query(context.Background(), "select * from companies;")
 	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
+
 	for rows.Next() {
-		var company models.Company
-		err := rows.Scan(&company.Id, &company.Name, &company.IsMain)
+		var company persistence.Companies
+		company.Scan(&rows)
+
+		var stringUUID string
+		err := company.Id.AssignTo(&stringUUID)
 		if err != nil {
-			return nil, err
+			return companies, err
 		}
-		companies = append(companies, company)
+
+		companies = append(companies, models.Company{
+			Id:     stringUUID,
+			Name:   company.Name,
+			IsMain: company.Ismain,
+		})
 	}
+
 	return companies, nil
 }
 
 func (repository *CompanyRepository) GetCompany(id string) (models.Company, error) {
 	var company models.Company
-	err := repository.DB.QueryRow(context.Background(), "select * from companies where id=$1", id).Scan(&company.Id, &company.Name, &company.IsMain)
+	rows, err := repository.DB.Query(context.Background(), "select * from companies where id=$1", id)
+	defer rows.Close()
 	if err != nil {
 		return company, err
 	}
+
+	for rows.Next() {
+		var companyPers persistence.Companies
+		companyPers.Scan(&rows)
+
+		var stringUUID string
+		err := companyPers.Id.AssignTo(&stringUUID)
+		if err != nil {
+			return company, err
+		}
+
+		company = models.Company{
+			Id:     stringUUID,
+			Name:   companyPers.Name,
+			IsMain: companyPers.Ismain,
+		}
+		break
+	}
+
 	return company, nil
 }
 
 func (repository *CompanyRepository) AddCompany(company *models.Company) error {
-	u := uuid.NewV4()
-	company.Id = u.String()
-	_, err := repository.DB.Exec(context.Background(), "insert into public.companies (id, name, ismain) values ($1, $2, $3)", u.Bytes(), company.Name, company.IsMain)
+	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback(context.Background())
+
+	companyPers := persistence.Companies{
+		Name:   company.Name,
+		Ismain: company.IsMain,
+	}
+	companyPers.Id.Set(uuid.NewV4())
+
+	_, err = companyPers.InsertTx(&tx)
+	if err != nil {
+		return err
+	}
+
+	tx.Commit(context.Background())
+
 	return nil
 }
 
 func (repository *CompanyRepository) UpdateCompany(company models.Company) error {
-	commandTag, err := repository.DB.Exec(context.Background(),
-		"UPDATE public.companies SET name=$1, ismain=$2 WHERE id=$3",
-		company.Name, company.IsMain, company.Id)
+	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
 	}
-	if commandTag.RowsAffected() != 1 {
+	defer tx.Rollback(context.Background())
+
+	companyPers := persistence.Companies{
+		Name:   company.Name,
+		Ismain: company.IsMain,
+	}
+	companyPers.Id.Set(company.Id)
+
+	commandTag, err := companyPers.UpdateTx(&tx)
+	if err != nil {
+		return err
+	}
+	if commandTag != 1 {
 		return errors.New("No row found to update")
 	}
+
+	tx.Commit(context.Background())
 	return nil
 }
 
 func (repository *CompanyRepository) DeleteCompany(id string) error {
-	commandTag, err := repository.DB.Exec(context.Background(), "DELETE FROM public.companies WHERE id=$1;", id)
+	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
 	}
-	if commandTag.RowsAffected() != 1 {
+	defer tx.Rollback(context.Background())
+
+	companyPers := persistence.Companies{}
+	companyPers.Id.Set(id)
+
+	commandTag, err := companyPers.DeleteTx(&tx)
+	if err != nil {
+		return err
+	}
+	if commandTag != 1 {
 		return errors.New("No row found to delete")
 	}
 	return nil

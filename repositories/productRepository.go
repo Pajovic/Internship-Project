@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"internship_project/models"
+	"internship_project/persistence"
 	"strconv"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -68,46 +69,109 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 
 func (repository *ProductRepository) GetProduct(id string) (models.Product, error) {
 	var product models.Product
-	err := repository.DB.QueryRow(context.Background(),
-		"SELECT * FROM products WHERE id=$1", id).
-		Scan(&product.ID, &product.Name, &product.Price, &product.Quantity, &product.IDC)
+	rows, err := repository.DB.Query(context.Background(), "select * from products where id=$1", id)
+	defer rows.Close()
 	if err != nil {
 		return product, err
 	}
+
+	for rows.Next() {
+		var productPers persistence.Products
+		productPers.Scan(&rows)
+
+		var productUUID string
+		err := productPers.Id.AssignTo(&productUUID)
+		if err != nil {
+			return product, err
+		}
+
+		var companyUUID string
+		err = productPers.Idc.AssignTo(&companyUUID)
+		if err != nil {
+			return product, err
+		}
+
+		product = models.Product{
+			ID:       productUUID,
+			Name:     productPers.Name,
+			Price:    productPers.Price,
+			Quantity: productPers.Quantity,
+			IDC:      companyUUID,
+		}
+
+		break
+	}
+
 	return product, nil
 }
 
 func (repository *ProductRepository) AddProduct(product *models.Product) error {
-	u := uuid.NewV4()
-	product.ID = u.String()
-	_, err := repository.DB.Exec(context.Background(),
-		"INSERT INTO products (id, name, price, quantity, idc) values ($1, $2, $3, $4, $5)",
-		u.Bytes(), product.Name, product.Price, product.Quantity, product.IDC)
+	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback(context.Background())
+
+	productPers := persistence.Products{
+		Name:     product.Name,
+		Price:    product.Price,
+		Quantity: product.Quantity,
+	}
+	productPers.Idc.Set(product.IDC)
+	productPers.Id.Set(uuid.NewV4())
+
+	_, err = productPers.InsertTx(&tx)
+	if err != nil {
+		return err
+	}
+
+	tx.Commit(context.Background())
+
 	return nil
 }
 
 func (repository *ProductRepository) UpdateProduct(product models.Product) error {
-	commandTag, err := repository.DB.Exec(context.Background(),
-		"UPDATE products SET name=$1, price=$2, quantity=$3, idc=$4 WHERE id=$5",
-		product.Name, product.Price, product.Quantity, product.IDC, product.ID)
+	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
 	}
-	if commandTag.RowsAffected() != 1 {
+	defer tx.Rollback(context.Background())
+
+	productPers := persistence.Products{
+		Name:     product.Name,
+		Price:    product.Price,
+		Quantity: product.Quantity,
+	}
+	productPers.Idc.Set(product.IDC)
+	productPers.Id.Set(product.ID)
+
+	commandTag, err := productPers.UpdateTx(&tx)
+	if err != nil {
+		return err
+	}
+	if commandTag != 1 {
 		return errors.New("No row found to update")
 	}
+
+	tx.Commit(context.Background())
 	return nil
 }
 
 func (repository *ProductRepository) DeleteProduct(id string) error {
-	commandTag, err := repository.DB.Exec(context.Background(), "DELETE FROM products WHERE id=$1;", id)
+	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
 	}
-	if commandTag.RowsAffected() != 1 {
+	defer tx.Rollback(context.Background())
+
+	productPers := persistence.Products{}
+	productPers.Id.Set(id)
+
+	commandTag, err := productPers.DeleteTx(&tx)
+	if err != nil {
+		return err
+	}
+	if commandTag != 1 {
 		return errors.New("No row found to delete")
 	}
 	return nil
