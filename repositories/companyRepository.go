@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 	"internship_project/models"
 	"internship_project/persistence"
 
@@ -45,7 +46,9 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 	var company models.Company
 	rows, err := repository.DB.Query(context.Background(), "select * from companies where id=$1", id)
 	defer rows.Close()
+
 	if err != nil {
+		fmt.Println("ERROR 1 ", err)
 		return company, err
 	}
 
@@ -56,6 +59,7 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 		var stringUUID string
 		err := companyPers.Id.AssignTo(&stringUUID)
 		if err != nil {
+			fmt.Println("ERROR 2 ", err)
 			return company, err
 		}
 
@@ -67,6 +71,7 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 		break
 	}
 
+	fmt.Println("ERROR NISTA ", err)
 	return company, nil
 }
 
@@ -77,11 +82,12 @@ func (repository *CompanyRepository) AddCompany(company *models.Company) error {
 	}
 	defer tx.Rollback(context.Background())
 
+	company.Id = uuid.NewV4().String()
 	companyPers := persistence.Companies{
 		Name:   company.Name,
 		Ismain: company.IsMain,
 	}
-	companyPers.Id.Set(uuid.NewV4())
+	companyPers.Id.Set(company.Id)
 
 	_, err = companyPers.InsertTx(&tx)
 	if err != nil {

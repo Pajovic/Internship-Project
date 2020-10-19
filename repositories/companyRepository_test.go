@@ -13,7 +13,7 @@ func TestAddCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
-		defer CreateTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.AddCompany(&testCompany)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
 	})
@@ -48,7 +48,7 @@ func TestGetCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
-		defer CreateTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
 		_, err := CompanyRepo.GetCompany(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
 	})
@@ -79,7 +79,7 @@ func TestUpdateCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
-		defer CreateTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.UpdateCompany(testCompany)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
 	})
@@ -112,7 +112,7 @@ func TestDeleteCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
-		defer CreateTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.DeleteCompany(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")
 	})

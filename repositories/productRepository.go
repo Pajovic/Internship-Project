@@ -115,13 +115,15 @@ func (repository *ProductRepository) AddProduct(product *models.Product) error {
 	}
 	defer tx.Rollback(context.Background())
 
+	product.ID = uuid.NewV4().String()
+
 	productPers := persistence.Products{
 		Name:     product.Name,
 		Price:    product.Price,
 		Quantity: product.Quantity,
 	}
 	productPers.Idc.Set(product.IDC)
-	productPers.Id.Set(uuid.NewV4())
+	productPers.Id.Set(product.ID)
 
 	_, err = productPers.InsertTx(&tx)
 	if err != nil {

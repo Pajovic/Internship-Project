@@ -77,10 +77,10 @@ func TestMain(m *testing.M) {
 		D:         true,
 	}
 
-	testAdmin = {
-		ID: "9d6ffd16-89e1-4ece-9e7c-09d4bf390838",
+	testAdmin = models.Employee{
+		ID:        "9d6ffd16-89e1-4ece-9e7c-09d4bf390838",
 		FirstName: "Admin",
-		LastName: "Admin",
+		LastName:  "Admin",
 		CompanyID: testCompany1.Id,
 		C:         true,
 		R:         true,
@@ -97,7 +97,6 @@ func TestMain(m *testing.M) {
 	}
 
 	SetupTables(connpool)
-	defer DropTables(connpool)
 
 	code := m.Run()
 
@@ -154,7 +153,7 @@ func insertMockData(db *pgxpool.Pool) {
 
 	// Insert Admin
 	db.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
-	testAdmin.ID, testAdmin.FirstName, testAdmin.LastName, testAdmin.CompanyID, testAdmin.C, testAdmin.R, testAdmin.U, testAdmin.D)
+		testAdmin.ID, testAdmin.FirstName, testAdmin.LastName, testAdmin.CompanyID, testAdmin.C, testAdmin.R, testAdmin.U, testAdmin.D)
 
 	// Insert external access rights
 	db.Exec(context.Background(), `INSERT INTO external_access_rights (id, idsc, idrc, r, u, d, approved)
@@ -228,37 +227,9 @@ func CreateTables(db *pgxpool.Pool) {
 	ALTER TABLE products ADD CONSTRAINT products_fk FOREIGN KEY (idc) REFERENCES companies(id);
 	`)
 
-	// Access Constraints
-	db.Exec(context.Background(), `
-		CREATE TABLE public.operators (
-			id int4 NOT NULL,
-			"name" varchar(5) NOT NULL,
-			CONSTRAINT operators_pk PRIMARY KEY (id)
-		);
-
-		CREATE TABLE public.properties (
-			id int8 NOT NULL,
-			"name" varchar(20) NOT NULL,
-			CONSTRAINT properties_pk PRIMARY KEY (id)
-		);
-
-		CREATE TABLE public.access_constraints (
-			id uuid NOT NULL,
-			idear uuid NOT NULL,
-			operator_id int4 NOT NULL,
-			property_id int8 NOT NULL,
-			property_value float8 NOT NULL,
-			CONSTRAINT access_constraints_pk PRIMARY KEY (id)
-		);
-
-		ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_idear FOREIGN KEY (idear) REFERENCES external_access_rights(id);
-		ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_operator_id FOREIGN KEY (operator_id) REFERENCES operators(id);
-		ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_property_id FOREIGN KEY (property_id) REFERENCES properties(id);
-	`)
-
 	// External Access Rights
 	db.Exec(context.Background(), ` 
-	CREATE TABLE public.external_access_rights (
+	CREATE TABLE IF NOT EXISTS external_access_rights (
 		id uuid NOT NULL,
 		idsc uuid NOT NULL,
 		idrc uuid NOT NULL,
@@ -269,9 +240,38 @@ func CreateTables(db *pgxpool.Pool) {
 		CONSTRAINT external_access_rights_pk PRIMARY KEY (id)
 	);
 
-	ALTER TABLE public.external_access_rights ADD CONSTRAINT external_access_rights_idrc FOREIGN KEY (idrc) REFERENCES companies(id);
-	ALTER TABLE public.external_access_rights ADD CONSTRAINT external_access_rights_idsc FOREIGN KEY (idsc) REFERENCES companies(id);
+	ALTER TABLE external_access_rights ADD CONSTRAINT external_access_rights_idrc FOREIGN KEY (idrc) REFERENCES companies(id);
+	ALTER TABLE external_access_rights ADD CONSTRAINT external_access_rights_idsc FOREIGN KEY (idsc) REFERENCES companies(id);
 	`)
+
+	// Access Constraints
+	db.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS operators (
+			id int4 NOT NULL,
+			"name" varchar(5) NOT NULL,
+			CONSTRAINT operators_pk PRIMARY KEY (id)
+		);
+
+		CREATE TABLE IF NOT EXISTS properties (
+			id int8 NOT NULL,
+			"name" varchar(20) NOT NULL,
+			CONSTRAINT properties_pk PRIMARY KEY (id)
+		);
+
+		CREATE TABLE IF NOT EXISTS access_constraints (
+			id uuid NOT NULL,
+			idear uuid NOT NULL,
+			operator_id int4 NOT NULL,
+			property_id int8 NOT NULL,
+			property_value float8 NOT NULL,
+			CONSTRAINT access_constraints_pk PRIMARY KEY (id)
+		);
+
+		ALTER TABLE access_constraints ADD CONSTRAINT access_constraints_idear FOREIGN KEY (idear) REFERENCES external_access_rights(id);
+		ALTER TABLE access_constraints ADD CONSTRAINT access_constraints_operator_id FOREIGN KEY (operator_id) REFERENCES operators(id);
+		ALTER TABLE access_constraints ADD CONSTRAINT access_constraints_property_id FOREIGN KEY (property_id) REFERENCES properties(id);
+	`)
+
 	insertMockData(db)
 }
 

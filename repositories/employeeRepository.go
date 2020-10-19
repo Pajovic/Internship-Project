@@ -18,7 +18,7 @@ type EmployeeRepository struct {
 // GetAllEmployees .
 func (repository *EmployeeRepository) GetAllEmployees(employeeIdc string) ([]models.Employee, error) {
 	allEmployees := []models.Employee{}
-	query := "select * from employees e where e.idc = $1 or idc in (select * from external_access_rights ear where ear.idrc = $2 and approved = true);"
+	query := "select * from employees e where e.idc = $1 or idc in (select idsc from external_access_rights ear where ear.idrc = $2 and approved = true);"
 	rows, err := repository.DB.Query(context.Background(), query, employeeIdc, employeeIdc)
 	defer rows.Close()
 	if err != nil {
@@ -104,6 +104,8 @@ func (repository *EmployeeRepository) AddEmployee(employee *models.Employee) err
 	}
 	defer tx.Rollback(context.Background())
 
+	employee.ID = uuid.NewV4().String()
+
 	employeePers := persistence.Employees{
 		Firstname: employee.FirstName,
 		Lastname:  employee.LastName,
@@ -113,7 +115,7 @@ func (repository *EmployeeRepository) AddEmployee(employee *models.Employee) err
 		D:         employee.D,
 	}
 	employeePers.Idc.Set(employee.CompanyID)
-	employeePers.Id.Set(uuid.NewV4())
+	employeePers.Id.Set(employee.ID)
 
 	_, err = employeePers.InsertTx(&tx)
 	if err != nil {

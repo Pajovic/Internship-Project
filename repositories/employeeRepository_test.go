@@ -21,12 +21,18 @@ func TestAddEmployee(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		oldEmployees, _ := EmployeeRepo.GetAllEmployees()
+		oldEmployees, _ := EmployeeRepo.GetAllEmployees(testAdmin.ID)
 		err := EmployeeRepo.AddEmployee(&testEmployee)
-		newEmployees, _ := EmployeeRepo.GetAllEmployees()
+		newEmployees, _ := EmployeeRepo.GetAllEmployees(testAdmin.ID)
+
+		t.Log(oldEmployees)
+		t.Log(newEmployees)
+
+		t.Log(testAdmin)
+		t.Log(testEmployee)
 
 		assert.NoError(err)
-		assert.Equal(len(newEmployees)-len(oldEmployees), 1, "Employee was not added.")
+		assert.Equal(1, len(newEmployees)-len(oldEmployees), "Employee was not added.")
 	})
 
 	t.Run("add an existing employee", func(t *testing.T) {
@@ -41,7 +47,7 @@ func TestGetAllEmployees(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("successful GetAll query", func(t *testing.T) {
-		allEmployees, err := EmployeeRepo.GetAllEmployees()
+		allEmployees, err := EmployeeRepo.GetAllEmployees(testAdmin.ID)
 
 		assert.NoError(err)
 		assert.NotNil(allEmployees, "Employees returned were nil.")
