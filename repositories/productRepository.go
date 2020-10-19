@@ -72,37 +72,44 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 
 func (repository *ProductRepository) GetProduct(id string) (models.Product, error) {
 	var product models.Product
-	rows, err := repository.DB.Query(context.Background(), "select * from products where id=$1", id)
-	defer rows.Close()
+
+	Uuid, err := uuid.FromString(id)
 	if err != nil {
 		return product, err
 	}
 
-	for rows.Next() {
-		var productPers persistence.Products
-		productPers.Scan(&rows)
+	rows, err := repository.DB.Query(context.Background(), "select * from products where id=$1", Uuid)
+	defer rows.Close()
 
-		var productUUID string
-		err := productPers.Id.AssignTo(&productUUID)
-		if err != nil {
-			return product, err
-		}
+	if err != nil {
+		return product, err
+	}
 
-		var companyUUID string
-		err = productPers.Idc.AssignTo(&companyUUID)
-		if err != nil {
-			return product, err
-		}
+	if !rows.Next() {
+		return product, errors.New("There is no product with this id")
+	}
 
-		product = models.Product{
-			ID:       productUUID,
-			Name:     productPers.Name,
-			Price:    productPers.Price,
-			Quantity: productPers.Quantity,
-			IDC:      companyUUID,
-		}
+	var productPers persistence.Products
+	productPers.Scan(&rows)
 
-		break
+	var productUUID string
+	err = productPers.Id.AssignTo(&productUUID)
+	if err != nil {
+		return product, err
+	}
+
+	var companyUUID string
+	err = productPers.Idc.AssignTo(&companyUUID)
+	if err != nil {
+		return product, err
+	}
+
+	product = models.Product{
+		ID:       productUUID,
+		Name:     productPers.Name,
+		Price:    productPers.Price,
+		Quantity: productPers.Quantity,
+		IDC:      companyUUID,
 	}
 
 	return product, nil

@@ -58,39 +58,47 @@ func (repository *EmployeeRepository) GetAllEmployees(employeeIdc string) ([]mod
 // GetEmployeeByID .
 func (repository *EmployeeRepository) GetEmployeeByID(id string) (models.Employee, error) {
 	var employee models.Employee
-	rows, err := repository.DB.Query(context.Background(), "select * from employees where id=$1", id)
-	defer rows.Close()
+
+	Uuid, err := uuid.FromString(id)
 	if err != nil {
 		return employee, err
 	}
 
-	for rows.Next() {
-		var employeePers persistence.Employees
-		employeePers.Scan(&rows)
+	rows, err := repository.DB.Query(context.Background(), "select * from employees where id=$1", Uuid)
+	defer rows.Close()
 
-		var employeeUUID string
-		err := employeePers.Id.AssignTo(&employeeUUID)
-		if err != nil {
-			return employee, err
-		}
+	if err != nil {
+		return employee, err
+	}
 
-		var companyUUID string
-		err = employeePers.Idc.AssignTo(&companyUUID)
-		if err != nil {
-			return employee, err
-		}
+	if !rows.Next() {
+		return employee, errors.New("There is no employee with this id")
+	}
 
-		employee = models.Employee{
-			ID:        employeeUUID,
-			FirstName: employeePers.Firstname,
-			LastName:  employeePers.Lastname,
-			CompanyID: companyUUID,
-			C:         employeePers.C,
-			R:         employeePers.R,
-			U:         employeePers.U,
-			D:         employeePers.D,
-		}
-		break
+	var employeePers persistence.Employees
+	employeePers.Scan(&rows)
+
+	var employeeUUID string
+	err = employeePers.Id.AssignTo(&employeeUUID)
+	if err != nil {
+		return employee, err
+	}
+
+	var companyUUID string
+	err = employeePers.Idc.AssignTo(&companyUUID)
+	if err != nil {
+		return employee, err
+	}
+
+	employee = models.Employee{
+		ID:        employeeUUID,
+		FirstName: employeePers.Firstname,
+		LastName:  employeePers.Lastname,
+		CompanyID: companyUUID,
+		C:         employeePers.C,
+		R:         employeePers.R,
+		U:         employeePers.U,
+		D:         employeePers.D,
 	}
 
 	return employee, nil

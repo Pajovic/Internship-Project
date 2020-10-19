@@ -21,15 +21,16 @@ func TestAddEmployee(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		oldEmployees, _ := EmployeeRepo.GetAllEmployees(testAdmin.ID)
+		oldEmployees, _ := EmployeeRepo.GetAllEmployees(testAdmin.CompanyID)
 		err := EmployeeRepo.AddEmployee(&testEmployee)
-		newEmployees, _ := EmployeeRepo.GetAllEmployees(testAdmin.ID)
+		newEmployees, _ := EmployeeRepo.GetAllEmployees(testAdmin.CompanyID)
 
 		t.Log(oldEmployees)
 		t.Log(newEmployees)
 
 		t.Log(testAdmin)
 		t.Log(testEmployee)
+		t.Log(testCompany1)
 
 		assert.NoError(err)
 		assert.Equal(1, len(newEmployees)-len(oldEmployees), "Employee was not added.")

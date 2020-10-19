@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"errors"
-	"fmt"
 	"internship_project/models"
 	"internship_project/persistence"
 
@@ -44,34 +43,38 @@ func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error)
 
 func (repository *CompanyRepository) GetCompany(id string) (models.Company, error) {
 	var company models.Company
-	rows, err := repository.DB.Query(context.Background(), "select * from companies where id=$1", id)
-	defer rows.Close()
 
+	Uuid, err := uuid.FromString(id)
 	if err != nil {
-		fmt.Println("ERROR 1 ", err)
 		return company, err
 	}
 
-	for rows.Next() {
-		var companyPers persistence.Companies
-		companyPers.Scan(&rows)
+	rows, err := repository.DB.Query(context.Background(), `select * from companies where id = $1`, Uuid)
+	defer rows.Close()
 
-		var stringUUID string
-		err := companyPers.Id.AssignTo(&stringUUID)
-		if err != nil {
-			fmt.Println("ERROR 2 ", err)
-			return company, err
-		}
-
-		company = models.Company{
-			Id:     stringUUID,
-			Name:   companyPers.Name,
-			IsMain: companyPers.Ismain,
-		}
-		break
+	if err != nil {
+		return company, err
 	}
 
-	fmt.Println("ERROR NISTA ", err)
+	if !rows.Next() {
+		return company, errors.New("There is no company with this id")
+	}
+
+	var companyPers persistence.Companies
+	companyPers.Scan(&rows)
+
+	var stringUUID string
+	err = companyPers.Id.AssignTo(&stringUUID)
+	if err != nil {
+		return company, err
+	}
+
+	company = models.Company{
+		Id:     stringUUID,
+		Name:   companyPers.Name,
+		IsMain: companyPers.Ismain,
+	}
+
 	return company, nil
 }
 

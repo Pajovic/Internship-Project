@@ -69,7 +69,7 @@ func TestGetCompany(t *testing.T) {
 		CompanyRepo.AddCompany(&testCompany)
 		company, err := CompanyRepo.GetCompany(testCompany.Id)
 		assert.NotNil(company, "Result is nil")
-		assert.NoError(err, "Company was not deleted.")
+		assert.NoError(err, "There was error while getting company")
 		assert.Equal(testCompany.Id, company.Id, "Returned company ID and test ID do not match.")
 	})
 }
