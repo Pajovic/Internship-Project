@@ -7,8 +7,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lytics/confl"
+	uuid "github.com/satori/go.uuid"
 )
 
 type config struct {
@@ -19,58 +21,188 @@ type config struct {
 }
 
 var EmployeeRepo EmployeeRepository
+var ProductRepo ProductRepository
+var CompanyRepo CompanyRepository
 
 var testEmployee models.Employee
+var testAdmin models.Employee
+
+var testProduct models.Product
+var testCompany models.Company
+
+var testCompany1 models.Company
+var testCompany2 models.Company
+var mainCompany1 models.Company
 
 func TestMain(m *testing.M) {
-	EmployeeRepo = EmployeeRepository{DB: getConnPool()}
+	connpool := getConnPool()
+	defer connpool.Close()
+
+	EmployeeRepo = EmployeeRepository{DB: connpool}
+	ProductRepo = ProductRepository{DB: connpool}
+	CompanyRepo = CompanyRepository{DB: connpool}
+
+	testCompany = models.Company{
+		Id:     "",
+		Name:   "SpaceX",
+		IsMain: false,
+	}
+
+	testCompany1 = models.Company{
+		Id:     "153fac6d-760d-4841-87e9-15aee2f25182",
+		Name:   "Test Kompanija 1",
+		IsMain: false,
+	}
+
+	testCompany2 = models.Company{
+		Id:     "aac4ca5c-315f-4c16-8e36-eb62e0292d25",
+		Name:   "Test Kompanija 2",
+		IsMain: false,
+	}
+
+	mainCompany1 = models.Company{
+		Id:     "91f88893-5cef-4d3c-9d6a-ed120f7e449e",
+		Name:   "Main Kompanija 1",
+		IsMain: true,
+	}
+
 	testEmployee = models.Employee{
 		ID:        "",
 		FirstName: "Test Name",
 		LastName:  "Test Surname",
-		CompanyID: "153fac6d-760d-4841-87e9-15aee2f25182", // ID from database
+		CompanyID: testCompany1.Id,
 		C:         false,
 		R:         true,
-		U:         false,
-		D:         false,
+		U:         true,
+		D:         true,
 	}
 
-	testCleanup(EmployeeRepo.DB)
-	defer testCleanup(EmployeeRepo.DB)
+	testAdmin = {
+		ID: "9d6ffd16-89e1-4ece-9e7c-09d4bf390838",
+		FirstName: "Admin",
+		LastName: "Admin",
+		CompanyID: testCompany1.Id,
+		C:         true,
+		R:         true,
+		U:         true,
+		D:         true,
+	}
 
-	setupTables(EmployeeRepo.DB)
+	testProduct = models.Product{
+		ID:       "",
+		Name:     "TEST_PRODUCT",
+		Price:    99,
+		Quantity: 10,
+		IDC:      testCompany1.Id,
+	}
+
+	SetupTables(connpool)
+	defer DropTables(connpool)
 
 	code := m.Run()
 
 	os.Exit(code)
 }
 
+func IsValidUUID(u string) bool {
+	_, err := uuid.FromString(u)
+	return err == nil
+}
+
+func DoesTableExist(tableName string, connpool *pgxpool.Pool) bool {
+	var n int64
+	err := connpool.QueryRow(context.Background(), "select 1 from information_schema.tables where table_name=$1", tableName).Scan(&n)
+	if err == pgx.ErrNoRows || err != nil {
+		return false
+	} else if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
 func getConnPool() *pgxpool.Pool {
 	var conf config
-	if _, err := confl.DecodeFile("./../database.conf", &conf); err != nil {
-		panic(err)
+	if _, configerr := confl.DecodeFile("./../dbconfig.conf", &conf); configerr != nil {
+		panic(configerr)
 	}
 
-	poolConfig, _ := pgxpool.ParseConfig(conf.TestDatabaseURL)
+	poolConfig, poolerr := pgxpool.ParseConfig(conf.TestDatabaseURL)
+	if poolerr != nil {
+		panic("Error configuring pool")
+	}
 
-	dbtest, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+	dbtest, dberr := pgxpool.ConnectConfig(context.Background(), poolConfig)
+	if dberr != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", dberr)
 		os.Exit(1)
 	}
 
 	return dbtest
 }
 
-func setupTables(db *pgxpool.Pool) {
-	db.Exec(context.Background(), `CREATE TABLE public.companies (
+func insertMockData(db *pgxpool.Pool) {
+	// Insert Companies
+	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
+		testCompany1.Id, testCompany1.Name, testCompany1.IsMain)
+
+	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
+		testCompany2.Id, testCompany2.Name, testCompany2.IsMain)
+
+	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
+		mainCompany1.Id, mainCompany1.Name, mainCompany1.IsMain)
+
+	// Insert Admin
+	db.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
+	testAdmin.ID, testAdmin.FirstName, testAdmin.LastName, testAdmin.CompanyID, testAdmin.C, testAdmin.R, testAdmin.U, testAdmin.D)
+
+	// Insert external access rights
+	db.Exec(context.Background(), `INSERT INTO external_access_rights (id, idsc, idrc, r, u, d, approved)
+	VALUES($1, $2, $3, $4, $5, $6, %7);`, "fba23a1e-7752-4e09-9c1c-765a98e5b921", testCompany1.Id,
+		testCompany2.Id, true, true, true, true)
+
+	db.Exec(context.Background(), `INSERT INTO external_access_rights (id, idsc, idrc, r, u, d, approved)
+	VALUES($1, $2, $3, $4, $5, $6, %7);`, "82a789cf-baf0-4ab5-a996-f3c43db5e17d", testCompany2.Id,
+		testCompany1.Id, true, true, true, false)
+
+	// Insert Operators
+	db.Exec(context.Background(), "insert into properties (id, name) values ($1, $2)",
+		"1", "quantity", true)
+
+	// Insert Operators
+	db.Exec(context.Background(), "insert into properies (id, name) values ($1, $2)",
+		"2", "price", true)
+
+	// Insert Operators
+	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
+		"1", ">", true)
+
+	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
+		"2", ">=", true)
+
+	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
+		"3", "<", true)
+
+	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
+		"4", "<=", true)
+}
+
+func SetupTables(db *pgxpool.Pool) {
+	DropTables(db)
+	CreateTables(db)
+}
+
+func CreateTables(db *pgxpool.Pool) {
+	// Companies
+	db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS companies (
 		id uuid NOT NULL,
 		"name" varchar(30) NOT NULL,
 		ismain bool NOT NULL,
 		CONSTRAINT companies_pk PRIMARY KEY (id)
 	);`)
 
-	db.Exec(context.Background(), `CREATE TABLE public.employees (
+	// Employees
+	db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS employees (
 		id uuid NOT NULL,
 		firstname varchar(30) NOT NULL,
 		lastname varchar(30) NOT NULL,
@@ -81,10 +213,11 @@ func setupTables(db *pgxpool.Pool) {
 		d bool NOT NULL,
 		CONSTRAINT employees_pk PRIMARY KEY (id)
 	);
-	ALTER TABLE public.employees ADD CONSTRAINT employees_fk FOREIGN KEY (idc) REFERENCES companies(id);
+	ALTER TABLE employees ADD CONSTRAINT employees_fk FOREIGN KEY (idc) REFERENCES companies(id);
 	`)
 
-	db.Exec(context.Background(), `CREATE TABLE public.products (
+	// Products
+	db.Exec(context.Background(), `CREATE TABLE IF NOT EXISTS products (
 		id uuid NOT NULL,
 		"name" varchar(30) NOT NULL,
 		price float4 NOT NULL,
@@ -92,14 +225,62 @@ func setupTables(db *pgxpool.Pool) {
 		idc uuid NOT NULL,
 		CONSTRAINT products_pk PRIMARY KEY (id)
 	);
-	ALTER TABLE public.products ADD CONSTRAINT products_fk FOREIGN KEY (idc) REFERENCES companies(id);`)
+	ALTER TABLE products ADD CONSTRAINT products_fk FOREIGN KEY (idc) REFERENCES companies(id);
+	`)
 
-	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
-		"153fac6d-760d-4841-87e9-15aee2f25182", "Test Kompanija", true)
+	// Access Constraints
+	db.Exec(context.Background(), `
+		CREATE TABLE public.operators (
+			id int4 NOT NULL,
+			"name" varchar(5) NOT NULL,
+			CONSTRAINT operators_pk PRIMARY KEY (id)
+		);
+
+		CREATE TABLE public.properties (
+			id int8 NOT NULL,
+			"name" varchar(20) NOT NULL,
+			CONSTRAINT properties_pk PRIMARY KEY (id)
+		);
+
+		CREATE TABLE public.access_constraints (
+			id uuid NOT NULL,
+			idear uuid NOT NULL,
+			operator_id int4 NOT NULL,
+			property_id int8 NOT NULL,
+			property_value float8 NOT NULL,
+			CONSTRAINT access_constraints_pk PRIMARY KEY (id)
+		);
+
+		ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_idear FOREIGN KEY (idear) REFERENCES external_access_rights(id);
+		ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_operator_id FOREIGN KEY (operator_id) REFERENCES operators(id);
+		ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_property_id FOREIGN KEY (property_id) REFERENCES properties(id);
+	`)
+
+	// External Access Rights
+	db.Exec(context.Background(), ` 
+	CREATE TABLE public.external_access_rights (
+		id uuid NOT NULL,
+		idsc uuid NOT NULL,
+		idrc uuid NOT NULL,
+		r bool NOT NULL,
+		u bool NOT NULL,
+		d bool NOT NULL,
+		approved bool NOT NULL,
+		CONSTRAINT external_access_rights_pk PRIMARY KEY (id)
+	);
+
+	ALTER TABLE public.external_access_rights ADD CONSTRAINT external_access_rights_idrc FOREIGN KEY (idrc) REFERENCES companies(id);
+	ALTER TABLE public.external_access_rights ADD CONSTRAINT external_access_rights_idsc FOREIGN KEY (idsc) REFERENCES companies(id);
+	`)
+	insertMockData(db)
 }
 
-func testCleanup(db *pgxpool.Pool) {
+func DropTables(db *pgxpool.Pool) {
 	db.Exec(context.Background(), "DROP TABLE IF EXISTS products;")
 	db.Exec(context.Background(), "DROP TABLE IF EXISTS employees;")
+	db.Exec(context.Background(), "DROP TABLE IF EXISTS access_constraints;")
+	db.Exec(context.Background(), "DROP TABLE IF EXISTS operators;")
+	db.Exec(context.Background(), "DROP TABLE IF EXISTS properties;")
+	db.Exec(context.Background(), "DROP TABLE IF EXISTS external_access_rights;")
 	db.Exec(context.Background(), "DROP TABLE IF EXISTS companies;")
 }

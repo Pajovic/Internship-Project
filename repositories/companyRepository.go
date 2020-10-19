@@ -15,9 +15,8 @@ type CompanyRepository struct {
 }
 
 func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error) {
-	companies := []models.Company{}
-	rows, err := repository.DB.Query(context.Background(), "select * from companies;")
-	defer rows.Close()
+	var companies []models.Company = []models.Company{}
+	rows, err := repository.DB.Query(context.Background(), "select * from public.companies")
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +37,7 @@ func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error)
 			IsMain: company.Ismain,
 		})
 	}
-
+	rows.Close()
 	return companies, nil
 }
 
