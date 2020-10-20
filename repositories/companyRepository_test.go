@@ -24,7 +24,7 @@ func TestAddCompany(t *testing.T) {
 		newCompanies, _ := CompanyRepo.GetAllCompanies()
 
 		assert.NoError(err)
-		assert.Equal(len(newCompanies)-len(oldCompanies), 1, "Company was not added.")
+		assert.Equal(1, len(newCompanies)-len(oldCompanies), "Company was not added.")
 
 	})
 

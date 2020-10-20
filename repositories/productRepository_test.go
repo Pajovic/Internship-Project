@@ -23,7 +23,7 @@ func TestAddProduct(t *testing.T) {
 		err := ProductRepo.AddProduct(&testProduct)
 		newProducts, _ := ProductRepo.GetAllProducts(testAdmin.CompanyID)
 		assert.NoError(err)
-		assert.Equal(len(newProducts)-len(oldProducts), 1, "Product was not added.")
+		assert.Equal(1, len(newProducts)-len(oldProducts), "Product was not added.")
 	})
 
 	t.Run("add an existing product", func(t *testing.T) {

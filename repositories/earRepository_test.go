@@ -24,7 +24,7 @@ func TestAddEar(t *testing.T) {
 		newEars, _ := EarRepo.GetAllEars()
 
 		assert.NoError(err)
-		assert.Equal(len(newEars)-len(oldEars), 1, "Ear was not added.")
+		assert.Equal(1, len(newEars)-len(oldEars), "Ear was not added.")
 
 	})
 
