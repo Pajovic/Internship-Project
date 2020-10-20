@@ -76,7 +76,7 @@ func (controller *CompanyController) DeleteCompany(w http.ResponseWriter, r *htt
 		errorhandler.WriteErrToClient(w, err)
 		return
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(204)
 }
 
 func (controller *CompanyController) ApproveExternalAccess(w http.ResponseWriter, r *http.Request) {

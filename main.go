@@ -24,7 +24,8 @@ func main() {
 	connpool := getConnectionPool()
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository)
-	companyController := getController(connpool)
+	companyController := getCompanyController(connpool)
+	earController := getEarController(connpool)
 
 	defer connpool.Close()
 
@@ -61,6 +62,16 @@ func main() {
 	employeeRouter.HandleFunc("", employeeController.AddNewEmployee).Methods("POST")
 	employeeRouter.HandleFunc("", employeeController.UpdateEmployee).Methods("PUT")
 	employeeRouter.HandleFunc("/{id}", employeeController.DeleteEmployee).Methods("DELETE")
+
+	// Employee Routes
+	earRouter := r.PathPrefix("/ear").Subrouter()
+
+	earRouter.HandleFunc("", earController.GetAllEars).Methods("GET")
+	earRouter.HandleFunc("/{id}", earController.GetEarById).Methods("GET")
+	earRouter.HandleFunc("", earController.AddEar).Methods("POST")
+	earRouter.HandleFunc("", earController.UpdateEar).Methods("PUT")
+	earRouter.HandleFunc("/{id}", earController.DeleteEar).Methods("DELETE")
+
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
 }
@@ -95,7 +106,7 @@ func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.Emp
 	return productController
 }
 
-func getController(connpool *pgxpool.Pool) controllers.CompanyController {
+func getCompanyController(connpool *pgxpool.Pool) controllers.CompanyController {
 	companyRepository := repositories.CompanyRepository{DB: connpool}
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := controllers.CompanyController{Service: companyService}
@@ -113,4 +124,14 @@ func getEmployeeController(connpool *pgxpool.Pool) controllers.EmployeeControlle
 	fmt.Println("Employee controller up and running.")
 
 	return employeeController
+}
+
+func getEarController(connpool *pgxpool.Pool) controllers.EarController {
+	earRepository := repositories.EarRepository{DB: connpool}
+	earService := services.EarService{Repository: earRepository}
+	earController := controllers.EarController{Service: earService}
+
+	fmt.Println("External access rights controller up and running.")
+
+	return earController
 }
