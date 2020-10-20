@@ -35,6 +35,7 @@ var testCompany2 models.Company
 var mainCompany1 models.Company
 
 var testEar1 models.ExternalRights
+var testEar2 models.ExternalRights
 
 func TestMain(m *testing.M) {
 	connpool := getConnPool()
@@ -100,6 +101,16 @@ func TestMain(m *testing.M) {
 
 	testEar1 = models.ExternalRights{
 		ID:       "6b64bc14-01c5-4afa-8ff9-40545b8d0939",
+		Read:     true,
+		Update:   true,
+		Delete:   true,
+		Approved: true,
+		IDSC:     "",
+		IDRC:     "",
+	}
+
+	testEar2 = models.ExternalRights{
+		ID:       "c9f8384b-1615-4117-a983-00d574c2614c",
 		Read:     true,
 		Update:   true,
 		Delete:   true,
@@ -170,6 +181,9 @@ func insertMockData(db *pgxpool.Pool) {
 	// Insert external access rights
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
 		testEar1.ID, testCompany1.Id, testCompany2.Id, testEar1.Read, testEar1.Update, testEar1.Delete, testEar1.Approved)
+
+	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
+		testEar2.ID, testCompany2.Id, testCompany1.Id, testEar2.Read, testEar2.Update, testEar2.Delete, testEar2.Approved)
 
 	// Insert Operators
 	db.Exec(context.Background(), "insert into properties (id, name) values ($1, $2)",
