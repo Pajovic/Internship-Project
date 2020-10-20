@@ -26,6 +26,7 @@ func main() {
 	productController := getProductController(connpool, &employeeController.Service.Repository)
 	companyController := getCompanyController(connpool)
 	earController := getEarController(connpool)
+	constraintController := getConstraintController(connpool)
 
 	defer connpool.Close()
 
@@ -63,7 +64,7 @@ func main() {
 	employeeRouter.HandleFunc("", employeeController.UpdateEmployee).Methods("PUT")
 	employeeRouter.HandleFunc("/{id}", employeeController.DeleteEmployee).Methods("DELETE")
 
-	// Employee Routes
+	// External Access Rules Routes
 	earRouter := r.PathPrefix("/ear").Subrouter()
 
 	earRouter.HandleFunc("", earController.GetAllEars).Methods("GET")
@@ -71,6 +72,15 @@ func main() {
 	earRouter.HandleFunc("", earController.AddEar).Methods("POST")
 	earRouter.HandleFunc("", earController.UpdateEar).Methods("PUT")
 	earRouter.HandleFunc("/{id}", earController.DeleteEar).Methods("DELETE")
+
+	// Constraints Routes
+	constraintRouter := r.PathPrefix("/constraint").Subrouter()
+
+	constraintRouter.HandleFunc("", constraintController.GetAllConstraints).Methods("GET")
+	constraintRouter.HandleFunc("/{id}", constraintController.GetConstraintById).Methods("GET")
+	constraintRouter.HandleFunc("", constraintController.AddConstraint).Methods("POST")
+	constraintRouter.HandleFunc("", constraintController.UpdateConstraint).Methods("PUT")
+	constraintRouter.HandleFunc("/{id}", constraintController.DeleteConstraint).Methods("DELETE")
 
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
@@ -121,7 +131,7 @@ func getEmployeeController(connpool *pgxpool.Pool) controllers.EmployeeControlle
 	employeeService := services.EmployeeService{Repository: employeeRepository}
 	employeeController := controllers.EmployeeController{Service: employeeService}
 
-	fmt.Println("Employee controller up and running.")
+	fmt.Println("\nEmployee controller up and running.")
 
 	return employeeController
 }
@@ -134,4 +144,14 @@ func getEarController(connpool *pgxpool.Pool) controllers.EarController {
 	fmt.Println("External access rights controller up and running.")
 
 	return earController
+}
+
+func getConstraintController(connpool *pgxpool.Pool) controllers.ConstraintController {
+	constraintRepository := repositories.ConstraintRepository{DB: connpool}
+	constraintService := services.ConstraintService{Repository: constraintRepository}
+	constraintController := controllers.ConstraintController{Service: constraintService}
+
+	fmt.Println("Constraints controller up and running.")
+
+	return constraintController
 }
