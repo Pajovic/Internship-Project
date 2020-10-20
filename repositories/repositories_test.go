@@ -34,6 +34,8 @@ var testCompany1 models.Company
 var testCompany2 models.Company
 var mainCompany1 models.Company
 
+var testEar1 models.ExternalRights
+
 func TestMain(m *testing.M) {
 	connpool := getConnPool()
 	defer connpool.Close()
@@ -96,6 +98,16 @@ func TestMain(m *testing.M) {
 		IDC:      testCompany1.Id,
 	}
 
+	testEar1 = models.ExternalRights{
+		ID:       "6b64bc14-01c5-4afa-8ff9-40545b8d0939",
+		Read:     true,
+		Update:   true,
+		Delete:   true,
+		Approved: false,
+		IDSC:     "",
+		IDRC:     "",
+	}
+
 	SetupTables(connpool)
 
 	code := m.Run()
@@ -156,13 +168,8 @@ func insertMockData(db *pgxpool.Pool) {
 		testAdmin.ID, testAdmin.FirstName, testAdmin.LastName, testAdmin.CompanyID, testAdmin.C, testAdmin.R, testAdmin.U, testAdmin.D)
 
 	// Insert external access rights
-	db.Exec(context.Background(), `INSERT INTO external_access_rights (id, idsc, idrc, r, u, d, approved)
-	VALUES($1, $2, $3, $4, $5, $6, %7);`, "fba23a1e-7752-4e09-9c1c-765a98e5b921", testCompany1.Id,
-		testCompany2.Id, true, true, true, true)
-
-	db.Exec(context.Background(), `INSERT INTO external_access_rights (id, idsc, idrc, r, u, d, approved)
-	VALUES($1, $2, $3, $4, $5, $6, %7);`, "82a789cf-baf0-4ab5-a996-f3c43db5e17d", testCompany2.Id,
-		testCompany1.Id, true, true, true, false)
+	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
+		testEar1.ID, testCompany1.Id, testCompany2.Id, testEar1.Read, testEar1.Update, testEar1.Delete, testEar1.Approved)
 
 	// Insert Operators
 	db.Exec(context.Background(), "insert into properties (id, name) values ($1, $2)",
