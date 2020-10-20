@@ -24,6 +24,7 @@ var EmployeeRepo EmployeeRepository
 var ProductRepo ProductRepository
 var CompanyRepo CompanyRepository
 var EarRepo EarRepository
+var ConstraintRepo ConstraintRepository
 
 var testAdmin models.Employee
 
@@ -39,6 +40,8 @@ var mainCompany1 models.Company
 var testEar1 models.ExternalRights
 var testEar2 models.ExternalRights
 
+var testConstraint models.AccessConstraint
+
 func TestMain(m *testing.M) {
 	connpool := getConnPool()
 	defer connpool.Close()
@@ -47,6 +50,7 @@ func TestMain(m *testing.M) {
 	ProductRepo = ProductRepository{DB: connpool}
 	CompanyRepo = CompanyRepository{DB: connpool}
 	EarRepo = EarRepository{DB: connpool}
+	ConstraintRepo = ConstraintRepository{DB: connpool}
 
 	testCompany = models.Company{
 		Id:     "",
@@ -132,6 +136,14 @@ func TestMain(m *testing.M) {
 		IDRC:     "",
 	}
 
+	testConstraint = models.AccessConstraint{
+		ID:            "",
+		IDEAR:         testEar1.ID,
+		OperatorID:    2,
+		PropertyID:    1,
+		PropertyValue: 15,
+	}
+
 	SetupTables(connpool)
 
 	code := m.Run()
@@ -198,26 +210,25 @@ func insertMockData(db *pgxpool.Pool) {
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
 		testEar2.ID, testCompany2.Id, testCompany1.Id, testEar2.Read, testEar2.Update, testEar2.Delete, testEar2.Approved)
 
-	// Insert Operators
+	// Insert Properties
 	db.Exec(context.Background(), "insert into properties (id, name) values ($1, $2)",
-		"1", "quantity", true)
+		"1", "quantity")
 
-	// Insert Operators
 	db.Exec(context.Background(), "insert into properies (id, name) values ($1, $2)",
-		"2", "price", true)
+		"2", "price")
 
 	// Insert Operators
 	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
-		"1", ">", true)
+		"1", ">")
 
 	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
-		"2", ">=", true)
+		"2", ">=")
 
 	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
-		"3", "<", true)
+		"3", "<")
 
 	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
-		"4", "<=", true)
+		"4", "<=")
 }
 
 func SetupTables(db *pgxpool.Pool) {
