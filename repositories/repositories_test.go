@@ -23,12 +23,14 @@ type config struct {
 var EmployeeRepo EmployeeRepository
 var ProductRepo ProductRepository
 var CompanyRepo CompanyRepository
+var EarRepo EarRepository
 
-var testEmployee models.Employee
 var testAdmin models.Employee
 
+var testEmployee models.Employee
 var testProduct models.Product
 var testCompany models.Company
+var testEar models.ExternalRights
 
 var testCompany1 models.Company
 var testCompany2 models.Company
@@ -44,6 +46,7 @@ func TestMain(m *testing.M) {
 	EmployeeRepo = EmployeeRepository{DB: connpool}
 	ProductRepo = ProductRepository{DB: connpool}
 	CompanyRepo = CompanyRepository{DB: connpool}
+	EarRepo = EarRepository{DB: connpool}
 
 	testCompany = models.Company{
 		Id:     "",
@@ -97,6 +100,16 @@ func TestMain(m *testing.M) {
 		Price:    99,
 		Quantity: 10,
 		IDC:      testCompany1.Id,
+	}
+
+	testEar = models.ExternalRights{
+		ID:       "a3a3d913-12d6-444b-aa21-ed1eb33bbde2",
+		Read:     true,
+		Update:   false,
+		Delete:   false,
+		Approved: false,
+		IDSC:     testCompany1.Id,
+		IDRC:     testCompany2.Id,
 	}
 
 	testEar1 = models.ExternalRights{
