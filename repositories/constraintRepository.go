@@ -165,5 +165,6 @@ func (repository *ConstraintRepository) DeleteConstraint(id string) error {
 	if commandTag != 1 {
 		return errors.New("No row found to delete")
 	}
+	tx.Commit(context.Background())
 	return nil
 }

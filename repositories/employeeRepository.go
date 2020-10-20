@@ -184,6 +184,8 @@ func (repository *EmployeeRepository) DeleteEmployee(id string) error {
 	if commandTag != 1 {
 		return errors.New("No row found to delete")
 	}
+
+	tx.Commit(context.Background())
 	return nil
 }
 
