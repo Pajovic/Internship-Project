@@ -83,7 +83,7 @@ func (controller *CompanyController) ApproveExternalAccess(w http.ResponseWriter
 	var idear string = mux.Vars(r)["idear"]
 	companyID := r.Header.Get("companyID")
 
-	err := controller.Service.ApproveExternalAccess(companyID, idear)
+	err := controller.Service.ChangeExternalRightApproveStatus(companyID, idear, true)
 
 	if err != nil {
 		errorhandler.WriteErrToClient(w, err)
@@ -96,7 +96,7 @@ func (controller *CompanyController) DisapproveExternalAccess(w http.ResponseWri
 	var idear string = mux.Vars(r)["idear"]
 	companyID := r.Header.Get("companyID")
 
-	err := controller.Service.DisapproveExternalAccess(companyID, idear)
+	err := controller.Service.ChangeExternalRightApproveStatus(companyID, idear, false)
 
 	if err != nil {
 		errorhandler.WriteErrToClient(w, err)

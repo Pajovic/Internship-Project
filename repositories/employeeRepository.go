@@ -130,9 +130,7 @@ func (repository *EmployeeRepository) AddEmployee(employee *models.Employee) err
 		return err
 	}
 
-	tx.Commit(context.Background())
-
-	return nil
+	return tx.Commit(context.Background())
 }
 
 // UpdateEmployee .
@@ -162,8 +160,7 @@ func (repository *EmployeeRepository) UpdateEmployee(employee models.Employee) e
 		return errors.New("No row found to update")
 	}
 
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }
 
 // DeleteEmployee .
@@ -185,8 +182,7 @@ func (repository *EmployeeRepository) DeleteEmployee(id string) error {
 		return errors.New("No row found to delete")
 	}
 
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }
 
 // GetEmployeeExternalPermissions .
@@ -195,138 +191,170 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 	var rights models.ExternalRights
 
 	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
-	tx, err := repository.DB.Begin(context.Background())
-	if err != nil {
-		return rights, err
-	}
-
-	defer tx.Rollback(context.Background())
-
 	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2;"
-	rows, err := tx.Query(context.Background(), queryExternalAccess, idReceivingCompany, product.IDC)
+	rows, err := repository.DB.Query(context.Background(), queryExternalAccess, idReceivingCompany, product.IDC)
+	defer rows.Close()
 
 	if err != nil {
 		return rights, err
 	}
 	for rows.Next() {
-		var right models.ExternalRights
-		err := rows.Scan(&right.ID, &right.IDSC, &right.IDRC, &right.Read, &right.Update, &right.Delete, &right.Approved)
+		var ear persistence.ExternalAccessRights
+		ear.Scan(&rows)
+
+		var stringUUID string
+		err := ear.Id.AssignTo(&stringUUID)
 		if err != nil {
 			return rights, err
 		}
-		allRights = append(allRights, right)
-	}
-	rows.Close()
 
-	if len(allRights) == 0 {
-		// 2a. If there is no rows returned employees from this company can't interact with this product
-		return rights, errors.New("You don't have any permission for this product")
-	} else if len(allRights) == 1 {
-		// 2b. If there is only 1 row returned, it means there are no constraints and we can return safely
-		rights = allRights[0]
-	} else {
-		// 2c. Otherwise, we need to acquire constraints, using ID of all constraints
+		var idscUUID string
+		err = ear.Idsc.AssignTo(&idscUUID)
+		if err != nil {
+			return rights, err
+		}
+
+		var idrcUUID string
+		err = ear.Idrc.AssignTo(&idrcUUID)
+		if err != nil {
+			return rights, err
+		}
+
+		allRights = append(allRights, models.ExternalRights{
+			ID:       stringUUID,
+			IDSC:     idscUUID,
+			IDRC:     idrcUUID,
+			Read:     ear.R,
+			Update:   ear.U,
+			Delete:   ear.D,
+			Approved: ear.Approved,
+		})
+	}
+
+	rightsFound := false
+	switch len(allRights) {
+	case 1:
+		// 2a. If there is only 1 row returned, it means there are no constraints and we can return safely
+		if allRights[0].Approved {
+			rights = allRights[0]
+			rightsFound = true
+		}
+	default:
+		// 2b. Otherwise, we need to acquire constraints, using ID of all constraints
 		for _, right := range allRights {
-			var accessConstraint models.AccessConstraint
-			err := tx.QueryRow(context.Background(), "select * from access_constraints where idear=$1", right.ID).
-				Scan(&accessConstraint.ID, &accessConstraint.IDEAR, &accessConstraint.OperatorID, &accessConstraint.PropertyID, &accessConstraint.PropertyValue)
+			if !right.Approved {
+				continue
+			}
+			rows, err := repository.DB.Query(context.Background(), `select * from access_constraints where idear = $1`, right.ID)
+			defer rows.Close()
+
 			if err != nil {
 				return rights, err
 			}
-			if checkConstraint(accessConstraint, product) && right.Approved {
+
+			rows.Next()
+			var constraintPers persistence.AccessConstraints
+			constraintPers.Scan(&rows)
+
+			var stringUUID string
+			err = constraintPers.Id.AssignTo(&stringUUID)
+			if err != nil {
+				return rights, err
+			}
+
+			var idearUUID string
+			err = constraintPers.Idear.AssignTo(&idearUUID)
+			if err != nil {
+				return rights, err
+			}
+
+			var constraint models.AccessConstraint = models.AccessConstraint{
+				ID:            stringUUID,
+				IDEAR:         idearUUID,
+				OperatorID:    constraintPers.OperatorId,
+				PropertyID:    constraintPers.PropertyId,
+				PropertyValue: constraintPers.PropertyValue,
+			}
+
+			if checkConstraint(constraint, product) {
 				rights = right
+				rightsFound = true
+				break
 			}
 		}
 	}
 
-	err = tx.Commit(context.Background())
-
-	if err != nil {
-		return rights, err
+	if !rightsFound {
+		return rights, errors.New("Your company does not have rights needed")
 	}
 
 	return rights, nil
 }
 
 // CheckCompaniesSharingEmployeeData .
-func (repository *EmployeeRepository) CheckCompaniesSharingEmployeeData(idReceivingCompany string, idSharingCompany string) (bool, error) {
+func (repository *EmployeeRepository) CheckCompaniesSharingEmployeeData(idReceivingCompany, idSharingCompany string) error {
 	var allRights []models.ExternalRights
 
 	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
-	tx, err := repository.DB.Begin(context.Background())
-	if err != nil {
-		return false, err
-	}
 
-	defer tx.Rollback(context.Background())
-
-	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2;"
-	rows, err := tx.Query(context.Background(), queryExternalAccess, idReceivingCompany, idSharingCompany)
+	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2 AND approved = true;"
+	rows, err := repository.DB.Query(context.Background(), queryExternalAccess, idReceivingCompany, idSharingCompany)
+	defer rows.Close()
 
 	if err != nil {
-		return false, err
+		return err
 	}
 	for rows.Next() {
-		var right models.ExternalRights
-		err := rows.Scan(&right.ID, &right.IDSC, &right.IDRC, &right.Read, &right.Update, &right.Delete, &right.Approved)
+		var ear persistence.ExternalAccessRights
+		ear.Scan(&rows)
+
+		var stringUUID string
+		err := ear.Id.AssignTo(&stringUUID)
 		if err != nil {
-			return false, err
+			return err
 		}
-		allRights = append(allRights, right)
+
+		var idscUUID string
+		err = ear.Idsc.AssignTo(&idscUUID)
+		if err != nil {
+			return err
+		}
+
+		var idrcUUID string
+		err = ear.Idrc.AssignTo(&idrcUUID)
+		if err != nil {
+			return err
+		}
+
+		allRights = append(allRights, models.ExternalRights{
+			ID:       stringUUID,
+			IDSC:     idscUUID,
+			IDRC:     idrcUUID,
+			Read:     ear.R,
+			Update:   ear.U,
+			Delete:   ear.D,
+			Approved: ear.Approved,
+		})
 	}
-	rows.Close()
 
 	if len(allRights) == 0 {
 		// 2a. If there is no rows returned employees from this company can't see employees from other companies
-		return false, errors.New("Your company does not have rights needed")
-	}
-	// 2b. If there is any sharing right, we must check if the sharing has been approved
-	rightsApproved := false
-	for _, right := range allRights {
-		if right.Approved {
-			rightsApproved = true
-			break
-		}
+		return errors.New("Your company does not have rights needed")
 	}
 
-	if !rightsApproved {
-		return false, errors.New("Sharing between your companies has not been approved")
-	}
-
-	err = tx.Commit(context.Background())
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return nil
 }
 
 func checkConstraint(accessConstraint models.AccessConstraint, product models.Product) bool {
 	var quantity int32 = int32(accessConstraint.PropertyValue)
-	if accessConstraint.OperatorID == 1 {
-		if product.Quantity > quantity {
-			return true
-		} else {
-			return false
-		}
-	} else if accessConstraint.OperatorID == 2 {
-		if product.Quantity >= quantity {
-			return true
-		} else {
-			return false
-		}
-	} else if accessConstraint.OperatorID == 3 {
-		if product.Quantity < quantity {
-			return true
-		} else {
-			return false
-		}
-	} else {
-		if product.Quantity <= quantity {
-			return true
-		} else {
-			return false
-		}
+	switch accessConstraint.OperatorID {
+	case 1:
+		return product.Quantity > quantity
+	case 2:
+		return product.Quantity >= quantity
+	case 3:
+		return product.Quantity < quantity
+	default:
+		return product.Quantity <= quantity
 	}
 }

@@ -30,7 +30,7 @@ func (service *CompanyService) DeleteCompany(id string) error {
 	return service.Repository.DeleteCompany(id)
 }
 
-func (service *CompanyService) ApproveExternalAccess(companyID string, idear string) error {
+func (service *CompanyService) ChangeExternalRightApproveStatus(companyID string, idear string, status bool) error {
 	approvingCompany, err := service.Repository.GetCompany(companyID)
 	if err != nil {
 		return err
@@ -40,18 +40,5 @@ func (service *CompanyService) ApproveExternalAccess(companyID string, idear str
 		return errors.New("Your company does not have permission to approve sharing")
 	}
 
-	return service.Repository.ApproveExternalAccess(idear)
-}
-
-func (service *CompanyService) DisapproveExternalAccess(companyID string, idear string) error {
-	approvingCompany, err := service.Repository.GetCompany(companyID)
-	if err != nil {
-		return err
-	}
-
-	if !approvingCompany.IsMain {
-		return errors.New("Your company does not have permission to disapprove sharing")
-	}
-
-	return service.Repository.DisapproveExternalAccess(idear)
+	return service.Repository.ChangeExternalRightApproveStatus(idear, status)
 }

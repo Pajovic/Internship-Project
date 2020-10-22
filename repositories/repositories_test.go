@@ -20,27 +20,29 @@ type config struct {
 	TestDatabaseURL string `json:"test_database_url"`
 }
 
-var EmployeeRepo EmployeeRepository
-var ProductRepo ProductRepository
-var CompanyRepo CompanyRepository
-var EarRepo EarRepository
-var ConstraintRepo ConstraintRepository
+var (
+	EmployeeRepo   EmployeeRepository
+	ProductRepo    ProductRepository
+	CompanyRepo    CompanyRepository
+	EarRepo        ExternalRightRepository
+	ConstraintRepo ConstraintRepository
 
-var testAdmin models.Employee
+	testAdmin models.Employee
 
-var testEmployee models.Employee
-var testProduct models.Product
-var testCompany models.Company
-var testEar models.ExternalRights
+	testEmployee models.Employee
+	testProduct  models.Product
+	testCompany  models.Company
+	testEar      models.ExternalRights
 
-var testCompany1 models.Company
-var testCompany2 models.Company
-var mainCompany1 models.Company
+	testCompany1 models.Company
+	testCompany2 models.Company
+	mainCompany1 models.Company
 
-var testEar1 models.ExternalRights
-var testEar2 models.ExternalRights
+	testEar1 models.ExternalRights
+	testEar2 models.ExternalRights
 
-var testConstraint models.AccessConstraint
+	testConstraint models.AccessConstraint
+)
 
 func TestMain(m *testing.M) {
 	connpool := getConnPool()
@@ -49,7 +51,7 @@ func TestMain(m *testing.M) {
 	EmployeeRepo = EmployeeRepository{DB: connpool}
 	ProductRepo = ProductRepository{DB: connpool}
 	CompanyRepo = CompanyRepository{DB: connpool}
-	EarRepo = EarRepository{DB: connpool}
+	EarRepo = ExternalRightRepository{DB: connpool}
 	ConstraintRepo = ConstraintRepository{DB: connpool}
 
 	testCompany = models.Company{

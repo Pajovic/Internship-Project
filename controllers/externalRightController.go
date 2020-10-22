@@ -10,11 +10,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type EarController struct {
-	Service services.EarService
+type ExternalRightController struct {
+	Service services.ExternalRightService
 }
 
-func (controller *EarController) GetAllEars(w http.ResponseWriter, r *http.Request) {
+func (controller *ExternalRightController) GetAllEars(w http.ResponseWriter, r *http.Request) {
 	ears, err := controller.Service.GetAllEars()
 	if err != nil {
 		errorhandler.WriteErrToClient(w, err)
@@ -24,7 +24,7 @@ func (controller *EarController) GetAllEars(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(ears)
 }
 
-func (controller *EarController) GetEarById(w http.ResponseWriter, r *http.Request) {
+func (controller *ExternalRightController) GetEarById(w http.ResponseWriter, r *http.Request) {
 	idParam := mux.Vars(r)["id"]
 
 	ear, err := controller.Service.GetEar(idParam)
@@ -36,7 +36,7 @@ func (controller *EarController) GetEarById(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(ear)
 }
 
-func (controller *EarController) AddEar(w http.ResponseWriter, r *http.Request) {
+func (controller *ExternalRightController) AddEar(w http.ResponseWriter, r *http.Request) {
 	var newEar models.ExternalRights
 	json.NewDecoder(r.Body).Decode(&newEar)
 	err := controller.Service.AddNewEar(&newEar)
@@ -48,7 +48,7 @@ func (controller *EarController) AddEar(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(newEar)
 }
 
-func (controller *EarController) UpdateEar(w http.ResponseWriter, r *http.Request) {
+func (controller *ExternalRightController) UpdateEar(w http.ResponseWriter, r *http.Request) {
 	var updateEar models.ExternalRights
 	json.NewDecoder(r.Body).Decode(&updateEar)
 
@@ -63,7 +63,7 @@ func (controller *EarController) UpdateEar(w http.ResponseWriter, r *http.Reques
 
 }
 
-func (controller *EarController) DeleteEar(w http.ResponseWriter, r *http.Request) {
+func (controller *ExternalRightController) DeleteEar(w http.ResponseWriter, r *http.Request) {
 	idParam := mux.Vars(r)["id"]
 
 	err := controller.Service.DeleteEar(idParam)

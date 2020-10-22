@@ -17,6 +17,8 @@ type CompanyRepository struct {
 func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error) {
 	var companies []models.Company = []models.Company{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.companies")
+	defer rows.Close()
+
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +39,6 @@ func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error)
 			IsMain: company.Ismain,
 		})
 	}
-	rows.Close()
 	return companies, nil
 }
 
@@ -97,9 +98,7 @@ func (repository *CompanyRepository) AddCompany(company *models.Company) error {
 		return err
 	}
 
-	tx.Commit(context.Background())
-
-	return nil
+	return tx.Commit(context.Background())
 }
 
 func (repository *CompanyRepository) UpdateCompany(company models.Company) error {
@@ -123,8 +122,7 @@ func (repository *CompanyRepository) UpdateCompany(company models.Company) error
 		return errors.New("No row found to update")
 	}
 
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }
 
 func (repository *CompanyRepository) DeleteCompany(id string) error {
@@ -144,23 +142,11 @@ func (repository *CompanyRepository) DeleteCompany(id string) error {
 	if commandTag != 1 {
 		return errors.New("No row found to delete")
 	}
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }
 
-func (repository *CompanyRepository) ApproveExternalAccess(idear string) error {
-	commandTag, err := repository.DB.Exec(context.Background(), "UPDATE external_access_rights SET approved = true WHERE id = $1;", idear)
-	if err != nil {
-		return err
-	}
-	if commandTag.RowsAffected() != 1 {
-		return errors.New("No row found to update")
-	}
-	return nil
-}
-
-func (repository *CompanyRepository) DisapproveExternalAccess(idear string) error {
-	commandTag, err := repository.DB.Exec(context.Background(), "UPDATE external_access_rights SET approved = false WHERE id = $1;", idear)
+func (repository *CompanyRepository) ChangeExternalRightApproveStatus(idear string, status bool) error {
+	commandTag, err := repository.DB.Exec(context.Background(), "UPDATE external_access_rights SET approved = $1 WHERE id = $2;", status, idear)
 	if err != nil {
 		return err
 	}

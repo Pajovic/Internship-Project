@@ -10,13 +10,15 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type EarRepository struct {
+type ExternalRightRepository struct {
 	DB *pgxpool.Pool
 }
 
-func (repository *EarRepository) GetAllEars() ([]models.ExternalRights, error) {
+func (repository *ExternalRightRepository) GetAllEars() ([]models.ExternalRights, error) {
 	var ears []models.ExternalRights = []models.ExternalRights{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.external_access_rights")
+	defer rows.Close()
+
 	if err != nil {
 		return nil, err
 	}
@@ -53,11 +55,10 @@ func (repository *EarRepository) GetAllEars() ([]models.ExternalRights, error) {
 			Approved: ear.Approved,
 		})
 	}
-	rows.Close()
 	return ears, nil
 }
 
-func (repository *EarRepository) GetEar(id string) (models.ExternalRights, error) {
+func (repository *ExternalRightRepository) GetEar(id string) (models.ExternalRights, error) {
 	var ear models.ExternalRights
 
 	Uuid, err := uuid.FromString(id)
@@ -110,7 +111,7 @@ func (repository *EarRepository) GetEar(id string) (models.ExternalRights, error
 	return ear, nil
 }
 
-func (repository *EarRepository) AddEar(ear *models.ExternalRights) error {
+func (repository *ExternalRightRepository) AddEar(ear *models.ExternalRights) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -133,12 +134,10 @@ func (repository *EarRepository) AddEar(ear *models.ExternalRights) error {
 		return err
 	}
 
-	tx.Commit(context.Background())
-
-	return nil
+	return tx.Commit(context.Background())
 }
 
-func (repository *EarRepository) UpdateEar(ear models.ExternalRights) error {
+func (repository *ExternalRightRepository) UpdateEar(ear models.ExternalRights) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -163,11 +162,10 @@ func (repository *EarRepository) UpdateEar(ear models.ExternalRights) error {
 		return errors.New("No row found to update")
 	}
 
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }
 
-func (repository *EarRepository) DeleteEar(id string) error {
+func (repository *ExternalRightRepository) DeleteEar(id string) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -185,6 +183,5 @@ func (repository *EarRepository) DeleteEar(id string) error {
 	if commandTag != 1 {
 		return errors.New("No row found to delete")
 	}
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }

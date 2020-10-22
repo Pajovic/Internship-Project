@@ -162,27 +162,19 @@ func TestCheckCompaniesSharingEmployeeData(t *testing.T) {
 	t.Run("invalid id", func(t *testing.T) {
 		invalidID := "123-asd-321"
 		assert.False(IsValidUUID(invalidID))
-		_, err := EmployeeRepo.CheckCompaniesSharingEmployeeData(invalidID, testProduct.IDC)
+		err := EmployeeRepo.CheckCompaniesSharingEmployeeData(invalidID, testProduct.IDC)
 		assert.Error(err)
 	})
 
 	t.Run("company with id does not exist", func(t *testing.T) {
 		randomUUID := "7d91a563-3386-4069-b785-09c52b5201b5"
 		assert.True(IsValidUUID(randomUUID))
-		_, err := EmployeeRepo.CheckCompaniesSharingEmployeeData(randomUUID, testProduct.IDC)
+		err := EmployeeRepo.CheckCompaniesSharingEmployeeData(randomUUID, testProduct.IDC)
 		assert.Error(err)
 	})
 
-	t.Run("sharing is not approved", func(t *testing.T) {
-		sharingAllowed, err := EmployeeRepo.CheckCompaniesSharingEmployeeData(testCompany1.Id, testCompany2.Id)
-
-		assert.False(sharingAllowed, "Companies have their data sharing approved")
-		assert.EqualError(err, "Sharing between your companies has not been approved", "Companies have their data sharing approved")
-		assert.Error(err, "Companies do actually share data")
-	})
-
 	t.Run("successful query", func(t *testing.T) {
-		_, err := EmployeeRepo.CheckCompaniesSharingEmployeeData(testCompany2.Id, testCompany1.Id)
+		err := EmployeeRepo.CheckCompaniesSharingEmployeeData(testCompany2.Id, testCompany1.Id)
 
 		assert.NoError(err, "Companies do not share data")
 	})

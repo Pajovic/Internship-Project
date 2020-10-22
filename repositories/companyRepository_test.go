@@ -136,58 +136,30 @@ func TestDeleteCompany(t *testing.T) {
 	})
 }
 
-func TestApproveExternalAccess(t *testing.T) {
+func TestChangeExternalRightApproveStatus(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
 		defer SetupTables(CompanyRepo.DB)
-		err := CompanyRepo.ApproveExternalAccess(uuid.NewV4().String())
+		err := CompanyRepo.ChangeExternalRightApproveStatus(uuid.NewV4().String(), true)
 		assert.Error(err, "Error was not thrown while updating ear in non-existing table")
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
 		uuid := "invalidUUID"
-		err := CompanyRepo.ApproveExternalAccess(uuid)
+		err := CompanyRepo.ChangeExternalRightApproveStatus(uuid, true)
 		assert.Error(err, "Error was not thrown for invalid uuid")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
 		uuid := uuid.NewV4().String()
-		err := CompanyRepo.ApproveExternalAccess(uuid)
+		err := CompanyRepo.ChangeExternalRightApproveStatus(uuid, true)
 		assert.Error(err, "Error was not thrown for non-existing uuid")
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		err := CompanyRepo.ApproveExternalAccess(testEar1.ID)
+		err := CompanyRepo.ChangeExternalRightApproveStatus(testEar1.ID, true)
 		assert.NoError(err, "Ear was not approved.")
-	})
-}
-
-func TestDisapproveExternalAccess(t *testing.T) {
-	assert := assert.New(t)
-
-	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(CompanyRepo.DB)
-		defer SetupTables(CompanyRepo.DB)
-		err := CompanyRepo.DisapproveExternalAccess(uuid.NewV4().String())
-		assert.Error(err, "Error was not thrown while updating ear in non-existing table")
-	})
-
-	t.Run("invalid uuid", func(t *testing.T) {
-		uuid := "invalidUUID"
-		err := CompanyRepo.DisapproveExternalAccess(uuid)
-		assert.Error(err, "Error was not thrown for invalid uuid")
-	})
-
-	t.Run("non-existing uuid", func(t *testing.T) {
-		uuid := uuid.NewV4().String()
-		err := CompanyRepo.DisapproveExternalAccess(uuid)
-		assert.Error(err, "Error was not thrown for non-existing uuid")
-	})
-
-	t.Run("successful query", func(t *testing.T) {
-		err := CompanyRepo.DisapproveExternalAccess(testEar1.ID)
-		assert.NoError(err, "Ear was not disapproved.")
 	})
 }

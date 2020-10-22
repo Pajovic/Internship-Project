@@ -137,9 +137,7 @@ func (repository *ProductRepository) AddProduct(product *models.Product) error {
 		return err
 	}
 
-	tx.Commit(context.Background())
-
-	return nil
+	return tx.Commit(context.Background())
 }
 
 func (repository *ProductRepository) UpdateProduct(product models.Product) error {
@@ -165,8 +163,7 @@ func (repository *ProductRepository) UpdateProduct(product models.Product) error
 		return errors.New("No row found to update")
 	}
 
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }
 
 func (repository *ProductRepository) DeleteProduct(id string) error {
@@ -187,6 +184,5 @@ func (repository *ProductRepository) DeleteProduct(id string) error {
 		return errors.New("No row found to delete")
 	}
 
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }

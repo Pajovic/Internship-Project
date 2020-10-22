@@ -47,12 +47,9 @@ func (service *EmployeeService) GetEmployeeByID(id string, idEmployee string) (m
 	}
 
 	if employee.CompanyID != employeeRequested.CompanyID {
-		companiesSharingEmployeeData, err := service.Repository.CheckCompaniesSharingEmployeeData(employee.CompanyID, employeeRequested.CompanyID)
+		err := service.Repository.CheckCompaniesSharingEmployeeData(employee.CompanyID, employeeRequested.CompanyID)
 		if err != nil {
 			return models.Employee{}, err
-		}
-		if !companiesSharingEmployeeData {
-			return models.Employee{}, errors.New("You have no permissions to preview this employee")
 		}
 	}
 

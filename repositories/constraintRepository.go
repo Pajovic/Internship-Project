@@ -17,6 +17,8 @@ type ConstraintRepository struct {
 func (repository *ConstraintRepository) GetAllConstraints() ([]models.AccessConstraint, error) {
 	var constraints []models.AccessConstraint = []models.AccessConstraint{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.access_constraints")
+	defer rows.Close()
+
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +47,6 @@ func (repository *ConstraintRepository) GetAllConstraints() ([]models.AccessCons
 			PropertyValue: constraint.PropertyValue,
 		})
 	}
-	rows.Close()
 	return constraints, nil
 }
 
@@ -115,9 +116,7 @@ func (repository *ConstraintRepository) AddConstraint(constraint *models.AccessC
 		return err
 	}
 
-	tx.Commit(context.Background())
-
-	return nil
+	return tx.Commit(context.Background())
 }
 
 func (repository *ConstraintRepository) UpdateConstraint(constraint models.AccessConstraint) error {
@@ -143,8 +142,7 @@ func (repository *ConstraintRepository) UpdateConstraint(constraint models.Acces
 		return errors.New("No row found to update")
 	}
 
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }
 
 func (repository *ConstraintRepository) DeleteConstraint(id string) error {
@@ -165,6 +163,5 @@ func (repository *ConstraintRepository) DeleteConstraint(id string) error {
 	if commandTag != 1 {
 		return errors.New("No row found to delete")
 	}
-	tx.Commit(context.Background())
-	return nil
+	return tx.Commit(context.Background())
 }
