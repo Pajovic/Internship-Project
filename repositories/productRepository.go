@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 	"internship_project/models"
 	"internship_project/persistence"
 	"strconv"
@@ -44,12 +45,14 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 	finalQuery.WriteString("select * from products p where p.idc = $1")
 
 	for _, earc := range earConstraints {
-		finalQuery.WriteString(" union select * from products p where p.idc = '" + earc.Idsc + "' ")
 		if earc.Operator != "" && earc.Property != "" {
-			finalQuery.WriteString("and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue))
+			finalQuery.WriteString(" or (p.idc = '" + earc.Idsc + "' and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue) + ")")
+		} else {
+			finalQuery.WriteString(" or p.idc = '" + earc.Idsc + "'")
 		}
 	}
 	finalQuery.WriteString(";")
+	fmt.Println(finalQuery.String())
 
 	products := []models.Product{}
 
@@ -59,11 +62,29 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 		return nil, err
 	}
 	for rowsProducts.Next() {
-		var product models.Product
-		err := rowsProducts.Scan(&product.ID, &product.Name, &product.Price, &product.Quantity, &product.IDC)
+		var productPers persistence.Products
+		productPers.Scan(&rowsProducts)
+
+		var productUUID string
+		err = productPers.Id.AssignTo(&productUUID)
 		if err != nil {
 			return nil, err
 		}
+
+		var companyUUID string
+		err = productPers.Idc.AssignTo(&companyUUID)
+		if err != nil {
+			return nil, err
+		}
+
+		var product = models.Product{
+			ID:       productUUID,
+			Name:     productPers.Name,
+			Price:    productPers.Price,
+			Quantity: productPers.Quantity,
+			IDC:      companyUUID,
+		}
+
 		products = append(products, product)
 	}
 

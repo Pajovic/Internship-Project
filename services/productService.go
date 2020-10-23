@@ -75,7 +75,7 @@ func (service *ProductService) AddNewProduct(product *models.Product, employeeID
 	return service.ProductRepository.AddProduct(product)
 }
 
-func (service *ProductService) Updateproduct(updateProduct models.Product, employeeID string) error {
+func (service *ProductService) UpdateProduct(updateProduct models.Product, employeeID string) error {
 	product, err := service.ProductRepository.GetProduct(updateProduct.ID)
 	if err != nil {
 		return err

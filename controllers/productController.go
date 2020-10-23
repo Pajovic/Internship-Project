@@ -62,7 +62,7 @@ func (controller *ProductController) UpdateProduct(w http.ResponseWriter, r *htt
 
 	updateProduct.ID = idParam
 
-	err := controller.Service.Updateproduct(updateProduct, idEmployee)
+	err := controller.Service.UpdateProduct(updateProduct, idEmployee)
 
 	if err != nil {
 		errorhandler.WriteErrToClient(w, err)
