@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
 	"net/http"
@@ -16,7 +17,7 @@ type CompanyController struct {
 func (controller *CompanyController) GetAllCompanies(w http.ResponseWriter, r *http.Request) {
 	companies, err := controller.Service.GetAllCompanies()
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -28,7 +29,7 @@ func (controller *CompanyController) GetCompanyById(w http.ResponseWriter, r *ht
 
 	company, err := controller.Service.GetCompany(idParam)
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -40,7 +41,7 @@ func (controller *CompanyController) AddCompany(w http.ResponseWriter, r *http.R
 	json.NewDecoder(r.Body).Decode(&newCompany)
 	err := controller.Service.AddNewCompany(&newCompany)
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -58,7 +59,7 @@ func (controller *CompanyController) UpdateCompany(w http.ResponseWriter, r *htt
 	err := controller.Service.UpdateCompany(updateCompany)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -72,7 +73,33 @@ func (controller *CompanyController) DeleteCompany(w http.ResponseWriter, r *htt
 	err := controller.Service.DeleteCompany(idParam)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
+		return
+	}
+	w.WriteHeader(204)
+}
+
+func (controller *CompanyController) ApproveExternalAccess(w http.ResponseWriter, r *http.Request) {
+	var idear string = mux.Vars(r)["idear"]
+	companyID := r.Header.Get("companyID")
+
+	err := controller.Service.ChangeExternalRightApproveStatus(companyID, idear, true)
+
+	if err != nil {
+		errorhandler.WriteErrToClient(w, err)
+		return
+	}
+	w.WriteHeader(200)
+}
+
+func (controller *CompanyController) DisapproveExternalAccess(w http.ResponseWriter, r *http.Request) {
+	var idear string = mux.Vars(r)["idear"]
+	companyID := r.Header.Get("companyID")
+
+	err := controller.Service.ChangeExternalRightApproveStatus(companyID, idear, false)
+
+	if err != nil {
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(200)

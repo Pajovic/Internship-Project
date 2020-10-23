@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"fmt"
 	"internship_project/models"
 	"testing"
 
@@ -21,12 +20,12 @@ func TestAddEmployee(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		oldEmployees, _ := EmployeeRepo.GetAllEmployees()
+		oldEmployees, _ := EmployeeRepo.GetAllEmployees(testAdmin.CompanyID)
 		err := EmployeeRepo.AddEmployee(&testEmployee)
-		newEmployees, _ := EmployeeRepo.GetAllEmployees()
+		newEmployees, _ := EmployeeRepo.GetAllEmployees(testAdmin.CompanyID)
 
 		assert.NoError(err)
-		assert.Equal(len(newEmployees)-len(oldEmployees), 1, "Employee was not added.")
+		assert.Equal(1, len(newEmployees)-len(oldEmployees), "Employee was not added.")
 	})
 
 	t.Run("add an existing employee", func(t *testing.T) {
@@ -41,7 +40,7 @@ func TestGetAllEmployees(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("successful GetAll query", func(t *testing.T) {
-		allEmployees, err := EmployeeRepo.GetAllEmployees()
+		allEmployees, err := EmployeeRepo.GetAllEmployees(testAdmin.ID)
 
 		assert.NoError(err)
 		assert.NotNil(allEmployees, "Employees returned were nil.")
@@ -117,7 +116,6 @@ func TestDeleteEmployee(t *testing.T) {
 		assert.False(IsValidUUID(invalidID))
 		err := EmployeeRepo.DeleteEmployee(invalidID)
 		assert.Error(err)
-		fmt.Println(err)
 	})
 
 	t.Run("id does not exist", func(t *testing.T) {
@@ -131,5 +129,53 @@ func TestDeleteEmployee(t *testing.T) {
 		err := EmployeeRepo.DeleteEmployee(testEmployee.ID)
 
 		assert.NoError(err, "Employee was not deleted.")
+	})
+}
+
+func TestGetEmployeeExternalPermissions(t *testing.T) {
+	assert := assert.New(t)
+
+	t.Run("invalid id", func(t *testing.T) {
+		invalidID := "123-asd-321"
+		assert.False(IsValidUUID(invalidID))
+		_, err := EmployeeRepo.GetEmployeeExternalPermissions(invalidID, testProduct)
+		assert.Error(err)
+	})
+
+	t.Run("company with id does not exist", func(t *testing.T) {
+		randomUUID := "7d91a563-3386-4069-b785-09c52b5201b5"
+		assert.True(IsValidUUID(randomUUID))
+		_, err := EmployeeRepo.GetEmployeeExternalPermissions(randomUUID, testProduct)
+		assert.Error(err)
+	})
+
+	t.Run("successful query", func(t *testing.T) {
+		_, err := EmployeeRepo.GetEmployeeExternalPermissions(testCompany2.Id, testProduct)
+
+		assert.NoError(err, "Could not get employee's EAR")
+	})
+}
+
+func TestCheckCompaniesSharingEmployeeData(t *testing.T) {
+	assert := assert.New(t)
+
+	t.Run("invalid id", func(t *testing.T) {
+		invalidID := "123-asd-321"
+		assert.False(IsValidUUID(invalidID))
+		err := EmployeeRepo.CheckCompaniesSharingEmployeeData(invalidID, testProduct.IDC)
+		assert.Error(err)
+	})
+
+	t.Run("company with id does not exist", func(t *testing.T) {
+		randomUUID := "7d91a563-3386-4069-b785-09c52b5201b5"
+		assert.True(IsValidUUID(randomUUID))
+		err := EmployeeRepo.CheckCompaniesSharingEmployeeData(randomUUID, testProduct.IDC)
+		assert.Error(err)
+	})
+
+	t.Run("successful query", func(t *testing.T) {
+		err := EmployeeRepo.CheckCompaniesSharingEmployeeData(testCompany2.Id, testCompany1.Id)
+
+		assert.NoError(err, "Companies do not share data")
 	})
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
 	"net/http"
@@ -14,9 +15,10 @@ type ProductController struct {
 }
 
 func (controller *ProductController) GetAllProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := controller.Service.GetAllProducts()
+	idEmployee := r.Header.Get("employeeID")
+	products, err := controller.Service.GetAllProducts(idEmployee)
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -25,10 +27,12 @@ func (controller *ProductController) GetAllProducts(w http.ResponseWriter, r *ht
 
 func (controller *ProductController) GetProductById(w http.ResponseWriter, r *http.Request) {
 	idParam := mux.Vars(r)["id"]
+	idEmployee := r.Header.Get("employeeID")
 
-	product, err := controller.Service.GetProduct(idParam)
+	product, err := controller.Service.GetProduct(idParam, idEmployee)
+
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -36,11 +40,13 @@ func (controller *ProductController) GetProductById(w http.ResponseWriter, r *ht
 }
 
 func (controller *ProductController) AddProduct(w http.ResponseWriter, r *http.Request) {
+	idEmployee := r.Header.Get("employeeID")
+
 	var newProduct models.Product
 	json.NewDecoder(r.Body).Decode(&newProduct)
-	err := controller.Service.AddNewProduct(&newProduct)
+	err := controller.Service.AddNewProduct(&newProduct, idEmployee)
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -49,16 +55,17 @@ func (controller *ProductController) AddProduct(w http.ResponseWriter, r *http.R
 
 func (controller *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	var idParam string = mux.Vars(r)["id"]
+	idEmployee := r.Header.Get("employeeID")
 
 	var updateProduct models.Product
 	json.NewDecoder(r.Body).Decode(&updateProduct)
 
 	updateProduct.ID = idParam
 
-	err := controller.Service.Updateproduct(updateProduct)
+	err := controller.Service.UpdateProduct(updateProduct, idEmployee)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -68,11 +75,12 @@ func (controller *ProductController) UpdateProduct(w http.ResponseWriter, r *htt
 
 func (controller *ProductController) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	var idParam string = mux.Vars(r)["id"]
+	idEmployee := r.Header.Get("employeeID")
 
-	err := controller.Service.DeleteProduct(idParam)
+	err := controller.Service.DeleteProduct(idParam, idEmployee)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(200)

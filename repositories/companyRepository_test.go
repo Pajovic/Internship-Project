@@ -13,7 +13,7 @@ func TestAddCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
-		defer CreateTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.AddCompany(&testCompany)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
 	})
@@ -24,7 +24,7 @@ func TestAddCompany(t *testing.T) {
 		newCompanies, _ := CompanyRepo.GetAllCompanies()
 
 		assert.NoError(err)
-		assert.Equal(len(newCompanies)-len(oldCompanies), 1, "Company was not added.")
+		assert.Equal(1, len(newCompanies)-len(oldCompanies), "Company was not added.")
 
 	})
 
@@ -48,7 +48,7 @@ func TestGetCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
-		defer CreateTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
 		_, err := CompanyRepo.GetCompany(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
 	})
@@ -69,7 +69,7 @@ func TestGetCompany(t *testing.T) {
 		CompanyRepo.AddCompany(&testCompany)
 		company, err := CompanyRepo.GetCompany(testCompany.Id)
 		assert.NotNil(company, "Result is nil")
-		assert.NoError(err, "Company was not deleted.")
+		assert.NoError(err, "There was error while getting company")
 		assert.Equal(testCompany.Id, company.Id, "Returned company ID and test ID do not match.")
 	})
 }
@@ -79,7 +79,7 @@ func TestUpdateCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
-		defer CreateTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.UpdateCompany(testCompany)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
 	})
@@ -112,7 +112,7 @@ func TestDeleteCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		DropTables(CompanyRepo.DB)
-		defer CreateTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.DeleteCompany(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")
 	})
@@ -133,5 +133,33 @@ func TestDeleteCompany(t *testing.T) {
 		CompanyRepo.AddCompany(&testCompany)
 		err := CompanyRepo.DeleteCompany(testCompany.Id)
 		assert.NoError(err, "Company was not deleted.")
+	})
+}
+
+func TestChangeExternalRightApproveStatus(t *testing.T) {
+	assert := assert.New(t)
+
+	t.Run("table does not exist", func(t *testing.T) {
+		DropTables(CompanyRepo.DB)
+		defer SetupTables(CompanyRepo.DB)
+		err := CompanyRepo.ChangeExternalRightApproveStatus(uuid.NewV4().String(), true)
+		assert.Error(err, "Error was not thrown while updating ear in non-existing table")
+	})
+
+	t.Run("invalid uuid", func(t *testing.T) {
+		uuid := "invalidUUID"
+		err := CompanyRepo.ChangeExternalRightApproveStatus(uuid, true)
+		assert.Error(err, "Error was not thrown for invalid uuid")
+	})
+
+	t.Run("non-existing uuid", func(t *testing.T) {
+		uuid := uuid.NewV4().String()
+		err := CompanyRepo.ChangeExternalRightApproveStatus(uuid, true)
+		assert.Error(err, "Error was not thrown for non-existing uuid")
+	})
+
+	t.Run("successful query", func(t *testing.T) {
+		err := CompanyRepo.ChangeExternalRightApproveStatus(testEar1.ID, true)
+		assert.NoError(err, "Ear was not approved.")
 	})
 }

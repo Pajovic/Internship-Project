@@ -19,12 +19,11 @@ func TestAddProduct(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		oldProducts, _ := ProductRepo.GetAllProducts()
+		oldProducts, _ := ProductRepo.GetAllProducts(testAdmin.CompanyID)
 		err := ProductRepo.AddProduct(&testProduct)
-		newProducts, _ := ProductRepo.GetAllProducts()
-
+		newProducts, _ := ProductRepo.GetAllProducts(testAdmin.CompanyID)
 		assert.NoError(err)
-		assert.Equal(len(newProducts)-len(oldProducts), 1, "Product was not added.")
+		assert.Equal(1, len(newProducts)-len(oldProducts), "Product was not added.")
 	})
 
 	t.Run("add an existing product", func(t *testing.T) {
@@ -39,7 +38,7 @@ func TestGetAllProducts(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("successful GetAll query", func(t *testing.T) {
-		allProducts, err := ProductRepo.GetAllProducts()
+		allProducts, err := ProductRepo.GetAllProducts(testAdmin.CompanyID)
 
 		assert.NoError(err)
 		assert.NotNil(allProducts, "Products were nil.")
@@ -97,10 +96,9 @@ func TestUpdateProduct(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		productForUpdate, _ := ProductRepo.GetProduct(testProduct.ID)
-		productForUpdate.Name = "UPDATED Name"
+		testProduct.Name = "UPDATED Name"
 
-		err := ProductRepo.UpdateProduct(productForUpdate)
+		err := ProductRepo.UpdateProduct(testProduct)
 
 		assert.NoError(err, "Product was not updated.")
 	})

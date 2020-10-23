@@ -17,10 +17,11 @@ type EmployeeController struct {
 
 // GetAllEmployees is used for getting all employees from the database
 func (controller *EmployeeController) GetAllEmployees(w http.ResponseWriter, r *http.Request) {
-	allEmployees, err := controller.Service.GetAllEmployees()
+	idEmployee := r.Header.Get("employeeID")
+	allEmployees, err := controller.Service.GetAllEmployees(idEmployee)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 
@@ -37,7 +38,7 @@ func (controller *EmployeeController) AddNewEmployee(w http.ResponseWriter, r *h
 	err := controller.Service.AddNewEmployee(&newEmployee)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 
@@ -48,12 +49,13 @@ func (controller *EmployeeController) AddNewEmployee(w http.ResponseWriter, r *h
 
 // GetEmployeeByID is used to find a specific employee
 func (controller *EmployeeController) GetEmployeeByID(w http.ResponseWriter, r *http.Request) {
+	idEmployee := r.Header.Get("employeeID")
 	id := mux.Vars(r)["id"] // Because ID is string in database
 
-	employee, err := controller.Service.GetEmployeeByID(id)
+	employee, err := controller.Service.GetEmployeeByID(id, idEmployee)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 
@@ -70,7 +72,7 @@ func (controller *EmployeeController) UpdateEmployee(w http.ResponseWriter, r *h
 	err := controller.Service.UpdateEmployee(updatedEmployee)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(200)
@@ -83,14 +85,8 @@ func (controller *EmployeeController) DeleteEmployee(w http.ResponseWriter, r *h
 	err := controller.Service.DeleteEmployee(id)
 
 	if err != nil {
-		writeErrToClient(w, err)
+		errorhandler.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(204)
-}
-
-func writeErrToClient(w http.ResponseWriter, err error) {
-	errMsg, code := errorhandler.GetErrorMsg(err)
-	w.WriteHeader(code)
-	w.Write([]byte(errMsg))
 }
