@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"errors"
-	"fmt"
 	"internship_project/models"
 	"internship_project/persistence"
 	"strconv"
@@ -52,7 +51,6 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 		}
 	}
 	finalQuery.WriteString(";")
-	fmt.Println(finalQuery.String())
 
 	products := []models.Product{}
 

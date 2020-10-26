@@ -80,7 +80,7 @@ func TestMain(m *testing.M) {
 	}
 
 	testEmployee = models.Employee{
-		ID:        "",
+		ID:        "298dd516-9663-4b96-bc3c-8e0b2b9be469",
 		FirstName: "Test Name",
 		LastName:  "Test Surname",
 		CompanyID: testCompany1.Id,

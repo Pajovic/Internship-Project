@@ -15,10 +15,18 @@ import (
 )
 
 var (
-	connpool    *pgxpool.Pool
-	CompanyCont CompanyController
+	connpool *pgxpool.Pool
 
-	testCompany models.Company
+	CompanyCont CompanyController
+	ProductCont ProductController
+
+	testAdmin models.Employee
+
+	testEmployee models.Employee
+	testProduct  models.Product
+	testProduct1 models.Product
+	testCompany  models.Company
+	testEar      models.ExternalRights
 
 	testCompany1 models.Company
 	testCompany2 models.Company
@@ -26,6 +34,8 @@ var (
 
 	testEar1 models.ExternalRights
 	testEar2 models.ExternalRights
+
+	testConstraint models.AccessConstraint
 )
 
 type Config struct {
@@ -40,6 +50,7 @@ func TestMain(m *testing.M) {
 	defer connpool.Close()
 
 	CompanyCont = GetCompanyController(connpool)
+	ProductCont = GetProductController(connpool)
 
 	testCompany = models.Company{
 		Id:     "",
@@ -65,6 +76,54 @@ func TestMain(m *testing.M) {
 		IsMain: true,
 	}
 
+	testEmployee = models.Employee{
+		ID:        "",
+		FirstName: "Test Name",
+		LastName:  "Test Surname",
+		CompanyID: testCompany1.Id,
+		C:         false,
+		R:         true,
+		U:         true,
+		D:         true,
+	}
+
+	testAdmin = models.Employee{
+		ID:        "9d6ffd16-89e1-4ece-9e7c-09d4bf390838",
+		FirstName: "Admin",
+		LastName:  "Admin",
+		CompanyID: testCompany1.Id,
+		C:         true,
+		R:         true,
+		U:         true,
+		D:         true,
+	}
+
+	testProduct = models.Product{
+		ID:       "",
+		Name:     "TEST_PRODUCT",
+		Price:    99,
+		Quantity: 10,
+		IDC:      testCompany1.Id,
+	}
+
+	testProduct1 = models.Product{
+		ID:       "a8451090-9e22-4fc2-832b-c65d0fc080c8",
+		Name:     "Inserted Product",
+		Price:    99,
+		Quantity: 10,
+		IDC:      testCompany1.Id,
+	}
+
+	testEar = models.ExternalRights{
+		ID:       "a3a3d913-12d6-444b-aa21-ed1eb33bbde2",
+		Read:     true,
+		Update:   false,
+		Delete:   false,
+		Approved: false,
+		IDSC:     testCompany1.Id,
+		IDRC:     testCompany2.Id,
+	}
+
 	testEar1 = models.ExternalRights{
 		ID:       "6b64bc14-01c5-4afa-8ff9-40545b8d0939",
 		Read:     true,
@@ -83,6 +142,14 @@ func TestMain(m *testing.M) {
 		Approved: false,
 		IDSC:     "",
 		IDRC:     "",
+	}
+
+	testConstraint = models.AccessConstraint{
+		ID:            "",
+		IDEAR:         testEar1.ID,
+		OperatorID:    2,
+		PropertyID:    1,
+		PropertyValue: 15,
 	}
 
 	SetUpTables(connpool)
@@ -119,6 +186,17 @@ func GetCompanyController(connpool *pgxpool.Pool) CompanyController {
 	return companyController
 }
 
+func GetProductController(connpool *pgxpool.Pool) ProductController {
+	productRepository := repositories.ProductRepository{DB: connpool}
+	employeeRepository := repositories.EmployeeRepository{DB: connpool}
+	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: employeeRepository}
+	productController := ProductController{Service: productService}
+
+	fmt.Println("Product controller up and running.")
+
+	return productController
+}
+
 func insertMockData(db *pgxpool.Pool) {
 	// Insert Companies
 	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
@@ -130,12 +208,40 @@ func insertMockData(db *pgxpool.Pool) {
 	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
 		mainCompany1.Id, mainCompany1.Name, mainCompany1.IsMain)
 
+	// Insert Product
+	db.Exec(context.Background(), "insert into products (id, name, price, quantity, idc) VALUES($1, $2, $3, $4, $5)",
+		testProduct1.ID, testProduct1.Name, testProduct1.Price, testProduct1.Quantity, testProduct1.IDC)
+
+	// Insert Admin
+	db.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
+		testAdmin.ID, testAdmin.FirstName, testAdmin.LastName, testAdmin.CompanyID, testAdmin.C, testAdmin.R, testAdmin.U, testAdmin.D)
+
 	// Insert external access rights
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
 		testEar1.ID, testCompany1.Id, testCompany2.Id, testEar1.Read, testEar1.Update, testEar1.Delete, testEar1.Approved)
 
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
 		testEar2.ID, testCompany2.Id, testCompany1.Id, testEar2.Read, testEar2.Update, testEar2.Delete, testEar2.Approved)
+
+	// Insert Properties
+	db.Exec(context.Background(), "insert into properties (id, name) values ($1, $2)",
+		"1", "quantity")
+
+	db.Exec(context.Background(), "insert into properies (id, name) values ($1, $2)",
+		"2", "price")
+
+	// Insert Operators
+	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
+		"1", ">")
+
+	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
+		"2", ">=")
+
+	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
+		"3", "<")
+
+	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
+		"4", "<=")
 }
 
 func SetUpTables(db *pgxpool.Pool) {
