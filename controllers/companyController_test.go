@@ -167,7 +167,7 @@ func TestDeleteCompany(t *testing.T) {
 	t.Run("successful delete", func(t *testing.T) {
 		defer SetUpTables(connpool)
 
-		path := fmt.Sprintf("/company/%s", testCompany1.Id)
+		path := fmt.Sprintf("/company/%s", mainCompany1.Id)
 		req, err := http.NewRequest("DELETE", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -315,5 +315,75 @@ func TestUpdateCompany(t *testing.T) {
 		router.ServeHTTP(rr, req)
 
 		assert.Equal(200, rr.Code, "Response code is not correct")
+	})
+}
+
+func TestChangeExternalRightApproveStatus(t *testing.T) {
+	assert := assert.New(t)
+
+	router := mux.NewRouter()
+	router.HandleFunc("/company/approve/{idear}", func(w http.ResponseWriter, r *http.Request) {
+		CompanyCont.ChangeExternalRightApproveStatus(w, r, true)
+	})
+
+	t.Run("invalid uuid", func(t *testing.T) {
+		path := fmt.Sprintf("/company/approve/%s", "INVALID_UUID")
+		req, err := http.NewRequest("PATCH", path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("companyID", mainCompany1.Id)
+
+		rr := httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		assert.Equal(400, rr.Code, "Response code is not correct")
+	})
+
+	t.Run("non-existing uuid", func(t *testing.T) {
+		path := fmt.Sprintf("/company/approve/%s", uuid.NewV4().String())
+		req, err := http.NewRequest("PATCH", path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("companyID", mainCompany1.Id)
+
+		rr := httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		assert.Equal(404, rr.Code, "Response code is not correct")
+	})
+
+	t.Run("successful update", func(t *testing.T) {
+		path := fmt.Sprintf("/company/approve/%s", testEar2.ID)
+		req, err := http.NewRequest("PATCH", path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("companyID", mainCompany1.Id)
+
+		rr := httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		assert.Equal(200, rr.Code, "Response code is not correct")
+	})
+
+	t.Run("no permission to update", func(t *testing.T) {
+		path := fmt.Sprintf("/company/approve/%s", testEar2.ID)
+		req, err := http.NewRequest("PATCH", path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("companyID", testCompany1.Id)
+
+		rr := httptest.NewRecorder()
+
+		router.ServeHTTP(rr, req)
+
+		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(`Your company does not have permission to approve sharing`, rr.Body.String(), "Error message is not correct")
 	})
 }

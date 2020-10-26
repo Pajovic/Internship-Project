@@ -52,8 +52,12 @@ func main() {
 	companyRouter.HandleFunc("", companyController.AddCompany).Methods("POST")
 	companyRouter.HandleFunc("/{id}", companyController.UpdateCompany).Methods("PUT")
 	companyRouter.HandleFunc("/{id}", companyController.DeleteCompany).Methods("DELETE")
-	companyRouter.HandleFunc("/approve/{idear}", companyController.ApproveExternalAccess).Methods("PATCH")
-	companyRouter.HandleFunc("/disapprove/{idear}", companyController.DisapproveExternalAccess).Methods("PATCH")
+	companyRouter.HandleFunc("/approve/{idear}", func(w http.ResponseWriter, r *http.Request) {
+		companyController.ChangeExternalRightApproveStatus(w, r, true)
+	}).Methods("PATCH")
+	companyRouter.HandleFunc("/disapprove/{idear}", func(w http.ResponseWriter, r *http.Request) {
+		companyController.ChangeExternalRightApproveStatus(w, r, true)
+	}).Methods("PATCH")
 
 	// Employee Routes
 	employeeRouter := r.PathPrefix("/employees").Subrouter()

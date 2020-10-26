@@ -14,12 +14,9 @@ internship_project/controllers/companyController.go:61.16,64.3 2 1
 internship_project/controllers/companyController.go:70.92,75.16 3 1
 internship_project/controllers/companyController.go:79.2,79.20 1 1
 internship_project/controllers/companyController.go:75.16,78.3 2 1
-internship_project/controllers/companyController.go:82.100,88.16 4 0
-internship_project/controllers/companyController.go:92.2,92.20 1 0
-internship_project/controllers/companyController.go:88.16,91.3 2 0
-internship_project/controllers/companyController.go:95.103,101.16 4 0
-internship_project/controllers/companyController.go:105.2,105.20 1 0
-internship_project/controllers/companyController.go:101.16,104.3 2 0
+internship_project/controllers/companyController.go:82.124,88.16 4 1
+internship_project/controllers/companyController.go:92.2,92.20 1 1
+internship_project/controllers/companyController.go:88.16,91.3 2 1
 internship_project/controllers/constraintController.go:17.99,19.16 2 0
 internship_project/controllers/constraintController.go:23.2,24.40 2 0
 internship_project/controllers/constraintController.go:19.16,22.3 2 0

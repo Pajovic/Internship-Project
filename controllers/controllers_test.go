@@ -23,6 +23,9 @@ var (
 	testCompany1 models.Company
 	testCompany2 models.Company
 	mainCompany1 models.Company
+
+	testEar1 models.ExternalRights
+	testEar2 models.ExternalRights
 )
 
 type Config struct {
@@ -60,6 +63,26 @@ func TestMain(m *testing.M) {
 		Id:     "91f88893-5cef-4d3c-9d6a-ed120f7e449e",
 		Name:   "Main Kompanija 1",
 		IsMain: true,
+	}
+
+	testEar1 = models.ExternalRights{
+		ID:       "6b64bc14-01c5-4afa-8ff9-40545b8d0939",
+		Read:     true,
+		Update:   true,
+		Delete:   true,
+		Approved: true,
+		IDSC:     "",
+		IDRC:     "",
+	}
+
+	testEar2 = models.ExternalRights{
+		ID:       "c9f8384b-1615-4117-a983-00d574c2614c",
+		Read:     true,
+		Update:   true,
+		Delete:   true,
+		Approved: false,
+		IDSC:     "",
+		IDRC:     "",
 	}
 
 	SetUpTables(connpool)
@@ -106,6 +129,13 @@ func insertMockData(db *pgxpool.Pool) {
 
 	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
 		mainCompany1.Id, mainCompany1.Name, mainCompany1.IsMain)
+
+	// Insert external access rights
+	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
+		testEar1.ID, testCompany1.Id, testCompany2.Id, testEar1.Read, testEar1.Update, testEar1.Delete, testEar1.Approved)
+
+	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
+		testEar2.ID, testCompany2.Id, testCompany1.Id, testEar2.Read, testEar2.Update, testEar2.Delete, testEar2.Approved)
 }
 
 func SetUpTables(db *pgxpool.Pool) {

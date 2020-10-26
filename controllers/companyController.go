@@ -79,24 +79,11 @@ func (controller *CompanyController) DeleteCompany(w http.ResponseWriter, r *htt
 	w.WriteHeader(204)
 }
 
-func (controller *CompanyController) ApproveExternalAccess(w http.ResponseWriter, r *http.Request) {
+func (controller *CompanyController) ChangeExternalRightApproveStatus(w http.ResponseWriter, r *http.Request, status bool) {
 	var idear string = mux.Vars(r)["idear"]
 	companyID := r.Header.Get("companyID")
 
-	err := controller.Service.ChangeExternalRightApproveStatus(companyID, idear, true)
-
-	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
-		return
-	}
-	w.WriteHeader(200)
-}
-
-func (controller *CompanyController) DisapproveExternalAccess(w http.ResponseWriter, r *http.Request) {
-	var idear string = mux.Vars(r)["idear"]
-	companyID := r.Header.Get("companyID")
-
-	err := controller.Service.ChangeExternalRightApproveStatus(companyID, idear, false)
+	err := controller.Service.ChangeExternalRightApproveStatus(companyID, idear, status)
 
 	if err != nil {
 		errorhandler.WriteErrToClient(w, err)
