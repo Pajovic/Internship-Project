@@ -17,9 +17,10 @@ import (
 var (
 	connpool *pgxpool.Pool
 
-	CompanyCont  CompanyController
-	ProductCont  ProductController
-	EmployeeCont EmployeeController
+	CompanyCont    CompanyController
+	ProductCont    ProductController
+	EmployeeCont   EmployeeController
+	ConstraintCont ConstraintController
 
 	testAdmin     models.Employee
 	testEmployee  models.Employee
@@ -37,7 +38,8 @@ var (
 	testEar1 models.ExternalRights
 	testEar2 models.ExternalRights
 
-	testConstraint models.AccessConstraint
+	testConstraint  models.AccessConstraint
+	testConstraint2 models.AccessConstraint
 )
 
 type Config struct {
@@ -54,6 +56,7 @@ func TestMain(m *testing.M) {
 	CompanyCont = GetCompanyController(connpool)
 	ProductCont = GetProductController(connpool)
 	EmployeeCont = GetEmployeeController(connpool)
+	ConstraintCont = GetConstraintController(connpool)
 
 	testCompany = models.Company{
 		Id:     "",
@@ -159,11 +162,19 @@ func TestMain(m *testing.M) {
 	}
 
 	testConstraint = models.AccessConstraint{
-		ID:            "",
+		ID:            "0657e510-1775-45be-a6cc-6fff7a9841fc",
 		IDEAR:         testEar1.ID,
 		OperatorID:    2,
 		PropertyID:    1,
 		PropertyValue: 15,
+	}
+
+	testConstraint2 = models.AccessConstraint{
+		ID:            "d70583a4-d5a3-4d6e-847f-dfba98bd3a27",
+		IDEAR:         testEar1.ID,
+		OperatorID:    3,
+		PropertyID:    1,
+		PropertyValue: 20,
 	}
 
 	SetUpTables(connpool)
@@ -198,6 +209,16 @@ func GetCompanyController(connpool *pgxpool.Pool) CompanyController {
 	fmt.Println("Company controller up and running.")
 
 	return companyController
+}
+
+func GetConstraintController(connpool *pgxpool.Pool) ConstraintController {
+	constraintRepository := repositories.ConstraintRepository{DB: connpool}
+	constraintService := services.ConstraintService{Repository: constraintRepository}
+	constraintController := ConstraintController{Service: constraintService}
+
+	fmt.Println("Constraint controller up and running.")
+
+	return constraintController
 }
 
 func GetEmployeeController(connpool *pgxpool.Pool) EmployeeController {
@@ -269,6 +290,10 @@ func insertMockData(db *pgxpool.Pool) {
 
 	db.Exec(context.Background(), "insert into operators (id, name) values ($1, $2)",
 		"4", "<=")
+
+	// Insert Constraints
+	db.Exec(context.Background(), "insert into access_constraints (id, idear, operator_id, property_id, property_value) VALUES($1, $2, $3, $4, $5)",
+		testConstraint2.ID, testConstraint2.IDEAR, testConstraint2.OperatorID, testConstraint2.PropertyID, testConstraint2.PropertyValue)
 }
 
 func SetUpTables(db *pgxpool.Pool) {
