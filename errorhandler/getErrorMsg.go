@@ -32,6 +32,9 @@ func GetErrorMsg(err error) (string, int) {
 		case "42601":
 			// syntax error
 			return "There is a following syntax error in the query:" + "\n" + pgErr.Message, 500
+		case "02000":
+			// No data
+			return pgErr.Message, 404
 		default:
 			msg := pgErr.Message
 			if d := pgErr.Detail; d != "" {

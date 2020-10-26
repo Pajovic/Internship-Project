@@ -2,10 +2,10 @@ package repositories
 
 import (
 	"context"
-	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
 
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
 )
@@ -50,7 +50,7 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 		return company, err
 	}
 
-	rows, err := repository.DB.Query(context.Background(), `select * from companies where id = $1`, Uuid)
+	rows, err := repository.DB.Query(context.Background(), `select * from public.companies where id = $1`, Uuid)
 	defer rows.Close()
 
 	if err != nil {
@@ -58,7 +58,10 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 	}
 
 	if !rows.Next() {
-		return company, errors.New("There is no company with this id")
+		var pgErr pgconn.PgError
+		pgErr.Code = `02000`
+		pgErr.Message = `There is no company with this id`
+		return company, &pgErr
 	}
 
 	var companyPers persistence.Companies
@@ -119,7 +122,10 @@ func (repository *CompanyRepository) UpdateCompany(company models.Company) error
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to update")
+		var pgErr pgconn.PgError
+		pgErr.Code = `02000`
+		pgErr.Message = `There is no company with this id`
+		return &pgErr
 	}
 
 	return tx.Commit(context.Background())
@@ -140,7 +146,10 @@ func (repository *CompanyRepository) DeleteCompany(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to delete")
+		var pgErr pgconn.PgError
+		pgErr.Code = `02000`
+		pgErr.Message = `There is no company with this id`
+		return &pgErr
 	}
 	return tx.Commit(context.Background())
 }
@@ -151,7 +160,10 @@ func (repository *CompanyRepository) ChangeExternalRightApproveStatus(idear stri
 		return err
 	}
 	if commandTag.RowsAffected() != 1 {
-		return errors.New("No row found to update")
+		var pgErr pgconn.PgError
+		pgErr.Code = `02000`
+		pgErr.Message = `There is no external right with this id`
+		return &pgErr
 	}
 	return nil
 }

@@ -1,24 +1,22 @@
-package main
+package controllers
 
 import (
 	"context"
 	"fmt"
-	"internship_project/controllers"
 	"internship_project/models"
+	"internship_project/repositories"
+	"internship_project/services"
 	"internship_project/utils"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lytics/confl"
-	"github.com/stretchr/testify/assert"
 )
 
 var (
-	connpool          *pgxpool.Pool
-	CompanyController controllers.CompanyController
+	connpool    *pgxpool.Pool
+	CompanyCont CompanyController
 
 	testCompany models.Company
 
@@ -27,11 +25,18 @@ var (
 	mainCompany1 models.Company
 )
 
+type Config struct {
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	DatabaseURL     string `json:"database_url"`
+	TestDatabaseURL string `json:"test_database_url"`
+}
+
 func TestMain(m *testing.M) {
 	connpool = GetTestConnectionPool()
 	defer connpool.Close()
 
-	CompanyController = GetCompanyController(connpool)
+	CompanyCont = GetCompanyController(connpool)
 
 	testCompany = models.Company{
 		Id:     "",
@@ -57,12 +62,14 @@ func TestMain(m *testing.M) {
 		IsMain: true,
 	}
 
+	SetUpTables(connpool)
+
 	os.Exit(m.Run())
 }
 
 func GetTestConnectionPool() *pgxpool.Pool {
 	var conf Config
-	if _, err := confl.DecodeFile("dbconfig.conf", &conf); err != nil {
+	if _, err := confl.DecodeFile("./../dbconfig.conf", &conf); err != nil {
 		panic(err)
 	}
 
@@ -77,6 +84,16 @@ func GetTestConnectionPool() *pgxpool.Pool {
 	fmt.Println("Connected to test database.")
 
 	return connection
+}
+
+func GetCompanyController(connpool *pgxpool.Pool) CompanyController {
+	companyRepository := repositories.CompanyRepository{DB: connpool}
+	companyService := services.CompanyService{Repository: companyRepository}
+	companyController := CompanyController{Service: companyService}
+
+	fmt.Println("Company controller up and running.")
+
+	return companyController
 }
 
 func insertMockData(db *pgxpool.Pool) {
@@ -94,37 +111,5 @@ func insertMockData(db *pgxpool.Pool) {
 func SetUpTables(db *pgxpool.Pool) {
 	utils.DropTables(db)
 	utils.CreateTables(db)
-
-}
-
-func TestGetAllCompanies(t *testing.T) {
-	assert := assert.New(t)
-
-	req, err := http.NewRequest("GET", "/company", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	handler := http.HandlerFunc(CompanyController.GetAllCompanies)
-
-	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
-
-		rr := httptest.NewRecorder()
-
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(rr.Code, 400, "Response code is not 500")
-		assert.Equal(rr.Body.String(), `relation "public.companies" does not exist`, "Error message is not correct")
-	})
-
-	t.Run("successful get", func(t *testing.T) {
-		rr := httptest.NewRecorder()
-
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(rr.Code, http.StatusOK, "Response code is not 200")
-	})
-
+	insertMockData(db)
 }
