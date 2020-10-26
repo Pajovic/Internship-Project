@@ -14,17 +14,18 @@ import (
 	"github.com/lytics/confl"
 )
 
-type config struct {
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	DatabaseURL string `json:"database_url"`
+type Config struct {
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	DatabaseURL     string `json:"database_url"`
+	TestDatabaseURL string `json:"test_database_url"`
 }
 
 func main() {
 	connpool := getConnectionPool()
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository)
-	companyController := getCompanyController(connpool)
+	companyController := GetCompanyController(connpool)
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
 
@@ -87,7 +88,7 @@ func main() {
 }
 
 func getConnectionPool() *pgxpool.Pool {
-	var conf config
+	var conf Config
 	if _, err := confl.DecodeFile("dbconfig.conf", &conf); err != nil {
 		panic(err)
 	}
@@ -116,7 +117,7 @@ func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.Emp
 	return productController
 }
 
-func getCompanyController(connpool *pgxpool.Pool) controllers.CompanyController {
+func GetCompanyController(connpool *pgxpool.Pool) controllers.CompanyController {
 	companyRepository := repositories.CompanyRepository{DB: connpool}
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := controllers.CompanyController{Service: companyService}

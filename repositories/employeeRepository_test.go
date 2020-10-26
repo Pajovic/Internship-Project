@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"internship_project/models"
+	"internship_project/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,7 +12,7 @@ func TestAddEmployee(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(EmployeeRepo.DB)
+		utils.DropTables(EmployeeRepo.DB)
 		defer SetupTables(EmployeeRepo.DB)
 
 		assert.False(DoesTableExist("employees", EmployeeRepo.DB))
