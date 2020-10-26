@@ -17,21 +17,23 @@ import (
 var (
 	connpool *pgxpool.Pool
 
-	CompanyCont CompanyController
-	ProductCont ProductController
+	CompanyCont  CompanyController
+	ProductCont  ProductController
+	EmployeeCont EmployeeController
 
-	testAdmin models.Employee
+	testAdmin     models.Employee
+	testEmployee  models.Employee
+	testEmployee1 models.Employee
 
-	testEmployee models.Employee
 	testProduct  models.Product
 	testProduct1 models.Product
-	testCompany  models.Company
-	testEar      models.ExternalRights
 
+	testCompany  models.Company
 	testCompany1 models.Company
 	testCompany2 models.Company
 	mainCompany1 models.Company
 
+	testEar  models.ExternalRights
 	testEar1 models.ExternalRights
 	testEar2 models.ExternalRights
 
@@ -51,6 +53,7 @@ func TestMain(m *testing.M) {
 
 	CompanyCont = GetCompanyController(connpool)
 	ProductCont = GetProductController(connpool)
+	EmployeeCont = GetEmployeeController(connpool)
 
 	testCompany = models.Company{
 		Id:     "",
@@ -81,6 +84,17 @@ func TestMain(m *testing.M) {
 		FirstName: "Test Name",
 		LastName:  "Test Surname",
 		CompanyID: testCompany1.Id,
+		C:         false,
+		R:         true,
+		U:         true,
+		D:         true,
+	}
+
+	testEmployee1 = models.Employee{
+		ID:        "3f17c2bb-d65c-4ac5-aadd-1f3d933ae860",
+		FirstName: "Preadded",
+		LastName:  "Test Surname",
+		CompanyID: testCompany2.Id,
 		C:         false,
 		R:         true,
 		U:         true,
@@ -186,6 +200,16 @@ func GetCompanyController(connpool *pgxpool.Pool) CompanyController {
 	return companyController
 }
 
+func GetEmployeeController(connpool *pgxpool.Pool) EmployeeController {
+	employeeRepository := repositories.EmployeeRepository{DB: connpool}
+	employeeService := services.EmployeeService{Repository: employeeRepository}
+	employeeController := EmployeeController{Service: employeeService}
+
+	fmt.Println("Employee controller up and running.")
+
+	return employeeController
+}
+
 func GetProductController(connpool *pgxpool.Pool) ProductController {
 	productRepository := repositories.ProductRepository{DB: connpool}
 	employeeRepository := repositories.EmployeeRepository{DB: connpool}
@@ -212,9 +236,12 @@ func insertMockData(db *pgxpool.Pool) {
 	db.Exec(context.Background(), "insert into products (id, name, price, quantity, idc) VALUES($1, $2, $3, $4, $5)",
 		testProduct1.ID, testProduct1.Name, testProduct1.Price, testProduct1.Quantity, testProduct1.IDC)
 
-	// Insert Admin
+	// Insert Users
 	db.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
 		testAdmin.ID, testAdmin.FirstName, testAdmin.LastName, testAdmin.CompanyID, testAdmin.C, testAdmin.R, testAdmin.U, testAdmin.D)
+
+	db.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
+		testEmployee1.ID, testEmployee1.FirstName, testEmployee1.LastName, testEmployee1.CompanyID, testEmployee1.C, testEmployee1.R, testEmployee1.U, testEmployee1.D)
 
 	// Insert external access rights
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,

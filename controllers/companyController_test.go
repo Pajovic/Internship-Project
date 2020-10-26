@@ -32,8 +32,8 @@ func TestGetAllCompanies(t *testing.T) {
 
 		handler.ServeHTTP(rr, req)
 
-		assert.Equal(400, rr.Code, "Response code is not correct")
-		assert.Equal(`relation "public.companies" does not exist`, rr.Body.String(), "Error message is not correct")
+		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(`The table you wish to work with, public.companies, does not exist.`, rr.Body.String(), "Error message is not correct")
 	})
 
 	t.Run("successful get", func(t *testing.T) {
@@ -65,8 +65,8 @@ func TestGetCompanyById(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(400, rr.Code, "Response code is not correct")
-		assert.Equal(`relation "public.companies" does not exist`, rr.Body.String(), "Error message is not correct")
+		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(`The table you wish to work with, public.companies, does not exist.`, rr.Body.String(), "Error message is not correct")
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestGetCompanyById(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(404, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful get", func(t *testing.T) {
@@ -132,8 +132,8 @@ func TestDeleteCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(400, rr.Code, "Response code is not correct")
-		assert.Equal(`relation "public.companies" does not exist`, rr.Body.String(), "Error message is not correct")
+		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(`The table you wish to work with, public.companies, does not exist.`, rr.Body.String(), "Error message is not correct")
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
@@ -147,7 +147,7 @@ func TestDeleteCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestDeleteCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(404, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful delete", func(t *testing.T) {
@@ -204,8 +204,8 @@ func TestAddCompany(t *testing.T) {
 
 		handler.ServeHTTP(rr, req)
 
-		assert.Equal(400, rr.Code, "Response code is not correct")
-		assert.Equal(`relation "public.companies" does not exist`, rr.Body.String(), "Error message is not correct")
+		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(`The table you wish to work with, public.companies, does not exist.`, rr.Body.String(), "Error message is not correct")
 	})
 
 	t.Run("successful add", func(t *testing.T) {
@@ -225,7 +225,7 @@ func TestAddCompany(t *testing.T) {
 
 		handler.ServeHTTP(rr, req)
 
-		assert.Equal(200, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusOK, rr.Code, "Response code is not correct")
 	})
 }
 
@@ -254,8 +254,8 @@ func TestUpdateCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(400, rr.Code, "Response code is not correct")
-		assert.Equal(`relation "public.companies" does not exist`, rr.Body.String(), "Error message is not correct")
+		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(`The table you wish to work with, public.companies, does not exist.`, rr.Body.String(), "Error message is not correct")
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
@@ -275,6 +275,7 @@ func TestUpdateCompany(t *testing.T) {
 		router.ServeHTTP(rr, req)
 
 		assert.Equal(500, rr.Code, "Response code is not correct")
+		t.Log(rr.Body.String())
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -293,7 +294,7 @@ func TestUpdateCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(404, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful update", func(t *testing.T) {
@@ -314,7 +315,7 @@ func TestUpdateCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(200, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusOK, rr.Code, "Response code is not correct")
 	})
 }
 
@@ -338,7 +339,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(400, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -353,7 +354,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(404, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful update", func(t *testing.T) {
@@ -368,7 +369,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(200, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusOK, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("no permission to update", func(t *testing.T) {
