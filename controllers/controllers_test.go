@@ -17,10 +17,11 @@ import (
 var (
 	connpool *pgxpool.Pool
 
-	CompanyCont    CompanyController
-	ProductCont    ProductController
-	EmployeeCont   EmployeeController
-	ConstraintCont ConstraintController
+	CompanyCont       CompanyController
+	ProductCont       ProductController
+	EmployeeCont      EmployeeController
+	ConstraintCont    ConstraintController
+	ExternalRightCont ExternalRightController
 
 	testAdmin     models.Employee
 	testEmployee  models.Employee
@@ -37,6 +38,7 @@ var (
 	testEar  models.ExternalRights
 	testEar1 models.ExternalRights
 	testEar2 models.ExternalRights
+	testEar3 models.ExternalRights
 
 	testConstraint  models.AccessConstraint
 	testConstraint2 models.AccessConstraint
@@ -57,6 +59,7 @@ func TestMain(m *testing.M) {
 	ProductCont = GetProductController(connpool)
 	EmployeeCont = GetEmployeeController(connpool)
 	ConstraintCont = GetConstraintController(connpool)
+	ExternalRightCont = GetExternalRightController(connpool)
 
 	testCompany = models.Company{
 		Id:     "",
@@ -161,6 +164,16 @@ func TestMain(m *testing.M) {
 		IDRC:     "",
 	}
 
+	testEar3 = models.ExternalRights{
+		ID:       "0fa90c22-18a4-4ed8-a834-190b1b84e32e",
+		Read:     true,
+		Update:   true,
+		Delete:   true,
+		Approved: false,
+		IDSC:     testCompany1.Id,
+		IDRC:     testCompany2.Id,
+	}
+
 	testConstraint = models.AccessConstraint{
 		ID:            "0657e510-1775-45be-a6cc-6fff7a9841fc",
 		IDEAR:         testEar1.ID,
@@ -219,6 +232,16 @@ func GetConstraintController(connpool *pgxpool.Pool) ConstraintController {
 	fmt.Println("Constraint controller up and running.")
 
 	return constraintController
+}
+
+func GetExternalRightController(connpool *pgxpool.Pool) ExternalRightController {
+	externalRightRepository := repositories.ExternalRightRepository{DB: connpool}
+	externalRightService := services.ExternalRightService{Repository: externalRightRepository}
+	externalRightController := ExternalRightController{Service: externalRightService}
+
+	fmt.Println("ExternalRight controller up and running.")
+
+	return externalRightController
 }
 
 func GetEmployeeController(connpool *pgxpool.Pool) EmployeeController {
