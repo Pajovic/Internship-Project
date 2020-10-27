@@ -71,7 +71,6 @@ func TestGetEmployeeById(t *testing.T) {
 		router.ServeHTTP(rr, req)
 
 		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
-		//assert.Equal(`The table you wish to work with, public.employees, does not exist.`, rr.Body.String(), "Error message is not correct")
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
