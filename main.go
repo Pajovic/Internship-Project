@@ -14,17 +14,18 @@ import (
 	"github.com/lytics/confl"
 )
 
-type config struct {
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	DatabaseURL string `json:"database_url"`
+type Config struct {
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	DatabaseURL     string `json:"database_url"`
+	TestDatabaseURL string `json:"test_database_url"`
 }
 
 func main() {
 	connpool := getConnectionPool()
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository)
-	companyController := getCompanyController(connpool)
+	companyController := GetCompanyController(connpool)
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
 
@@ -39,7 +40,7 @@ func main() {
 	productRouter.HandleFunc("", productController.GetAllProducts).Methods("GET")
 	productRouter.HandleFunc("/{id}", productController.GetProductById).Methods("GET")
 	productRouter.HandleFunc("", productController.AddProduct).Methods("POST")
-	productRouter.HandleFunc("/{id}", productController.UpdateProduct).Methods("PUT")
+	productRouter.HandleFunc("", productController.UpdateProduct).Methods("PUT")
 	productRouter.HandleFunc("/{id}", productController.DeleteProduct).Methods("DELETE")
 
 	// Company Routes
@@ -49,10 +50,14 @@ func main() {
 	companyRouter.HandleFunc("", companyController.GetAllCompanies).Methods("GET")
 	companyRouter.HandleFunc("/{id}", companyController.GetCompanyById).Methods("GET")
 	companyRouter.HandleFunc("", companyController.AddCompany).Methods("POST")
-	companyRouter.HandleFunc("/{id}", companyController.UpdateCompany).Methods("PUT")
+	companyRouter.HandleFunc("", companyController.UpdateCompany).Methods("PUT")
 	companyRouter.HandleFunc("/{id}", companyController.DeleteCompany).Methods("DELETE")
-	companyRouter.HandleFunc("/approve/{idear}", companyController.ApproveExternalAccess).Methods("PATCH")
-	companyRouter.HandleFunc("/disapprove/{idear}", companyController.DisapproveExternalAccess).Methods("PATCH")
+	companyRouter.HandleFunc("/approve/{idear}", func(w http.ResponseWriter, r *http.Request) {
+		companyController.ChangeExternalRightApproveStatus(w, r, true)
+	}).Methods("PATCH")
+	companyRouter.HandleFunc("/disapprove/{idear}", func(w http.ResponseWriter, r *http.Request) {
+		companyController.ChangeExternalRightApproveStatus(w, r, true)
+	}).Methods("PATCH")
 
 	// Employee Routes
 	employeeRouter := r.PathPrefix("/employees").Subrouter()
@@ -87,7 +92,7 @@ func main() {
 }
 
 func getConnectionPool() *pgxpool.Pool {
-	var conf config
+	var conf Config
 	if _, err := confl.DecodeFile("dbconfig.conf", &conf); err != nil {
 		panic(err)
 	}
@@ -116,7 +121,7 @@ func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.Emp
 	return productController
 }
 
-func getCompanyController(connpool *pgxpool.Pool) controllers.CompanyController {
+func GetCompanyController(connpool *pgxpool.Pool) controllers.CompanyController {
 	companyRepository := repositories.CompanyRepository{DB: connpool}
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := controllers.CompanyController{Service: companyService}

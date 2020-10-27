@@ -2,6 +2,7 @@ package errorhandler
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/jackc/pgconn"
 )
@@ -32,6 +33,14 @@ func GetErrorMsg(err error) (string, int) {
 		case "42601":
 			// syntax error
 			return "There is a following syntax error in the query:" + "\n" + pgErr.Message, 500
+		case "02000":
+			// No data
+			return pgErr.Message, 404
+		case "42P01":
+			// Undefined table
+			tableName := strings.Split(err.Error(), "\"")[1]
+			return "The table you wish to work with, " + tableName + ", does not exist.", 500
+
 		default:
 			msg := pgErr.Message
 			if d := pgErr.Detail; d != "" {

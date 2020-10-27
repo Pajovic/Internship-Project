@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"internship_project/models"
+	"internship_project/utils"
 	"testing"
 
 	uuid "github.com/satori/go.uuid"
@@ -12,7 +13,7 @@ func TestAddConstraint(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(ConstraintRepo.DB)
+		utils.DropTables(ConstraintRepo.DB)
 		defer SetupTables(ConstraintRepo.DB)
 		err := ConstraintRepo.AddConstraint(&testConstraint)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
@@ -47,7 +48,7 @@ func TestGetConstraint(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(ConstraintRepo.DB)
+		utils.DropTables(ConstraintRepo.DB)
 		defer SetupTables(ConstraintRepo.DB)
 		_, err := ConstraintRepo.GetConstraint(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
@@ -78,7 +79,7 @@ func TestUpdateConstraint(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(ConstraintRepo.DB)
+		utils.DropTables(ConstraintRepo.DB)
 		defer SetupTables(ConstraintRepo.DB)
 		err := ConstraintRepo.UpdateConstraint(testConstraint)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
@@ -111,7 +112,7 @@ func TestDeleteConstraint(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(ConstraintRepo.DB)
+		utils.DropTables(ConstraintRepo.DB)
 		defer SetupTables(ConstraintRepo.DB)
 		err := ConstraintRepo.DeleteConstraint(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")

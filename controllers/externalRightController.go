@@ -60,7 +60,6 @@ func (controller *ExternalRightController) UpdateEar(w http.ResponseWriter, r *h
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updateEar)
-
 }
 
 func (controller *ExternalRightController) DeleteEar(w http.ResponseWriter, r *http.Request) {

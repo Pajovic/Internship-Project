@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"internship_project/models"
+	"internship_project/utils"
 	"testing"
 
 	uuid "github.com/satori/go.uuid"
@@ -12,7 +13,7 @@ func TestAddCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(CompanyRepo.DB)
+		utils.DropTables(CompanyRepo.DB)
 		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.AddCompany(&testCompany)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
@@ -47,7 +48,7 @@ func TestGetCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(CompanyRepo.DB)
+		utils.DropTables(CompanyRepo.DB)
 		defer SetupTables(CompanyRepo.DB)
 		_, err := CompanyRepo.GetCompany(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
@@ -78,7 +79,7 @@ func TestUpdateCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(CompanyRepo.DB)
+		utils.DropTables(CompanyRepo.DB)
 		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.UpdateCompany(testCompany)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
@@ -111,7 +112,7 @@ func TestDeleteCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(CompanyRepo.DB)
+		utils.DropTables(CompanyRepo.DB)
 		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.DeleteCompany(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")
@@ -140,7 +141,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(CompanyRepo.DB)
+		utils.DropTables(CompanyRepo.DB)
 		defer SetupTables(CompanyRepo.DB)
 		err := CompanyRepo.ChangeExternalRightApproveStatus(uuid.NewV4().String(), true)
 		assert.Error(err, "Error was not thrown while updating ear in non-existing table")

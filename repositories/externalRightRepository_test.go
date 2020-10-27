@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"internship_project/models"
+	"internship_project/utils"
 	"testing"
 
 	uuid "github.com/satori/go.uuid"
@@ -12,7 +13,7 @@ func TestAddEar(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(EarRepo.DB)
+		utils.DropTables(EarRepo.DB)
 		defer SetupTables(EarRepo.DB)
 		err := EarRepo.AddEar(&testEar)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
@@ -47,7 +48,7 @@ func TestGetEar(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(EarRepo.DB)
+		utils.DropTables(EarRepo.DB)
 		defer SetupTables(EarRepo.DB)
 		_, err := EarRepo.GetEar(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
@@ -78,7 +79,7 @@ func TestUpdateEar(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(EarRepo.DB)
+		utils.DropTables(EarRepo.DB)
 		defer SetupTables(EarRepo.DB)
 		err := EarRepo.UpdateEar(testEar)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
@@ -111,7 +112,7 @@ func TestDeleteEar(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		DropTables(EarRepo.DB)
+		utils.DropTables(EarRepo.DB)
 		defer SetupTables(EarRepo.DB)
 		err := EarRepo.DeleteEar(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")
