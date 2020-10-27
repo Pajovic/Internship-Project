@@ -233,7 +233,7 @@ func TestUpdateCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/company/{id}", CompanyCont.UpdateCompany)
+	router.HandleFunc("/company", CompanyCont.UpdateCompany)
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
@@ -243,7 +243,7 @@ func TestUpdateCompany(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		path := fmt.Sprintf("/company/%s", testCompany1.Id)
+		path := fmt.Sprintf("/company")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
@@ -259,11 +259,11 @@ func TestUpdateCompany(t *testing.T) {
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
-		body, err := json.Marshal(testCompany1)
+		body, err := json.Marshal(testCompany)
 		if err != nil {
 			t.Fatal(err)
 		}
-		path := fmt.Sprintf("/company/%s", "INVALID_UUID")
+		path := fmt.Sprintf("/company")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
@@ -279,11 +279,12 @@ func TestUpdateCompany(t *testing.T) {
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
-		body, err := json.Marshal(testCompany1)
+		testCompany.Id = uuid.NewV4().String()
+		body, err := json.Marshal(testCompany)
 		if err != nil {
 			t.Fatal(err)
 		}
-		path := fmt.Sprintf("/company/%s", uuid.NewV4().String())
+		path := fmt.Sprintf("/company")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
@@ -293,6 +294,8 @@ func TestUpdateCompany(t *testing.T) {
 		rr := httptest.NewRecorder()
 
 		router.ServeHTTP(rr, req)
+
+		testCompany.Id = ""
 
 		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
@@ -304,7 +307,7 @@ func TestUpdateCompany(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		path := fmt.Sprintf("/company/%s", testCompany1.Id)
+		path := fmt.Sprintf("/company")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)

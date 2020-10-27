@@ -40,7 +40,7 @@ func main() {
 	productRouter.HandleFunc("", productController.GetAllProducts).Methods("GET")
 	productRouter.HandleFunc("/{id}", productController.GetProductById).Methods("GET")
 	productRouter.HandleFunc("", productController.AddProduct).Methods("POST")
-	productRouter.HandleFunc("/{id}", productController.UpdateProduct).Methods("PUT")
+	productRouter.HandleFunc("", productController.UpdateProduct).Methods("PUT")
 	productRouter.HandleFunc("/{id}", productController.DeleteProduct).Methods("DELETE")
 
 	// Company Routes
@@ -50,7 +50,7 @@ func main() {
 	companyRouter.HandleFunc("", companyController.GetAllCompanies).Methods("GET")
 	companyRouter.HandleFunc("/{id}", companyController.GetCompanyById).Methods("GET")
 	companyRouter.HandleFunc("", companyController.AddCompany).Methods("POST")
-	companyRouter.HandleFunc("/{id}", companyController.UpdateCompany).Methods("PUT")
+	companyRouter.HandleFunc("", companyController.UpdateCompany).Methods("PUT")
 	companyRouter.HandleFunc("/{id}", companyController.DeleteCompany).Methods("DELETE")
 	companyRouter.HandleFunc("/approve/{idear}", func(w http.ResponseWriter, r *http.Request) {
 		companyController.ChangeExternalRightApproveStatus(w, r, true)

@@ -248,7 +248,7 @@ func TestUpdateProduct(t *testing.T) {
 	assert := assert.New(t)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/product/{id}", ProductCont.UpdateProduct)
+	router.HandleFunc("/product", ProductCont.UpdateProduct)
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
@@ -260,7 +260,7 @@ func TestUpdateProduct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		path := fmt.Sprintf("/product/%s", testProduct1.ID)
+		path := fmt.Sprintf("/product")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
@@ -276,12 +276,12 @@ func TestUpdateProduct(t *testing.T) {
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
-		body, err := json.Marshal(testProduct1)
+		body, err := json.Marshal(testProduct)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		path := fmt.Sprintf("/product/%s", "INVALID_UUID")
+		path := fmt.Sprintf("/product")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
@@ -297,11 +297,12 @@ func TestUpdateProduct(t *testing.T) {
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
-		body, err := json.Marshal(testProduct1)
+		testProduct.ID = uuid.NewV4().String()
+		body, err := json.Marshal(testProduct)
 		if err != nil {
 			t.Fatal(err)
 		}
-		path := fmt.Sprintf("/product/%s", uuid.NewV4().String())
+		path := fmt.Sprintf("/product")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)
@@ -312,6 +313,7 @@ func TestUpdateProduct(t *testing.T) {
 		rr := httptest.NewRecorder()
 
 		router.ServeHTTP(rr, req)
+		testProduct.ID = ""
 
 		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
 	})
@@ -325,7 +327,7 @@ func TestUpdateProduct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		path := fmt.Sprintf("/product/%s", testProduct1.ID)
+		path := fmt.Sprintf("/product")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
 			t.Fatal(err)

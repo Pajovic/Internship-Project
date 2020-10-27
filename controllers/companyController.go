@@ -49,12 +49,8 @@ func (controller *CompanyController) AddCompany(w http.ResponseWriter, r *http.R
 }
 
 func (controller *CompanyController) UpdateCompany(w http.ResponseWriter, r *http.Request) {
-	var idParam string = mux.Vars(r)["id"]
-
 	var updateCompany models.Company
 	json.NewDecoder(r.Body).Decode(&updateCompany)
-
-	updateCompany.Id = idParam
 
 	err := controller.Service.UpdateCompany(updateCompany)
 
@@ -64,7 +60,6 @@ func (controller *CompanyController) UpdateCompany(w http.ResponseWriter, r *htt
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updateCompany)
-
 }
 
 func (controller *CompanyController) DeleteCompany(w http.ResponseWriter, r *http.Request) {

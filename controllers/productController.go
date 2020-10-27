@@ -54,13 +54,10 @@ func (controller *ProductController) AddProduct(w http.ResponseWriter, r *http.R
 }
 
 func (controller *ProductController) UpdateProduct(w http.ResponseWriter, r *http.Request) {
-	var idParam string = mux.Vars(r)["id"]
 	idEmployee := r.Header.Get("employeeID")
 
 	var updateProduct models.Product
 	json.NewDecoder(r.Body).Decode(&updateProduct)
-
-	updateProduct.ID = idParam
 
 	err := controller.Service.UpdateProduct(updateProduct, idEmployee)
 
