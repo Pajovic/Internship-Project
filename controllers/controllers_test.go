@@ -150,8 +150,8 @@ func TestMain(m *testing.M) {
 		Update:   true,
 		Delete:   true,
 		Approved: true,
-		IDSC:     "",
-		IDRC:     "",
+		IDSC:     testCompany1.Id,
+		IDRC:     testCompany2.Id,
 	}
 
 	testEar2 = models.ExternalRights{
@@ -160,8 +160,8 @@ func TestMain(m *testing.M) {
 		Update:   true,
 		Delete:   true,
 		Approved: false,
-		IDSC:     "",
-		IDRC:     "",
+		IDSC:     testCompany2.Id,
+		IDRC:     testCompany1.Id,
 	}
 
 	testEar3 = models.ExternalRights{
@@ -289,10 +289,10 @@ func insertMockData(db *pgxpool.Pool) {
 
 	// Insert external access rights
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
-		testEar1.ID, testCompany1.Id, testCompany2.Id, testEar1.Read, testEar1.Update, testEar1.Delete, testEar1.Approved)
+		testEar1.ID, testEar1.IDSC, testEar1.IDRC, testEar1.Read, testEar1.Update, testEar1.Delete, testEar1.Approved)
 
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
-		testEar2.ID, testCompany2.Id, testCompany1.Id, testEar2.Read, testEar2.Update, testEar2.Delete, testEar2.Approved)
+		testEar2.ID, testEar2.IDSC, testEar2.IDRC, testEar2.Read, testEar2.Update, testEar2.Delete, testEar2.Approved)
 
 	// Insert Properties
 	db.Exec(context.Background(), "insert into properties (id, name) values ($1, $2)",

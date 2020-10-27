@@ -170,7 +170,7 @@ func TestUpdateExternalRight(t *testing.T) {
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
-		body, err := json.Marshal(testEar1)
+		body, err := json.Marshal(testEar)
 		if err != nil {
 			t.Fatal(err)
 		}
