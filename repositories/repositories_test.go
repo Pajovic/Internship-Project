@@ -21,6 +21,7 @@ type config struct {
 }
 
 var (
+	Connpool *pgxpool.Pool
 	EmployeeRepo   EmployeeRepository
 	ProductRepo    ProductRepository
 	CompanyRepo    CompanyRepository
@@ -29,16 +30,16 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	connpool := getConnPool()
-	defer connpool.Close()
+	Connpool = getConnPool()
+	defer Connpool.Close()
 
-	EmployeeRepo = EmployeeRepository{DB: connpool}
-	ProductRepo = ProductRepository{DB: connpool}
-	CompanyRepo = CompanyRepository{DB: connpool}
-	EarRepo = ExternalRightRepository{DB: connpool}
-	ConstraintRepo = ConstraintRepository{DB: connpool}
+	EmployeeRepo = NewEmployeeRepo(Connpool)
+	ProductRepo = NewProductRepo(Connpool)
+	CompanyRepo = NewCompanyRepo(Connpool)
+	EarRepo = NewExternalRightRepo(Connpool)
+	ConstraintRepo = NewConstraintRepo(Connpool)
 
-	utils.SetUpTables(connpool)
+	utils.SetUpTables(Connpool)
 
 	code := m.Run()
 

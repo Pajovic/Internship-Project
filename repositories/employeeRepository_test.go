@@ -12,10 +12,10 @@ func TestAddEmployee(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(EmployeeRepo.DB)
-		defer utils.SetUpTables(EmployeeRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 
-		assert.False(DoesTableExist("employees", EmployeeRepo.DB))
+		assert.False(DoesTableExist("employees", Connpool))
 		err := EmployeeRepo.AddEmployee(&utils.TestEmployee)
 		assert.Error(err)
 	})

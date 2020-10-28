@@ -11,11 +11,28 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type ExternalRightRepository struct {
+type ExternalRightRepository interface {
+	GetAllEars() ([]models.ExternalRights, error)
+	GetEar(id string) (models.ExternalRights, error)
+	AddEar(ear *models.ExternalRights) error
+	UpdateEar(ear models.ExternalRights) error
+	DeleteEar(id string) error
+}
+
+type externalRightRepository struct {
 	DB *pgxpool.Pool
 }
 
-func (repository *ExternalRightRepository) GetAllEars() ([]models.ExternalRights, error) {
+func NewExternalRightRepo(db *pgxpool.Pool) ExternalRightRepository {
+	if db == nil {
+		panic("ExternalRightRepository not created, pgxpool is nil")
+	}
+	return &externalRightRepository {
+		DB: db,
+	}
+}
+
+func (repository *externalRightRepository) GetAllEars() ([]models.ExternalRights, error) {
 	ears := []models.ExternalRights{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.external_access_rights")
 	defer rows.Close()
@@ -59,7 +76,7 @@ func (repository *ExternalRightRepository) GetAllEars() ([]models.ExternalRights
 	return ears, nil
 }
 
-func (repository *ExternalRightRepository) GetEar(id string) (models.ExternalRights, error) {
+func (repository *externalRightRepository) GetEar(id string) (models.ExternalRights, error) {
 	var ear models.ExternalRights
 
 	Uuid, err := uuid.FromString(id)
@@ -112,7 +129,7 @@ func (repository *ExternalRightRepository) GetEar(id string) (models.ExternalRig
 	return ear, nil
 }
 
-func (repository *ExternalRightRepository) AddEar(ear *models.ExternalRights) error {
+func (repository *externalRightRepository) AddEar(ear *models.ExternalRights) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -138,7 +155,7 @@ func (repository *ExternalRightRepository) AddEar(ear *models.ExternalRights) er
 	return tx.Commit(context.Background())
 }
 
-func (repository *ExternalRightRepository) UpdateEar(ear models.ExternalRights) error {
+func (repository *externalRightRepository) UpdateEar(ear models.ExternalRights) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -166,7 +183,7 @@ func (repository *ExternalRightRepository) UpdateEar(ear models.ExternalRights) 
 	return tx.Commit(context.Background())
 }
 
-func (repository *ExternalRightRepository) DeleteEar(id string) error {
+func (repository *externalRightRepository) DeleteEar(id string) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err

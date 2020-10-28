@@ -10,11 +10,30 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type CompanyRepository struct {
-	DB *pgxpool.Pool
+type CompanyRepository interface {
+	GetAllCompanies() ([]models.Company, error)
+	GetCompany(string) (models.Company, error)
+	AddCompany(*models.Company) error
+	UpdateCompany(models.Company) error
+	DeleteCompany(string) error
+	ChangeExternalRightApproveStatus(string, bool) error
 }
 
-func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error) {
+type companyRepository struct {
+	DB *pgxpool.Pool
+
+}
+
+func NewCompanyRepo(db *pgxpool.Pool) CompanyRepository {
+	if db == nil {
+		panic("CompanyRepository not created, pgxpool is nil")
+	}
+	return &companyRepository {
+		DB: db,
+	}
+}
+
+func (repository *companyRepository) GetAllCompanies() ([]models.Company, error) {
 	companies := []models.Company{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.companies")
 	defer rows.Close()
@@ -42,7 +61,7 @@ func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error)
 	return companies, nil
 }
 
-func (repository *CompanyRepository) GetCompany(id string) (models.Company, error) {
+func (repository *companyRepository) GetCompany(id string) (models.Company, error) {
 	var company models.Company
 
 	Uuid, err := uuid.FromString(id)
@@ -79,7 +98,7 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 	return company, nil
 }
 
-func (repository *CompanyRepository) AddCompany(company *models.Company) error {
+func (repository *companyRepository) AddCompany(company *models.Company) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -101,7 +120,7 @@ func (repository *CompanyRepository) AddCompany(company *models.Company) error {
 	return tx.Commit(context.Background())
 }
 
-func (repository *CompanyRepository) UpdateCompany(company models.Company) error {
+func (repository *companyRepository) UpdateCompany(company models.Company) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -125,7 +144,7 @@ func (repository *CompanyRepository) UpdateCompany(company models.Company) error
 	return tx.Commit(context.Background())
 }
 
-func (repository *CompanyRepository) DeleteCompany(id string) error {
+func (repository *companyRepository) DeleteCompany(id string) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -145,7 +164,7 @@ func (repository *CompanyRepository) DeleteCompany(id string) error {
 	return tx.Commit(context.Background())
 }
 
-func (repository *CompanyRepository) ChangeExternalRightApproveStatus(idear string, status bool) error {
+func (repository *companyRepository) ChangeExternalRightApproveStatus(idear string, status bool) error {
 	commandTag, err := repository.DB.Exec(context.Background(), "UPDATE external_access_rights SET approved = $1 WHERE id = $2;", status, idear)
 	if err != nil {
 		return err

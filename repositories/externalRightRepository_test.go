@@ -13,8 +13,8 @@ func TestAddEar(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(EarRepo.DB)
-		defer utils.SetUpTables(EarRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := EarRepo.AddEar(&utils.TestEar)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
 	})
@@ -48,8 +48,8 @@ func TestGetEar(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(EarRepo.DB)
-		defer utils.SetUpTables(EarRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		_, err := EarRepo.GetEar(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
 	})
@@ -79,8 +79,8 @@ func TestUpdateEar(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(EarRepo.DB)
-		defer utils.SetUpTables(EarRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := EarRepo.UpdateEar(utils.TestEar)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
 	})
@@ -112,8 +112,8 @@ func TestDeleteEar(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(EarRepo.DB)
-		defer utils.SetUpTables(EarRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := EarRepo.DeleteEar(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")
 	})

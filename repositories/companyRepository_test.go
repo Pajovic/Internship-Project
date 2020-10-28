@@ -13,8 +13,8 @@ func TestAddCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(CompanyRepo.DB)
-		defer utils.SetUpTables(CompanyRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := CompanyRepo.AddCompany(&utils.TestCompany)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
 	})
@@ -48,8 +48,8 @@ func TestGetCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(CompanyRepo.DB)
-		defer utils.SetUpTables(CompanyRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		_, err := CompanyRepo.GetCompany(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
 	})
@@ -79,8 +79,8 @@ func TestUpdateCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(CompanyRepo.DB)
-		defer utils.SetUpTables(CompanyRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := CompanyRepo.UpdateCompany(utils.TestCompany)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
 	})
@@ -112,8 +112,8 @@ func TestDeleteCompany(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(CompanyRepo.DB)
-		defer utils.SetUpTables(CompanyRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := CompanyRepo.DeleteCompany(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")
 	})
@@ -141,8 +141,8 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(CompanyRepo.DB)
-		defer utils.SetUpTables(CompanyRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := CompanyRepo.ChangeExternalRightApproveStatus(uuid.NewV4().String(), true)
 		assert.Error(err, "Error was not thrown while updating ear in non-existing table")
 	})

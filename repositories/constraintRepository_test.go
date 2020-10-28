@@ -13,8 +13,8 @@ func TestAddConstraint(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(ConstraintRepo.DB)
-		defer utils.SetUpTables(ConstraintRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := ConstraintRepo.AddConstraint(&utils.TestConstraint)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
 	})
@@ -48,8 +48,8 @@ func TestGetConstraint(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(ConstraintRepo.DB)
-		defer utils.SetUpTables(ConstraintRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		_, err := ConstraintRepo.GetConstraint(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
 	})
@@ -79,8 +79,8 @@ func TestUpdateConstraint(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(ConstraintRepo.DB)
-		defer utils.SetUpTables(ConstraintRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := ConstraintRepo.UpdateConstraint(utils.TestConstraint)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
 	})
@@ -112,8 +112,8 @@ func TestDeleteConstraint(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(ConstraintRepo.DB)
-		defer utils.SetUpTables(ConstraintRepo.DB)
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
 		err := ConstraintRepo.DeleteConstraint(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")
 	})

@@ -12,9 +12,9 @@ func TestAddProduct(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("table does not exist", func(t *testing.T) {
-		utils.DropTables(ProductRepo.DB)
-		defer utils.SetUpTables(ProductRepo.DB)
-		assert.False(DoesTableExist("products", ProductRepo.DB))
+		utils.DropTables(Connpool)
+		defer utils.SetUpTables(Connpool)
+		assert.False(DoesTableExist("products", Connpool))
 		err := ProductRepo.AddProduct(&utils.TestProduct)
 		assert.Error(err)
 	})

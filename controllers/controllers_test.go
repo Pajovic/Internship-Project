@@ -35,8 +35,8 @@ func TestMain(m *testing.M) {
 	defer connpool.Close()
 
 	CompanyCont = GetCompanyController(connpool)
-	ProductCont = GetProductController(connpool)
 	EmployeeCont = GetEmployeeController(connpool)
+	ProductCont = getProductController(connpool, &EmployeeCont.Service.Repository)
 	ConstraintCont = GetConstraintController(connpool)
 	ExternalRightCont = GetExternalRightController(connpool)
 
@@ -65,7 +65,7 @@ func GetTestConnectionPool() *pgxpool.Pool {
 }
 
 func GetCompanyController(connpool *pgxpool.Pool) CompanyController {
-	companyRepository := repositories.CompanyRepository{DB: connpool}
+	companyRepository := repositories.NewCompanyRepo(connpool)
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := CompanyController{Service: companyService}
 
@@ -75,7 +75,7 @@ func GetCompanyController(connpool *pgxpool.Pool) CompanyController {
 }
 
 func GetConstraintController(connpool *pgxpool.Pool) ConstraintController {
-	constraintRepository := repositories.ConstraintRepository{DB: connpool}
+	constraintRepository := repositories.NewConstraintRepo(connpool)
 	constraintService := services.ConstraintService{Repository: constraintRepository}
 	constraintController := ConstraintController{Service: constraintService}
 
@@ -85,7 +85,7 @@ func GetConstraintController(connpool *pgxpool.Pool) ConstraintController {
 }
 
 func GetExternalRightController(connpool *pgxpool.Pool) ExternalRightController {
-	externalRightRepository := repositories.ExternalRightRepository{DB: connpool}
+	externalRightRepository := repositories.NewExternalRightRepo(connpool)
 	externalRightService := services.ExternalRightService{Repository: externalRightRepository}
 	externalRightController := ExternalRightController{Service: externalRightService}
 
@@ -95,7 +95,7 @@ func GetExternalRightController(connpool *pgxpool.Pool) ExternalRightController 
 }
 
 func GetEmployeeController(connpool *pgxpool.Pool) EmployeeController {
-	employeeRepository := repositories.EmployeeRepository{DB: connpool}
+	employeeRepository := repositories.NewEmployeeRepo(connpool)
 	employeeService := services.EmployeeService{Repository: employeeRepository}
 	employeeController := EmployeeController{Service: employeeService}
 
@@ -104,10 +104,10 @@ func GetEmployeeController(connpool *pgxpool.Pool) EmployeeController {
 	return employeeController
 }
 
-func GetProductController(connpool *pgxpool.Pool) ProductController {
-	productRepository := repositories.ProductRepository{DB: connpool}
-	employeeRepository := repositories.EmployeeRepository{DB: connpool}
-	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: employeeRepository}
+func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) ProductController {
+
+	productRepository := repositories.NewProductRepo(connpool)
+	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: *employeeRepo}
 	productController := ProductController{Service: productService}
 
 	fmt.Println("Product controller up and running.")
