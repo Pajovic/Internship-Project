@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
-	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
+	"internship_project/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -21,7 +21,7 @@ func (controller *EmployeeController) GetAllEmployees(w http.ResponseWriter, r *
 	allEmployees, err := controller.Service.GetAllEmployees(idEmployee)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 
@@ -38,7 +38,7 @@ func (controller *EmployeeController) AddNewEmployee(w http.ResponseWriter, r *h
 	err := controller.Service.AddNewEmployee(&newEmployee)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (controller *EmployeeController) GetEmployeeByID(w http.ResponseWriter, r *
 	employee, err := controller.Service.GetEmployeeByID(id, idEmployee)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (controller *EmployeeController) UpdateEmployee(w http.ResponseWriter, r *h
 	err := controller.Service.UpdateEmployee(updatedEmployee)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(200)
@@ -85,7 +85,7 @@ func (controller *EmployeeController) DeleteEmployee(w http.ResponseWriter, r *h
 	err := controller.Service.DeleteEmployee(id)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(204)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
+	"internship_project/utils"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
@@ -15,7 +16,7 @@ type ConstraintRepository struct {
 }
 
 func (repository *ConstraintRepository) GetAllConstraints() ([]models.AccessConstraint, error) {
-	var constraints []models.AccessConstraint = []models.AccessConstraint{}
+	constraints := []models.AccessConstraint{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.access_constraints")
 	defer rows.Close()
 
@@ -139,7 +140,7 @@ func (repository *ConstraintRepository) UpdateConstraint(constraint models.Acces
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to update")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
@@ -161,7 +162,7 @@ func (repository *ConstraintRepository) DeleteConstraint(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to delete")
+		return utils.NoDataError
 	}
 	return tx.Commit(context.Background())
 }

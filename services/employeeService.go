@@ -13,7 +13,7 @@ type EmployeeService struct {
 
 // GetAllEmployees is used to return all employees
 func (service *EmployeeService) GetAllEmployees(employeeID string) ([]models.Employee, error) {
-	var allEmployees []models.Employee
+	allEmployees := []models.Employee{}
 
 	employee, err := service.Repository.GetEmployeeByID(employeeID)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
+	"internship_project/utils"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
@@ -15,7 +16,7 @@ type ExternalRightRepository struct {
 }
 
 func (repository *ExternalRightRepository) GetAllEars() ([]models.ExternalRights, error) {
-	var ears []models.ExternalRights = []models.ExternalRights{}
+	ears := []models.ExternalRights{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.external_access_rights")
 	defer rows.Close()
 
@@ -159,7 +160,7 @@ func (repository *ExternalRightRepository) UpdateEar(ear models.ExternalRights) 
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to update")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
@@ -181,7 +182,7 @@ func (repository *ExternalRightRepository) DeleteEar(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to delete")
+		return utils.NoDataError
 	}
 	return tx.Commit(context.Background())
 }

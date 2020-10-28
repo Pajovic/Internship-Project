@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
-	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
+	"internship_project/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -18,7 +18,7 @@ func (controller *ProductController) GetAllProducts(w http.ResponseWriter, r *ht
 	idEmployee := r.Header.Get("employeeID")
 	products, err := controller.Service.GetAllProducts(idEmployee)
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -32,7 +32,7 @@ func (controller *ProductController) GetProductById(w http.ResponseWriter, r *ht
 	product, err := controller.Service.GetProduct(idParam, idEmployee)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -46,7 +46,7 @@ func (controller *ProductController) AddProduct(w http.ResponseWriter, r *http.R
 	json.NewDecoder(r.Body).Decode(&newProduct)
 	err := controller.Service.AddNewProduct(&newProduct, idEmployee)
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -62,7 +62,7 @@ func (controller *ProductController) UpdateProduct(w http.ResponseWriter, r *htt
 	err := controller.Service.UpdateProduct(updateProduct, idEmployee)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -77,7 +77,7 @@ func (controller *ProductController) DeleteProduct(w http.ResponseWriter, r *htt
 	err := controller.Service.DeleteProduct(idParam, idEmployee)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(200)

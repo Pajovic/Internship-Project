@@ -5,6 +5,7 @@ import (
 	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
+	"internship_project/utils"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
@@ -157,7 +158,7 @@ func (repository *EmployeeRepository) UpdateEmployee(employee models.Employee) e
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to update")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
@@ -179,7 +180,7 @@ func (repository *EmployeeRepository) DeleteEmployee(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to delete")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
@@ -187,7 +188,7 @@ func (repository *EmployeeRepository) DeleteEmployee(id string) error {
 
 // GetEmployeeExternalPermissions .
 func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceivingCompany string, product models.Product) (models.ExternalRights, error) {
-	var allRights []models.ExternalRights
+	allRights := []models.ExternalRights{}
 	var rights models.ExternalRights
 
 	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
@@ -293,7 +294,7 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 
 // CheckCompaniesSharingEmployeeData .
 func (repository *EmployeeRepository) CheckCompaniesSharingEmployeeData(idReceivingCompany, idSharingCompany string) error {
-	var allRights []models.ExternalRights
+	allRights := []models.ExternalRights{}
 
 	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
 

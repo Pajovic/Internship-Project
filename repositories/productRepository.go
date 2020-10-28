@@ -5,6 +5,7 @@ import (
 	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
+	"internship_project/utils"
 	"strconv"
 	"strings"
 
@@ -32,7 +33,7 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 	}
 	for rows.Next() {
 		var earConstraint models.EarConstraint
-		err := rows.Scan(&earConstraint.Idear, &earConstraint.Idrc, &earConstraint.Idsc, &earConstraint.Property, &earConstraint.Operator, &earConstraint.PropertyValue)
+		err := rows.Scan(&earConstraint.IDEAR, &earConstraint.IDRC, &earConstraint.IDSC, &earConstraint.Property, &earConstraint.Operator, &earConstraint.PropertyValue)
 		if err != nil {
 			return nil, err
 		}
@@ -45,9 +46,9 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 
 	for _, earc := range earConstraints {
 		if earc.Operator != "" && earc.Property != "" {
-			finalQuery.WriteString(" or (p.idc = '" + earc.Idsc + "' and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue) + ")")
+			finalQuery.WriteString(" or (p.idc = '" + earc.IDSC + "' and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue) + ")")
 		} else {
-			finalQuery.WriteString(" or p.idc = '" + earc.Idsc + "'")
+			finalQuery.WriteString(" or p.idc = '" + earc.IDSC + "'")
 		}
 	}
 	finalQuery.WriteString(";")
@@ -179,7 +180,7 @@ func (repository *ProductRepository) UpdateProduct(product models.Product) error
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to update")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
@@ -200,7 +201,7 @@ func (repository *ProductRepository) DeleteProduct(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to delete")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())

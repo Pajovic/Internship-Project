@@ -14,14 +14,14 @@ func TestAddConstraint(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(ConstraintRepo.DB)
-		defer SetupTables(ConstraintRepo.DB)
-		err := ConstraintRepo.AddConstraint(&testConstraint)
+		defer utils.SetUpTables(ConstraintRepo.DB)
+		err := ConstraintRepo.AddConstraint(&utils.TestConstraint)
 		assert.Error(err, "Error was not thrown while inserting in non-existing table")
 	})
 
 	t.Run("successful query", func(t *testing.T) {
 		oldConstraints, _ := ConstraintRepo.GetAllConstraints()
-		err := ConstraintRepo.AddConstraint(&testConstraint)
+		err := ConstraintRepo.AddConstraint(&utils.TestConstraint)
 		newConstraints, _ := ConstraintRepo.GetAllConstraints()
 
 		assert.NoError(err)
@@ -49,7 +49,7 @@ func TestGetConstraint(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(ConstraintRepo.DB)
-		defer SetupTables(ConstraintRepo.DB)
+		defer utils.SetUpTables(ConstraintRepo.DB)
 		_, err := ConstraintRepo.GetConstraint(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while getting from non-existing table")
 	})
@@ -67,11 +67,11 @@ func TestGetConstraint(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		ConstraintRepo.AddConstraint(&testConstraint)
-		constraint, err := ConstraintRepo.GetConstraint(testConstraint.ID)
+		ConstraintRepo.AddConstraint(&utils.TestConstraint)
+		constraint, err := ConstraintRepo.GetConstraint(utils.TestConstraint.ID)
 		assert.NotNil(constraint, "Result is nil")
 		assert.NoError(err, "There was error while getting constraint")
-		assert.Equal(testConstraint.ID, constraint.ID, "Returned constraint ID and test ID do not match.")
+		assert.Equal(utils.TestConstraint.ID, constraint.ID, "Returned constraint ID and test ID do not match.")
 	})
 }
 
@@ -80,29 +80,29 @@ func TestUpdateConstraint(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(ConstraintRepo.DB)
-		defer SetupTables(ConstraintRepo.DB)
-		err := ConstraintRepo.UpdateConstraint(testConstraint)
+		defer utils.SetUpTables(ConstraintRepo.DB)
+		err := ConstraintRepo.UpdateConstraint(utils.TestConstraint)
 		assert.Error(err, "Error was not thrown while updating in non-existing table")
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
 		uuid := "invalidUUID"
-		testConstraint.ID = uuid
-		err := ConstraintRepo.UpdateConstraint(testConstraint)
+		utils.TestConstraint.ID = uuid
+		err := ConstraintRepo.UpdateConstraint(utils.TestConstraint)
 		assert.NotNil(err, "Error was not thrown for invalid uuid")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
 		uuid := uuid.NewV4().String()
-		testConstraint.ID = uuid
-		err := ConstraintRepo.UpdateConstraint(testConstraint)
+		utils.TestConstraint.ID = uuid
+		err := ConstraintRepo.UpdateConstraint(utils.TestConstraint)
 		assert.NotNil(err, "Error was not thrown for non-existing uuid")
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		ConstraintRepo.AddConstraint(&testConstraint)
-		testConstraint.PropertyValue = 30
-		err := ConstraintRepo.UpdateConstraint(testConstraint)
+		ConstraintRepo.AddConstraint(&utils.TestConstraint)
+		utils.TestConstraint.PropertyValue = 30
+		err := ConstraintRepo.UpdateConstraint(utils.TestConstraint)
 		assert.NoError(err, "Constraint was not updated.")
 	})
 
@@ -113,7 +113,7 @@ func TestDeleteConstraint(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(ConstraintRepo.DB)
-		defer SetupTables(ConstraintRepo.DB)
+		defer utils.SetUpTables(ConstraintRepo.DB)
 		err := ConstraintRepo.DeleteConstraint(uuid.NewV4().String())
 		assert.Error(err, "Error was not thrown while deleting in non-existing table")
 	})
@@ -131,8 +131,8 @@ func TestDeleteConstraint(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		ConstraintRepo.AddConstraint(&testConstraint)
-		err := ConstraintRepo.DeleteConstraint(testConstraint.ID)
+		ConstraintRepo.AddConstraint(&utils.TestConstraint)
+		err := ConstraintRepo.DeleteConstraint(utils.TestConstraint.ID)
 		assert.NoError(err, "Constraint was not deleted.")
 	})
 }

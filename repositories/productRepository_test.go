@@ -13,22 +13,22 @@ func TestAddProduct(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(ProductRepo.DB)
-		defer SetupTables(ProductRepo.DB)
+		defer utils.SetUpTables(ProductRepo.DB)
 		assert.False(DoesTableExist("products", ProductRepo.DB))
-		err := ProductRepo.AddProduct(&testProduct)
+		err := ProductRepo.AddProduct(&utils.TestProduct)
 		assert.Error(err)
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		oldProducts, _ := ProductRepo.GetAllProducts(testAdmin.CompanyID)
-		err := ProductRepo.AddProduct(&testProduct)
-		newProducts, _ := ProductRepo.GetAllProducts(testAdmin.CompanyID)
+		oldProducts, _ := ProductRepo.GetAllProducts(utils.TestAdmin.CompanyID)
+		err := ProductRepo.AddProduct(&utils.TestProduct)
+		newProducts, _ := ProductRepo.GetAllProducts(utils.TestAdmin.CompanyID)
 		assert.NoError(err)
 		assert.Equal(1, len(newProducts)-len(oldProducts), "Product was not added.")
 	})
 
 	t.Run("add an existing product", func(t *testing.T) {
-		existingProduct := &models.Product{ID: testProduct.ID}
+		existingProduct := &models.Product{ID: utils.TestProduct.ID}
 		err := ProductRepo.AddProduct(existingProduct)
 
 		assert.Error(err)
@@ -39,7 +39,7 @@ func TestGetAllProducts(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("successful GetAll query", func(t *testing.T) {
-		allProducts, err := ProductRepo.GetAllProducts(testAdmin.CompanyID)
+		allProducts, err := ProductRepo.GetAllProducts(utils.TestAdmin.CompanyID)
 
 		assert.NoError(err)
 		assert.NotNil(allProducts, "Products were nil.")
@@ -65,7 +65,7 @@ func TestGetProduct(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		testID := testProduct.ID
+		testID := utils.TestProduct.ID
 		product, err := ProductRepo.GetProduct(testID)
 
 		assert.NoError(err)
@@ -90,16 +90,16 @@ func TestUpdateProduct(t *testing.T) {
 
 	t.Run("id does not exist", func(t *testing.T) {
 		randomUUID := "e323a287-c350-4b27-a567-d8c92c52f1d9"
-		randomProduct := models.Product{ID: randomUUID, IDC: testProduct.IDC, Name: testProduct.Name, Price: testProduct.Price, Quantity: testProduct.Quantity}
+		randomProduct := models.Product{ID: randomUUID, IDC: utils.TestProduct.IDC, Name: utils.TestProduct.Name, Price: utils.TestProduct.Price, Quantity: utils.TestProduct.Quantity}
 		assert.True(IsValidUUID(randomUUID))
 		err := ProductRepo.UpdateProduct(randomProduct)
 		assert.Error(err)
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		testProduct.Name = "UPDATED Name"
+		utils.TestProduct.Name = "UPDATED Name"
 
-		err := ProductRepo.UpdateProduct(testProduct)
+		err := ProductRepo.UpdateProduct(utils.TestProduct)
 
 		assert.NoError(err, "Product was not updated.")
 	})
@@ -124,7 +124,7 @@ func TestDeleteProduct(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		err := ProductRepo.DeleteProduct(testProduct.ID)
+		err := ProductRepo.DeleteProduct(utils.TestProduct.ID)
 
 		assert.NoError(err, "Product was not deleted.")
 	})

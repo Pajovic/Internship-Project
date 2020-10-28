@@ -23,13 +23,13 @@ func TestGetAllEmployees(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req.Header.Set("employeeID", testAdmin.ID)
+	req.Header.Set("employeeID", utils.TestAdmin.ID)
 
 	handler := http.HandlerFunc(EmployeeCont.GetAllEmployees)
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		rr := httptest.NewRecorder()
 
@@ -56,7 +56,7 @@ func TestGetEmployeeById(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/employee/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("GET", path, nil)
@@ -64,7 +64,7 @@ func TestGetEmployeeById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Set("employeeID", testAdmin.ID)
+		req.Header.Set("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -80,7 +80,7 @@ func TestGetEmployeeById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Set("employeeID", testAdmin.ID)
+		req.Header.Set("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -96,7 +96,7 @@ func TestGetEmployeeById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Set("employeeID", testAdmin.ID)
+		req.Header.Set("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -106,13 +106,13 @@ func TestGetEmployeeById(t *testing.T) {
 	})
 
 	t.Run("successful get", func(t *testing.T) {
-		path := fmt.Sprintf("/employee/%s", testAdmin.ID)
+		path := fmt.Sprintf("/employee/%s", utils.TestAdmin.ID)
 		req, err := http.NewRequest("GET", path, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		req.Header.Set("employeeID", testAdmin.ID)
+		req.Header.Set("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -130,7 +130,7 @@ func TestDeleteEmployee(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/employee/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("DELETE", path, nil)
@@ -171,13 +171,13 @@ func TestDeleteEmployee(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful delete", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		path := fmt.Sprintf("/employee/%s", testEmployee1.ID)
+		path := fmt.Sprintf("/employee/%s", utils.TestEmployee1.ID)
 		req, err := http.NewRequest("DELETE", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -198,9 +198,9 @@ func TestAddEmployee(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testEmployee)
+		body, err := json.Marshal(utils.TestEmployee)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -219,9 +219,9 @@ func TestAddEmployee(t *testing.T) {
 	})
 
 	t.Run("successful add", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testEmployee)
+		body, err := json.Marshal(utils.TestEmployee)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -247,9 +247,9 @@ func TestUpdateEmployee(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testAdmin)
+		body, err := json.Marshal(utils.TestAdmin)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -313,9 +313,9 @@ func TestUpdateEmployee(t *testing.T) {
 	})
 
 	t.Run("successful update", func(t *testing.T) {
-		testAdmin.FirstName = "UPDATED"
+		utils.TestAdmin.FirstName = "UPDATED"
 
-		body, err := json.Marshal(testAdmin)
+		body, err := json.Marshal(utils.TestAdmin)
 		if err != nil {
 			t.Fatal(err)
 		}
