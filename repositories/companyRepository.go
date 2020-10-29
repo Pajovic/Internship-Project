@@ -4,18 +4,37 @@ import (
 	"context"
 	"internship_project/models"
 	"internship_project/persistence"
+	"internship_project/utils"
 
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
 )
 
-type CompanyRepository struct {
-	DB *pgxpool.Pool
+type CompanyRepository interface {
+	GetAllCompanies() ([]models.Company, error)
+	GetCompany(string) (models.Company, error)
+	AddCompany(*models.Company) error
+	UpdateCompany(models.Company) error
+	DeleteCompany(string) error
+	ChangeExternalRightApproveStatus(string, bool) error
 }
 
-func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error) {
-	var companies []models.Company = []models.Company{}
+type companyRepository struct {
+	DB *pgxpool.Pool
+
+}
+
+func NewCompanyRepo(db *pgxpool.Pool) CompanyRepository {
+	if db == nil {
+		panic("CompanyRepository not created, pgxpool is nil")
+	}
+	return &companyRepository {
+		DB: db,
+	}
+}
+
+func (repository *companyRepository) GetAllCompanies() ([]models.Company, error) {
+	companies := []models.Company{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.companies")
 	defer rows.Close()
 
@@ -34,7 +53,7 @@ func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error)
 		}
 
 		companies = append(companies, models.Company{
-			Id:     stringUUID,
+			ID:     stringUUID,
 			Name:   company.Name,
 			IsMain: company.Ismain,
 		})
@@ -42,7 +61,7 @@ func (repository *CompanyRepository) GetAllCompanies() ([]models.Company, error)
 	return companies, nil
 }
 
-func (repository *CompanyRepository) GetCompany(id string) (models.Company, error) {
+func (repository *companyRepository) GetCompany(id string) (models.Company, error) {
 	var company models.Company
 
 	Uuid, err := uuid.FromString(id)
@@ -58,10 +77,7 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 	}
 
 	if !rows.Next() {
-		var pgErr pgconn.PgError
-		pgErr.Code = `02000`
-		pgErr.Message = `There is no company with this id`
-		return company, &pgErr
+		return company, utils.NoDataError
 	}
 
 	var companyPers persistence.Companies
@@ -74,7 +90,7 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 	}
 
 	company = models.Company{
-		Id:     stringUUID,
+		ID:     stringUUID,
 		Name:   companyPers.Name,
 		IsMain: companyPers.Ismain,
 	}
@@ -82,19 +98,19 @@ func (repository *CompanyRepository) GetCompany(id string) (models.Company, erro
 	return company, nil
 }
 
-func (repository *CompanyRepository) AddCompany(company *models.Company) error {
+func (repository *companyRepository) AddCompany(company *models.Company) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(context.Background())
 
-	company.Id = uuid.NewV4().String()
+	company.ID = uuid.NewV4().String()
 	companyPers := persistence.Companies{
 		Name:   company.Name,
 		Ismain: company.IsMain,
 	}
-	companyPers.Id.Set(company.Id)
+	companyPers.Id.Set(company.ID)
 
 	_, err = companyPers.InsertTx(&tx)
 	if err != nil {
@@ -104,7 +120,7 @@ func (repository *CompanyRepository) AddCompany(company *models.Company) error {
 	return tx.Commit(context.Background())
 }
 
-func (repository *CompanyRepository) UpdateCompany(company models.Company) error {
+func (repository *companyRepository) UpdateCompany(company models.Company) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -115,23 +131,20 @@ func (repository *CompanyRepository) UpdateCompany(company models.Company) error
 		Name:   company.Name,
 		Ismain: company.IsMain,
 	}
-	companyPers.Id.Set(company.Id)
+	companyPers.Id.Set(company.ID)
 
 	commandTag, err := companyPers.UpdateTx(&tx)
 	if err != nil {
 		return err
 	}
 	if commandTag != 1 {
-		var pgErr pgconn.PgError
-		pgErr.Code = `02000`
-		pgErr.Message = `There is no company with this id`
-		return &pgErr
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
 }
 
-func (repository *CompanyRepository) DeleteCompany(id string) error {
+func (repository *companyRepository) DeleteCompany(id string) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -146,24 +159,18 @@ func (repository *CompanyRepository) DeleteCompany(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		var pgErr pgconn.PgError
-		pgErr.Code = `02000`
-		pgErr.Message = `There is no company with this id`
-		return &pgErr
+		return utils.NoDataError
 	}
 	return tx.Commit(context.Background())
 }
 
-func (repository *CompanyRepository) ChangeExternalRightApproveStatus(idear string, status bool) error {
+func (repository *companyRepository) ChangeExternalRightApproveStatus(idear string, status bool) error {
 	commandTag, err := repository.DB.Exec(context.Background(), "UPDATE external_access_rights SET approved = $1 WHERE id = $2;", status, idear)
 	if err != nil {
 		return err
 	}
 	if commandTag.RowsAffected() != 1 {
-		var pgErr pgconn.PgError
-		pgErr.Code = `02000`
-		pgErr.Message = `There is no external right with this id`
-		return &pgErr
+		return utils.NoDataError
 	}
 	return nil
 }

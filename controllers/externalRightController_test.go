@@ -27,7 +27,7 @@ func TestGetAllEars(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		rr := httptest.NewRecorder()
 
@@ -54,7 +54,7 @@ func TestGetExternalRightById(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/ear/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("GET", path, nil)
@@ -99,7 +99,7 @@ func TestGetExternalRightById(t *testing.T) {
 	})
 
 	t.Run("successful get", func(t *testing.T) {
-		path := fmt.Sprintf("/ear/%s", testEar1.ID)
+		path := fmt.Sprintf("/ear/%s", utils.TestEar1.ID)
 		req, err := http.NewRequest("GET", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -121,9 +121,9 @@ func TestUpdateExternalRight(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testEar1)
+		body, err := json.Marshal(utils.TestEar1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -148,8 +148,8 @@ func TestUpdateExternalRight(t *testing.T) {
 			Read:   true,
 			Update: true,
 			Delete: true,
-			IDSC:   testCompany1.Id,
-			IDRC:   testCompany2.Id,
+			IDSC:   utils.TestCompany1.ID,
+			IDRC:   utils.TestCompany2.ID,
 		}
 		body, err := json.Marshal(invalidUUID)
 		if err != nil {
@@ -170,7 +170,7 @@ func TestUpdateExternalRight(t *testing.T) {
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
-		body, err := json.Marshal(testEar)
+		body, err := json.Marshal(utils.TestEar)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -185,13 +185,13 @@ func TestUpdateExternalRight(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful update", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testEar1)
+		body, err := json.Marshal(utils.TestEar1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -218,7 +218,7 @@ func TestDeleteExternalRight(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/ear/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("DELETE", path, nil)
@@ -259,13 +259,13 @@ func TestDeleteExternalRight(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful delete", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		path := fmt.Sprintf("/ear/%s", testEar2.ID)
+		path := fmt.Sprintf("/ear/%s", utils.TestEar2.ID)
 		req, err := http.NewRequest("DELETE", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -286,9 +286,9 @@ func TestAddExternalRight(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testEar)
+		body, err := json.Marshal(utils.TestEar)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -307,9 +307,9 @@ func TestAddExternalRight(t *testing.T) {
 	})
 
 	t.Run("successful add", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testEar)
+		body, err := json.Marshal(utils.TestEar)
 		if err != nil {
 			t.Fatal(err)
 		}

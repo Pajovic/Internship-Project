@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
-	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
+	"internship_project/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -17,7 +17,7 @@ type ExternalRightController struct {
 func (controller *ExternalRightController) GetAllEars(w http.ResponseWriter, r *http.Request) {
 	ears, err := controller.Service.GetAllEars()
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -29,7 +29,7 @@ func (controller *ExternalRightController) GetEarById(w http.ResponseWriter, r *
 
 	ear, err := controller.Service.GetEar(idParam)
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -41,7 +41,7 @@ func (controller *ExternalRightController) AddEar(w http.ResponseWriter, r *http
 	json.NewDecoder(r.Body).Decode(&newEar)
 	err := controller.Service.AddNewEar(&newEar)
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -55,7 +55,7 @@ func (controller *ExternalRightController) UpdateEar(w http.ResponseWriter, r *h
 	err := controller.Service.UpdateEar(updateEar)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -68,7 +68,7 @@ func (controller *ExternalRightController) DeleteEar(w http.ResponseWriter, r *h
 	err := controller.Service.DeleteEar(idParam)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(204)

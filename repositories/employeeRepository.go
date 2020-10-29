@@ -5,18 +5,37 @@ import (
 	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
+	"internship_project/utils"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
 )
 
-//EmployeeRepository .
-type EmployeeRepository struct {
+type EmployeeRepository interface {
+	GetAllEmployees(string) ([]models.Employee, error)
+	GetEmployeeByID(id string) (models.Employee, error)
+	AddEmployee(*models.Employee) error
+	UpdateEmployee(models.Employee) error
+	DeleteEmployee(string) error
+	GetEmployeeExternalPermissions(string, models.Product) (models.ExternalRights, error)
+	CheckCompaniesSharingEmployeeData(string, string) error
+}
+
+type employeeRepository struct {
 	DB *pgxpool.Pool
 }
 
+func NewEmployeeRepo(db *pgxpool.Pool) EmployeeRepository {
+	if db == nil {
+		panic("EmployeeRepository not created, pgxpool is nil")
+	}
+	return &employeeRepository{
+		DB: db,
+	}
+}
+
 // GetAllEmployees .
-func (repository *EmployeeRepository) GetAllEmployees(employeeIdc string) ([]models.Employee, error) {
+func (repository *employeeRepository) GetAllEmployees(employeeIdc string) ([]models.Employee, error) {
 	allEmployees := []models.Employee{}
 	query := "select * from employees e where e.idc = $1 or idc in (select idsc from external_access_rights ear where ear.idrc = $2 and approved = true);"
 	rows, err := repository.DB.Query(context.Background(), query, employeeIdc, employeeIdc)
@@ -56,7 +75,7 @@ func (repository *EmployeeRepository) GetAllEmployees(employeeIdc string) ([]mod
 }
 
 // GetEmployeeByID .
-func (repository *EmployeeRepository) GetEmployeeByID(id string) (models.Employee, error) {
+func (repository *employeeRepository) GetEmployeeByID(id string) (models.Employee, error) {
 	var employee models.Employee
 
 	Uuid, err := uuid.FromString(id)
@@ -105,7 +124,7 @@ func (repository *EmployeeRepository) GetEmployeeByID(id string) (models.Employe
 }
 
 // AddEmployee .
-func (repository *EmployeeRepository) AddEmployee(employee *models.Employee) error {
+func (repository *employeeRepository) AddEmployee(employee *models.Employee) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -134,7 +153,7 @@ func (repository *EmployeeRepository) AddEmployee(employee *models.Employee) err
 }
 
 // UpdateEmployee .
-func (repository *EmployeeRepository) UpdateEmployee(employee models.Employee) error {
+func (repository *employeeRepository) UpdateEmployee(employee models.Employee) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -157,14 +176,14 @@ func (repository *EmployeeRepository) UpdateEmployee(employee models.Employee) e
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to update")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
 }
 
 // DeleteEmployee .
-func (repository *EmployeeRepository) DeleteEmployee(id string) error {
+func (repository *employeeRepository) DeleteEmployee(id string) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -179,19 +198,19 @@ func (repository *EmployeeRepository) DeleteEmployee(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to delete")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
 }
 
 // GetEmployeeExternalPermissions .
-func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceivingCompany string, product models.Product) (models.ExternalRights, error) {
-	var allRights []models.ExternalRights
+func (repository *employeeRepository) GetEmployeeExternalPermissions(idReceivingCompany string, product models.Product) (models.ExternalRights, error) {
+	allRights := []models.ExternalRights{}
 	var rights models.ExternalRights
 
 	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
-	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2;"
+	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2 AND approved = true;"
 	rows, err := repository.DB.Query(context.Background(), queryExternalAccess, idReceivingCompany, product.IDC)
 	defer rows.Close()
 
@@ -242,9 +261,6 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 	default:
 		// 2b. Otherwise, we need to acquire constraints, using ID of all constraints
 		for _, right := range allRights {
-			if !right.Approved {
-				continue
-			}
 			rows, err := repository.DB.Query(context.Background(), `select * from access_constraints where idear = $1`, right.ID)
 			defer rows.Close()
 
@@ -292,8 +308,8 @@ func (repository *EmployeeRepository) GetEmployeeExternalPermissions(idReceiving
 }
 
 // CheckCompaniesSharingEmployeeData .
-func (repository *EmployeeRepository) CheckCompaniesSharingEmployeeData(idReceivingCompany, idSharingCompany string) error {
-	var allRights []models.ExternalRights
+func (repository *employeeRepository) CheckCompaniesSharingEmployeeData(idReceivingCompany, idSharingCompany string) error {
+	allRights := []models.ExternalRights{}
 
 	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
 

@@ -1,7 +1,7 @@
 package models
 
 type Company struct {
-	Id     string
-	Name   string
-	IsMain bool
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	IsMain bool   `json:"isMain"`
 }
