@@ -112,7 +112,7 @@ func getConnectionPool() *pgxpool.Pool {
 
 func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) controllers.ProductController {
 
-	productRepository := repositories.ProductRepository{DB: connpool}
+	productRepository := repositories.NewProductRepo(connpool)
 	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: *employeeRepo}
 	productController := controllers.ProductController{Service: productService}
 
@@ -122,7 +122,7 @@ func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.Emp
 }
 
 func GetCompanyController(connpool *pgxpool.Pool) controllers.CompanyController {
-	companyRepository := repositories.CompanyRepository{DB: connpool}
+	companyRepository := repositories.NewCompanyRepo(connpool)
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := controllers.CompanyController{Service: companyService}
 
@@ -132,7 +132,7 @@ func GetCompanyController(connpool *pgxpool.Pool) controllers.CompanyController 
 }
 
 func getEmployeeController(connpool *pgxpool.Pool) controllers.EmployeeController {
-	employeeRepository := repositories.EmployeeRepository{DB: connpool}
+	employeeRepository := repositories.NewEmployeeRepo(connpool)
 	employeeService := services.EmployeeService{Repository: employeeRepository}
 	employeeController := controllers.EmployeeController{Service: employeeService}
 
@@ -142,7 +142,7 @@ func getEmployeeController(connpool *pgxpool.Pool) controllers.EmployeeControlle
 }
 
 func getExternalRightController(connpool *pgxpool.Pool) controllers.ExternalRightController {
-	earRepository := repositories.ExternalRightRepository{DB: connpool}
+	earRepository := repositories.NewExternalRightRepo(connpool)
 	earService := services.ExternalRightService{Repository: earRepository}
 	ExternalRightController := controllers.ExternalRightController{Service: earService}
 
@@ -152,7 +152,7 @@ func getExternalRightController(connpool *pgxpool.Pool) controllers.ExternalRigh
 }
 
 func getConstraintController(connpool *pgxpool.Pool) controllers.ConstraintController {
-	constraintRepository := repositories.ConstraintRepository{DB: connpool}
+	constraintRepository := repositories.NewConstraintRepo(connpool)
 	constraintService := services.ConstraintService{Repository: constraintRepository}
 	constraintController := controllers.ConstraintController{Service: constraintService}
 

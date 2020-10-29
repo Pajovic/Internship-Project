@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
-	"internship_project/errorhandler"
 	"internship_project/models"
 	"internship_project/services"
+	"internship_project/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -17,7 +17,7 @@ type ConstraintController struct {
 func (controller *ConstraintController) GetAllConstraints(w http.ResponseWriter, r *http.Request) {
 	constraints, err := controller.Service.GetAllConstraints()
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -29,7 +29,7 @@ func (controller *ConstraintController) GetConstraintById(w http.ResponseWriter,
 
 	constraint, err := controller.Service.GetConstraint(idParam)
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -41,7 +41,7 @@ func (controller *ConstraintController) AddConstraint(w http.ResponseWriter, r *
 	json.NewDecoder(r.Body).Decode(&newConstraint)
 	err := controller.Service.AddNewConstraint(&newConstraint)
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -55,7 +55,7 @@ func (controller *ConstraintController) UpdateConstraint(w http.ResponseWriter, 
 	err := controller.Service.UpdateConstraint(updateConstraint)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -69,7 +69,7 @@ func (controller *ConstraintController) DeleteConstraint(w http.ResponseWriter, 
 	err := controller.Service.DeleteConstraint(idParam)
 
 	if err != nil {
-		errorhandler.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, err)
 		return
 	}
 	w.WriteHeader(204)

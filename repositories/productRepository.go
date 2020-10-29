@@ -5,6 +5,7 @@ import (
 	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
+	"internship_project/utils"
 	"strconv"
 	"strings"
 
@@ -12,11 +13,28 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type ProductRepository struct {
+type ProductRepository interface {
+	GetAllProducts(string) ([]models.Product, error)
+	GetProduct(string) (models.Product, error)
+	AddProduct(*models.Product) error
+	UpdateProduct(models.Product) error
+	DeleteProduct(string) error
+}
+
+type productRepository struct {
 	DB *pgxpool.Pool
 }
 
-func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]models.Product, error) {
+func NewProductRepo(db *pgxpool.Pool) ProductRepository {
+	if db == nil {
+		panic("ProductRepository not created, pgxpool is nil")
+	}
+	return &productRepository {
+		DB: db,
+	}
+}
+
+func (repository *productRepository) GetAllProducts(employeeIdc string) ([]models.Product, error) {
 	earConstraints := []models.EarConstraint{}
 
 	query := `select ear.id "idear", ear.idrc, ear.idsc, p.name "property", o2.name "operator", ac.property_value from external_access_rights ear
@@ -32,7 +50,7 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 	}
 	for rows.Next() {
 		var earConstraint models.EarConstraint
-		err := rows.Scan(&earConstraint.Idear, &earConstraint.Idrc, &earConstraint.Idsc, &earConstraint.Property, &earConstraint.Operator, &earConstraint.PropertyValue)
+		err := rows.Scan(&earConstraint.IDEAR, &earConstraint.IDRC, &earConstraint.IDSC, &earConstraint.Property, &earConstraint.Operator, &earConstraint.PropertyValue)
 		if err != nil {
 			return nil, err
 		}
@@ -45,9 +63,9 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 
 	for _, earc := range earConstraints {
 		if earc.Operator != "" && earc.Property != "" {
-			finalQuery.WriteString(" or (p.idc = '" + earc.Idsc + "' and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue) + ")")
+			finalQuery.WriteString(" or (p.idc = '" + earc.IDSC + "' and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue) + ")")
 		} else {
-			finalQuery.WriteString(" or p.idc = '" + earc.Idsc + "'")
+			finalQuery.WriteString(" or p.idc = '" + earc.IDSC + "'")
 		}
 	}
 	finalQuery.WriteString(";")
@@ -89,7 +107,7 @@ func (repository *ProductRepository) GetAllProducts(employeeIdc string) ([]model
 	return products, nil
 }
 
-func (repository *ProductRepository) GetProduct(id string) (models.Product, error) {
+func (repository *productRepository) GetProduct(id string) (models.Product, error) {
 	var product models.Product
 
 	Uuid, err := uuid.FromString(id)
@@ -134,7 +152,7 @@ func (repository *ProductRepository) GetProduct(id string) (models.Product, erro
 	return product, nil
 }
 
-func (repository *ProductRepository) AddProduct(product *models.Product) error {
+func (repository *productRepository) AddProduct(product *models.Product) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -159,7 +177,7 @@ func (repository *ProductRepository) AddProduct(product *models.Product) error {
 	return tx.Commit(context.Background())
 }
 
-func (repository *ProductRepository) UpdateProduct(product models.Product) error {
+func (repository *productRepository) UpdateProduct(product models.Product) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -179,13 +197,13 @@ func (repository *ProductRepository) UpdateProduct(product models.Product) error
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to update")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
 }
 
-func (repository *ProductRepository) DeleteProduct(id string) error {
+func (repository *productRepository) DeleteProduct(id string) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -200,7 +218,7 @@ func (repository *ProductRepository) DeleteProduct(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to delete")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())

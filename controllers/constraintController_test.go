@@ -27,7 +27,7 @@ func TestGetAllConstraints(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		rr := httptest.NewRecorder()
 
@@ -54,7 +54,7 @@ func TestGetConstraintById(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/constraint/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("GET", path, nil)
@@ -99,7 +99,7 @@ func TestGetConstraintById(t *testing.T) {
 	})
 
 	t.Run("successful get", func(t *testing.T) {
-		path := fmt.Sprintf("/constraint/%s", testConstraint2.ID)
+		path := fmt.Sprintf("/constraint/%s", utils.TestConstraint2.ID)
 		req, err := http.NewRequest("GET", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -121,9 +121,9 @@ func TestUpdateConstraint(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testConstraint)
+		body, err := json.Marshal(utils.TestConstraint)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -168,10 +168,10 @@ func TestUpdateConstraint(t *testing.T) {
 	t.Run("non-existing uuid", func(t *testing.T) {
 		randomUUID := models.AccessConstraint{
 			ID:            uuid.NewV4().String(),
-			IDEAR:         testConstraint2.IDEAR,
-			OperatorID:    testConstraint2.OperatorID,
-			PropertyID:    testConstraint2.PropertyID,
-			PropertyValue: testConstraint2.PropertyValue,
+			IDEAR:         utils.TestConstraint2.IDEAR,
+			OperatorID:    utils.TestConstraint2.OperatorID,
+			PropertyID:    utils.TestConstraint2.PropertyID,
+			PropertyValue: utils.TestConstraint2.PropertyValue,
 		}
 		body, err := json.Marshal(randomUUID)
 		if err != nil {
@@ -188,14 +188,14 @@ func TestUpdateConstraint(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful update", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		testConstraint2.PropertyValue = 99
-		body, err := json.Marshal(testConstraint2)
+		utils.TestConstraint2.PropertyValue = 99
+		body, err := json.Marshal(utils.TestConstraint2)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -222,7 +222,7 @@ func TestDeleteConstraint(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/constraint/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("DELETE", path, nil)
@@ -263,13 +263,13 @@ func TestDeleteConstraint(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful delete", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		path := fmt.Sprintf("/constraint/%s", testConstraint2.ID)
+		path := fmt.Sprintf("/constraint/%s", utils.TestConstraint2.ID)
 		req, err := http.NewRequest("DELETE", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -290,9 +290,9 @@ func TestAddConstraint(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testConstraint)
+		body, err := json.Marshal(utils.TestConstraint)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -311,9 +311,9 @@ func TestAddConstraint(t *testing.T) {
 	})
 
 	t.Run("successful add", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testConstraint)
+		body, err := json.Marshal(utils.TestConstraint)
 		if err != nil {
 			t.Fatal(err)
 		}

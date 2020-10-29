@@ -5,17 +5,35 @@ import (
 	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
+	"internship_project/utils"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
 )
 
-type ConstraintRepository struct {
+type ConstraintRepository interface {
+	GetAllConstraints() ([]models.AccessConstraint, error)
+	GetConstraint(string) (models.AccessConstraint, error)
+	AddConstraint(*models.AccessConstraint) error
+	UpdateConstraint(models.AccessConstraint) error
+	DeleteConstraint(string) error
+}
+
+type constraintRepository struct {
 	DB *pgxpool.Pool
 }
 
-func (repository *ConstraintRepository) GetAllConstraints() ([]models.AccessConstraint, error) {
-	var constraints []models.AccessConstraint = []models.AccessConstraint{}
+func NewConstraintRepo(db *pgxpool.Pool) ConstraintRepository {
+	if db == nil {
+		panic("ConstraintRepository not created, pgxpool is nil")
+	}
+	return &constraintRepository {
+		DB: db,
+	}
+}
+
+func (repository *constraintRepository) GetAllConstraints() ([]models.AccessConstraint, error) {
+	constraints := []models.AccessConstraint{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.access_constraints")
 	defer rows.Close()
 
@@ -50,7 +68,7 @@ func (repository *ConstraintRepository) GetAllConstraints() ([]models.AccessCons
 	return constraints, nil
 }
 
-func (repository *ConstraintRepository) GetConstraint(id string) (models.AccessConstraint, error) {
+func (repository *constraintRepository) GetConstraint(id string) (models.AccessConstraint, error) {
 	var constraint models.AccessConstraint
 
 	Uuid, err := uuid.FromString(id)
@@ -95,7 +113,7 @@ func (repository *ConstraintRepository) GetConstraint(id string) (models.AccessC
 	return constraint, nil
 }
 
-func (repository *ConstraintRepository) AddConstraint(constraint *models.AccessConstraint) error {
+func (repository *constraintRepository) AddConstraint(constraint *models.AccessConstraint) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -119,7 +137,7 @@ func (repository *ConstraintRepository) AddConstraint(constraint *models.AccessC
 	return tx.Commit(context.Background())
 }
 
-func (repository *ConstraintRepository) UpdateConstraint(constraint models.AccessConstraint) error {
+func (repository *constraintRepository) UpdateConstraint(constraint models.AccessConstraint) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -139,13 +157,13 @@ func (repository *ConstraintRepository) UpdateConstraint(constraint models.Acces
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to update")
+		return utils.NoDataError
 	}
 
 	return tx.Commit(context.Background())
 }
 
-func (repository *ConstraintRepository) DeleteConstraint(id string) error {
+func (repository *constraintRepository) DeleteConstraint(id string) error {
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err
@@ -161,7 +179,7 @@ func (repository *ConstraintRepository) DeleteConstraint(id string) error {
 		return err
 	}
 	if commandTag != 1 {
-		return errors.New("No row found to delete")
+		return utils.NoDataError
 	}
 	return tx.Commit(context.Background())
 }

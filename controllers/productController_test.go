@@ -23,13 +23,13 @@ func TestGetAllProducts(t *testing.T) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("employeeID", testAdmin.ID)
+	req.Header.Set("employeeID", utils.TestAdmin.ID)
 
 	handler := http.HandlerFunc(ProductCont.GetAllProducts)
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		rr := httptest.NewRecorder()
 
@@ -54,9 +54,9 @@ func TestAddProduct(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testProduct)
+		body, err := json.Marshal(utils.TestProduct)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -65,7 +65,7 @@ func TestAddProduct(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -75,9 +75,9 @@ func TestAddProduct(t *testing.T) {
 	})
 
 	t.Run("successful add", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testProduct)
+		body, err := json.Marshal(utils.TestProduct)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -86,7 +86,7 @@ func TestAddProduct(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -104,7 +104,7 @@ func TestGetProductById(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/product/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("GET", path, nil)
@@ -112,7 +112,7 @@ func TestGetProductById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -129,7 +129,7 @@ func TestGetProductById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -145,7 +145,7 @@ func TestGetProductById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -155,13 +155,13 @@ func TestGetProductById(t *testing.T) {
 	})
 
 	t.Run("successful get", func(t *testing.T) {
-		path := fmt.Sprintf("/product/%s", testProduct1.ID)
+		path := fmt.Sprintf("/product/%s", utils.TestProduct1.ID)
 		req, err := http.NewRequest("GET", path, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -179,7 +179,7 @@ func TestDeleteProduct(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/product/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("DELETE", path, nil)
@@ -187,7 +187,7 @@ func TestDeleteProduct(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -202,7 +202,7 @@ func TestDeleteProduct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -217,7 +217,7 @@ func TestDeleteProduct(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -227,14 +227,14 @@ func TestDeleteProduct(t *testing.T) {
 	})
 
 	t.Run("successful delete", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		path := fmt.Sprintf("/product/%s", testProduct1.ID)
+		path := fmt.Sprintf("/product/%s", utils.TestProduct1.ID)
 		req, err := http.NewRequest("DELETE", path, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -252,11 +252,11 @@ func TestUpdateProduct(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		testProduct1.Name = "UPDATED"
+		utils.TestProduct1.Name = "UPDATED"
 
-		body, err := json.Marshal(testProduct1)
+		body, err := json.Marshal(utils.TestProduct1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -266,7 +266,7 @@ func TestUpdateProduct(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -276,7 +276,7 @@ func TestUpdateProduct(t *testing.T) {
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
-		body, err := json.Marshal(testProduct)
+		body, err := json.Marshal(utils.TestProduct)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -287,7 +287,7 @@ func TestUpdateProduct(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -297,8 +297,8 @@ func TestUpdateProduct(t *testing.T) {
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
-		testProduct.ID = uuid.NewV4().String()
-		body, err := json.Marshal(testProduct)
+		utils.TestProduct.ID = uuid.NewV4().String()
+		body, err := json.Marshal(utils.TestProduct)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -308,22 +308,22 @@ func TestUpdateProduct(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 
 		router.ServeHTTP(rr, req)
-		testProduct.ID = ""
+		utils.TestProduct.ID = ""
 
 		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful update", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		testProduct1.Name = "UPDATED"
+		utils.TestProduct1.Name = "UPDATED"
 
-		body, err := json.Marshal(testProduct1)
+		body, err := json.Marshal(utils.TestProduct1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -333,7 +333,7 @@ func TestUpdateProduct(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Add("employeeID", testAdmin.ID)
+		req.Header.Add("employeeID", utils.TestAdmin.ID)
 
 		rr := httptest.NewRecorder()
 

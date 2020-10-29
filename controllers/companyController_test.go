@@ -26,7 +26,7 @@ func TestGetAllCompanies(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		rr := httptest.NewRecorder()
 
@@ -53,7 +53,7 @@ func TestGetCompanyById(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/company/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("GET", path, nil)
@@ -98,7 +98,7 @@ func TestGetCompanyById(t *testing.T) {
 	})
 
 	t.Run("successful get", func(t *testing.T) {
-		path := fmt.Sprintf("/company/%s", testCompany1.Id)
+		path := fmt.Sprintf("/company/%s", utils.TestCompany1.ID)
 		req, err := http.NewRequest("GET", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -120,7 +120,7 @@ func TestDeleteCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
 		path := fmt.Sprintf("/company/%s", uuid.NewV4().String())
 		req, err := http.NewRequest("DELETE", path, nil)
@@ -165,9 +165,9 @@ func TestDeleteCompany(t *testing.T) {
 	})
 
 	t.Run("successful delete", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		path := fmt.Sprintf("/company/%s", mainCompany1.Id)
+		path := fmt.Sprintf("/company/%s", utils.MainCompany1.ID)
 		req, err := http.NewRequest("DELETE", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -188,9 +188,9 @@ func TestAddCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testCompany)
+		body, err := json.Marshal(utils.TestCompany)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -209,9 +209,9 @@ func TestAddCompany(t *testing.T) {
 	})
 
 	t.Run("successful add", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testCompany)
+		body, err := json.Marshal(utils.TestCompany)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -237,9 +237,9 @@ func TestUpdateCompany(t *testing.T) {
 
 	t.Run("table does not exist", func(t *testing.T) {
 		utils.DropTables(connpool)
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testCompany1)
+		body, err := json.Marshal(utils.TestCompany1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -259,7 +259,7 @@ func TestUpdateCompany(t *testing.T) {
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
-		body, err := json.Marshal(testCompany)
+		body, err := json.Marshal(utils.TestCompany)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -279,8 +279,8 @@ func TestUpdateCompany(t *testing.T) {
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
-		testCompany.Id = uuid.NewV4().String()
-		body, err := json.Marshal(testCompany)
+		utils.TestCompany.ID = uuid.NewV4().String()
+		body, err := json.Marshal(utils.TestCompany)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -295,15 +295,15 @@ func TestUpdateCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		testCompany.Id = ""
+		utils.TestCompany.ID = ""
 
 		assert.Equal(http.StatusNotFound, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful update", func(t *testing.T) {
-		defer SetUpTables(connpool)
+		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(testCompany1)
+		body, err := json.Marshal(utils.TestCompany1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -336,7 +336,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Set("companyID", mainCompany1.Id)
+		req.Header.Set("companyID", utils.MainCompany1.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -351,7 +351,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Set("companyID", mainCompany1.Id)
+		req.Header.Set("companyID", utils.MainCompany1.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -361,12 +361,12 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 	})
 
 	t.Run("successful update", func(t *testing.T) {
-		path := fmt.Sprintf("/company/approve/%s", testEar2.ID)
+		path := fmt.Sprintf("/company/approve/%s", utils.TestEar2.ID)
 		req, err := http.NewRequest("PATCH", path, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Set("companyID", mainCompany1.Id)
+		req.Header.Set("companyID", utils.MainCompany1.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -376,12 +376,12 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 	})
 
 	t.Run("no permission to update", func(t *testing.T) {
-		path := fmt.Sprintf("/company/approve/%s", testEar2.ID)
+		path := fmt.Sprintf("/company/approve/%s", utils.TestEar2.ID)
 		req, err := http.NewRequest("PATCH", path, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Set("companyID", testCompany1.Id)
+		req.Header.Set("companyID", utils.TestCompany1.ID)
 
 		rr := httptest.NewRecorder()
 
