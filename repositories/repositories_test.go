@@ -21,7 +21,7 @@ type config struct {
 }
 
 var (
-	Connpool *pgxpool.Pool
+	Connpool       *pgxpool.Pool
 	EmployeeRepo   EmployeeRepository
 	ProductRepo    ProductRepository
 	CompanyRepo    CompanyRepository
@@ -56,11 +56,8 @@ func DoesTableExist(tableName string, connpool *pgxpool.Pool) bool {
 	err := connpool.QueryRow(context.Background(), "select 1 from information_schema.tables where table_name=$1", tableName).Scan(&n)
 	if err == pgx.ErrNoRows || err != nil {
 		return false
-	} else if err != nil {
-		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func getConnPool() *pgxpool.Pool {
@@ -82,6 +79,3 @@ func getConnPool() *pgxpool.Pool {
 
 	return dbtest
 }
-
-
-

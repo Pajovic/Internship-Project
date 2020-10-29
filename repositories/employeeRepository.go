@@ -29,7 +29,7 @@ func NewEmployeeRepo(db *pgxpool.Pool) EmployeeRepository {
 	if db == nil {
 		panic("EmployeeRepository not created, pgxpool is nil")
 	}
-	return &employeeRepository {
+	return &employeeRepository{
 		DB: db,
 	}
 }
@@ -210,7 +210,7 @@ func (repository *employeeRepository) GetEmployeeExternalPermissions(idReceiving
 	var rights models.ExternalRights
 
 	// 1. Using idReceivingCompany and idSharingCompany, acquire all external access rules for these two companies
-	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2;"
+	queryExternalAccess := "SELECT * FROM external_access_rights WHERE idrc = $1 AND idsc = $2 AND approved = true;"
 	rows, err := repository.DB.Query(context.Background(), queryExternalAccess, idReceivingCompany, product.IDC)
 	defer rows.Close()
 
@@ -261,9 +261,6 @@ func (repository *employeeRepository) GetEmployeeExternalPermissions(idReceiving
 	default:
 		// 2b. Otherwise, we need to acquire constraints, using ID of all constraints
 		for _, right := range allRights {
-			if !right.Approved {
-				continue
-			}
 			rows, err := repository.DB.Query(context.Background(), `select * from access_constraints where idear = $1`, right.ID)
 			defer rows.Close()
 
