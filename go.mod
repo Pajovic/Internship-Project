@@ -15,4 +15,5 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af // indirect
+	google.golang.org/api v0.35.0 // indirect
 )
