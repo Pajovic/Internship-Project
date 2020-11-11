@@ -32,6 +32,8 @@ func main() {
 	defer connpool.Close()
 
 	r := mux.NewRouter()
+	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./public/")))
+	r.PathPrefix("/static/").Handler(s)
 
 	// Product Routes
 	productRouter := r.PathPrefix("/product").Subrouter()

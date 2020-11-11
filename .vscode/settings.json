@@ -1,4 +1,5 @@
 {
     "go.coverOnSingleTest": true,
-    "go.coverOnSingleTestFile": true
+    "go.coverOnSingleTestFile": true,
+    "git.ignoreLimitWarning": true
 }
