@@ -28,12 +28,16 @@ func main() {
 	companyController := GetCompanyController(connpool)
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
+	userController := getUserController(connpool)
 
 	defer connpool.Close()
 
 	r := mux.NewRouter()
 	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./public/")))
 	r.PathPrefix("/static/").Handler(s)
+
+	// Sign In Routes
+	r.HandleFunc("/signin/google", userController.GoogleSignIn).Methods("POST")
 
 	// Product Routes
 	productRouter := r.PathPrefix("/product").Subrouter()
@@ -161,4 +165,14 @@ func getConstraintController(connpool *pgxpool.Pool) controllers.ConstraintContr
 	fmt.Println("Constraints controller up and running.")
 
 	return constraintController
+}
+
+func getUserController(connpool *pgxpool.Pool) controllers.UserController {
+	userRepository := repositories.NewUserRepo(connpool)
+	userService := services.UserService{Repository: userRepository}
+	userController := controllers.UserController{Service: userService}
+
+	fmt.Println("User controller up and running.")
+
+	return userController
 }
