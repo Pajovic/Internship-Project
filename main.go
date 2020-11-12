@@ -3,12 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/markbates/goth/gothic"
 	"internship_project/controllers"
 	"internship_project/repositories"
 	"internship_project/services"
+	"internship_project/utils"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/markbates/goth/gothic"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -25,9 +28,14 @@ type Config struct {
 }
 
 type GoogleAuthCredentials struct {
-	ClientId 		string `json:"client_id"`
-	ClientSecret	string `json:"client_secret"`
+	ClientId     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
 }
+
+var (
+	userRepository repositories.UserRepository
+	userService    services.UserService
+)
 
 func main() {
 	connpool := getConnectionPool()
@@ -38,6 +46,9 @@ func main() {
 	constraintController := getConstraintController(connpool)
 	userController := getUserController(connpool)
 
+	userRepository = repositories.NewUserRepo(connpool)
+	userService = services.UserService{Repository: userRepository}
+
 	defer connpool.Close()
 
 	r := mux.NewRouter()
@@ -46,7 +57,7 @@ func main() {
 
 	googleAuthCredentials := loadGoogleCredentials()
 	goth.UseProviders(
-		google.New(googleAuthCredentials.ClientId, googleAuthCredentials.ClientSecret ,"http://localhost:8000/auth/google/callback", "email", "profile"),
+		google.New(googleAuthCredentials.ClientId, googleAuthCredentials.ClientSecret, "http://localhost:8000/auth/google/callback", "email", "profile"),
 	)
 
 	// Sign In Routes
@@ -109,8 +120,29 @@ func main() {
 	constraintRouter.HandleFunc("", constraintController.UpdateConstraint).Methods("PUT")
 	constraintRouter.HandleFunc("/{id}", constraintController.DeleteConstraint).Methods("DELETE")
 
+	r.Use(googleAuthMiddleware)
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
+}
+
+func googleAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.String(), "/static/") || strings.HasPrefix(r.URL.String(), "/auth/") {
+			next.ServeHTTP(w, r)
+		} else {
+			idToken := r.Header.Get("id_token")
+
+			_, err := userService.GetUser(idToken)
+
+			if err != nil {
+				utils.WriteErrToClient(w, err)
+				// http.Redirect(w, r, "/static/", 404)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		}
+	})
 }
 
 func getConnectionPool() *pgxpool.Pool {
