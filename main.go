@@ -9,7 +9,6 @@ import (
 	"internship_project/utils"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/markbates/goth/gothic"
 
@@ -120,28 +119,29 @@ func main() {
 	constraintRouter.HandleFunc("", constraintController.UpdateConstraint).Methods("PUT")
 	constraintRouter.HandleFunc("/{id}", constraintController.DeleteConstraint).Methods("DELETE")
 
-	r.Use(googleAuthMiddleware)
+	companyRouter.Use(googleAuthMiddleware)
+	constraintRouter.Use(googleAuthMiddleware)
+	employeeRouter.Use(googleAuthMiddleware)
+	earRouter.Use(googleAuthMiddleware)
+	productRouter.Use(googleAuthMiddleware)
+
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
 }
 
 func googleAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.String(), "/static/") || strings.HasPrefix(r.URL.String(), "/auth/") {
-			next.ServeHTTP(w, r)
-		} else {
-			idToken := r.Header.Get("id_token")
+		idToken := r.Header.Get("id_token")
 
-			_, err := userService.GetUser(idToken)
+		_, err := userService.GetUser(idToken)
 
-			if err != nil {
-				utils.WriteErrToClient(w, err)
-				// http.Redirect(w, r, "/static/", 404)
-				return
-			}
-
-			next.ServeHTTP(w, r)
+		if err != nil {
+			utils.WriteErrToClient(w, err)
+			// http.Redirect(w, r, "/static/", 404)
+			return
 		}
+
+		next.ServeHTTP(w, r)
 	})
 }
 
