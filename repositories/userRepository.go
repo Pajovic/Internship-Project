@@ -9,6 +9,7 @@ import (
 )
 
 type UserRepository interface {
+	DoesUserExists(string) (bool, error)
 	GetAllUsers() ([]models.User, error)
 	GetUser(string) (models.User, error)
 	AddUser(models.User) error
@@ -27,6 +28,20 @@ func NewUserRepo(db *pgxpool.Pool) UserRepository {
 	return &userRepository {
 		DB: db,
 	}
+}
+
+func (repository *userRepository) DoesUserExists(id string) (bool, error) {
+	var count int
+	err := repository.DB.QueryRow(context.Background(), "select count(*) from public.users where id = $1", id).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	if count == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
+
 }
 
 func (repository *userRepository) GetAllUsers() ([]models.User, error) {

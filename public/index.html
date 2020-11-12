@@ -4,9 +4,9 @@
 <head>
     <script src="https://apis.google.com/js/platform.js" async defer></script>
     <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"> <!-- load bulma css -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> <!-- load fontawesome -->
     <title>AVA Internship Project - Single Sign On</title>
-    <meta name="google-signin-client_id"
-        content="964074182446-j5nvqao6o5rhvs5c3374bcrrckip111h.apps.googleusercontent.com">
 </head>
 
 <body>
@@ -14,45 +14,10 @@
         <div class="title">
             <h2>Single Sign On Demo</h2>
         </div>
-        <div class="g-signin2" data-onsuccess="onSignIn"></div>
-        <a href="#" id="signout" onclick="signOut()">Sign Out</a>
+        <a href="/auth/google" class="btn btn-danger"><span class="fa fa-google"></span> SignIn with Google</a>
     </div>
 
 </body>
-
-<script>
-    function onSignIn(googleUser) {
-        var profile = googleUser.getBasicProfile();
-        console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-        console.log('Name: ' + profile.getName());
-        console.log('Image URL: ' + profile.getImageUrl());
-        console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-        console.log('Token: ', googleUser.getAuthResponse().id_token)
-
-        let signinBtn = document.getElementsByClassName('g-signin2')[0]
-        let signoutBtn = document.getElementById('signout')
-        if (signinBtn.style.display === 'none') {
-            signinBtn.style.display = 'block';
-            signoutBtn.style.display = 'none';
-        } else {
-            signinBtn.style.display = 'none';
-            signoutBtn.style.display = 'block';
-        }
-    }
-
-    function signOut() {
-        let signinBtn = document.getElementsByClassName('g-signin2')[0]
-        let signoutBtn = document.getElementById('signout')
-
-        var auth2 = gapi.auth2.getAuthInstance();
-        auth2.signOut().then(function () {
-            console.log('User signed out.');
-            window.history.go()
-        });
-    }
-
-
-</script>
 
 <style>
     body {
@@ -70,10 +35,6 @@
         right: 2%;
     }
 
-    #signout {
-        display: none;
-        text-decoration: none;
-    }
 </style>
 
 

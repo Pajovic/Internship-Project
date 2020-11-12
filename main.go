@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/markbates/goth/gothic"
 	"internship_project/controllers"
 	"internship_project/repositories"
 	"internship_project/services"
@@ -12,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lytics/confl"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/google"
 )
 
 type Config struct {
@@ -19,6 +22,11 @@ type Config struct {
 	Password        string `json:"password"`
 	DatabaseURL     string `json:"database_url"`
 	TestDatabaseURL string `json:"test_database_url"`
+}
+
+type GoogleAuthCredentials struct {
+	ClientId 		string `json:"client_id"`
+	ClientSecret	string `json:"client_secret"`
 }
 
 func main() {
@@ -36,8 +44,16 @@ func main() {
 	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./public/")))
 	r.PathPrefix("/static/").Handler(s)
 
+	googleAuthCredentials := loadGoogleCredentials()
+	goth.UseProviders(
+		google.New(googleAuthCredentials.ClientId, googleAuthCredentials.ClientSecret ,"http://localhost:8000/auth/google/callback", "email", "profile"),
+	)
+
 	// Sign In Routes
-	r.HandleFunc("/signin/google", userController.GoogleSignIn).Methods("POST")
+	r.HandleFunc("/auth/{provider}/callback", userController.GoogleSignIn).Methods("GET")
+	r.HandleFunc("/auth/{provider}", func(res http.ResponseWriter, req *http.Request) {
+		gothic.BeginAuthHandler(res, req)
+	}).Methods("GET")
 
 	// Product Routes
 	productRouter := r.PathPrefix("/product").Subrouter()
@@ -114,6 +130,14 @@ func getConnectionPool() *pgxpool.Pool {
 	fmt.Println("Connected to database.")
 
 	return connection
+}
+
+func loadGoogleCredentials() GoogleAuthCredentials {
+	var googleAuthCredentials GoogleAuthCredentials
+	if _, err := confl.DecodeFile("googleauth.conf", &googleAuthCredentials); err != nil {
+		panic(err)
+	}
+	return googleAuthCredentials
 }
 
 func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) controllers.ProductController {

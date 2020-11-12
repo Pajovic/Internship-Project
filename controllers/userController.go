@@ -1,7 +1,8 @@
 package controllers
 
 import (
-	"encoding/json"
+	"fmt"
+	"github.com/markbates/goth/gothic"
 	"internship_project/services"
 	"internship_project/utils"
 	"net/http"
@@ -12,13 +13,16 @@ type UserController struct {
 }
 
 func (controller *UserController) GoogleSignIn(w http.ResponseWriter, r *http.Request) {
-	token := r.Header.Get("id_token")
-
-	user, err := controller.Service.GoogleSignIn(token)
+	user, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
 		utils.WriteErrToClient(w, err)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	u, err := controller.Service.GoogleSignIn(user)
+	if err != nil {
+		utils.WriteErrToClient(w, err)
+		return
+	}
+	fmt.Println("\nYou are logged in as:")
+	fmt.Println("     ", u, "\n")
 }

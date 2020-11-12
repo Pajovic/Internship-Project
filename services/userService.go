@@ -1,42 +1,33 @@
 package services
 
 import (
-	"context"
+	"github.com/markbates/goth"
 	"internship_project/models"
 	"internship_project/repositories"
-
-	"google.golang.org/api/idtoken"
 )
 
 type UserService struct {
 	Repository repositories.UserRepository
 }
 
-const googleClientId = ""
-
-func (service *UserService) GoogleSignIn(token string) (models.User, error) {
+func (service *UserService) GoogleSignIn(u goth.User) (models.User, error) {
 	var user models.User
-
-	tokenValidator, err := idtoken.NewValidator(context.Background())
+	exists, err := service.Repository.DoesUserExists(u.UserID)
 	if err != nil {
 		return user, err
 	}
-
-	payload, err := tokenValidator.Validate(context.Background(), token, googleClientId)
-	if err != nil {
-		return user, err
-	}
-
-	sub := payload.Subject
-	user, err = service.Repository.GetUser(sub)
-	if err != nil {
+	if !exists {
 		user = models.User{
-			ID:     sub,
-			Email: "",
-			Name:   "",
+			ID:     u.UserID,
+			Email: 	u.Email,
+			Name:   u.FirstName + " " + u.LastName,
 		}
-		service.Repository.AddUser(user)
+		err = service.Repository.AddUser(user)
+	} else {
+		user, err = service.Repository.GetUser(u.UserID)
 	}
-
+	if err != nil {
+		return user, err
+	}
 	return user, nil
 }
