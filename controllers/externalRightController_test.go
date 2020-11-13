@@ -81,7 +81,7 @@ func TestGetExternalRightById(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -95,11 +95,11 @@ func TestGetExternalRightById(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful get", func(t *testing.T) {
-		path := fmt.Sprintf("/ear/%s", utils.TestEar1.ID)
+		path := fmt.Sprintf("/ear/%s", utils.Ear1to2Disapproved.ID)
 		req, err := http.NewRequest("GET", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -123,7 +123,7 @@ func TestUpdateExternalRight(t *testing.T) {
 		utils.DropTables(connpool)
 		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(utils.TestEar1)
+		body, err := json.Marshal(utils.Ear1to2Disapproved)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -166,14 +166,24 @@ func TestUpdateExternalRight(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
-		body, err := json.Marshal(utils.TestEar)
+		randomEAR := models.ExternalRights{
+			ID:       uuid.NewV4().String(),
+			IDRC:     utils.TestEar.IDRC,
+			IDSC:     utils.TestEar.IDSC,
+			Read:     utils.TestEar.Read,
+			Update:   utils.TestEar.Update,
+			Delete:   utils.TestEar.Delete,
+			Approved: utils.TestEar.Approved,
+		}
+		body, err := json.Marshal(randomEAR)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		path := fmt.Sprintf("/ear")
 		req, err := http.NewRequest("PUT", path, bytes.NewBuffer(body))
 		if err != nil {
@@ -191,7 +201,7 @@ func TestUpdateExternalRight(t *testing.T) {
 	t.Run("successful update", func(t *testing.T) {
 		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(utils.TestEar1)
+		body, err := json.Marshal(utils.Ear1to2Disapproved)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -245,7 +255,7 @@ func TestDeleteExternalRight(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -263,9 +273,10 @@ func TestDeleteExternalRight(t *testing.T) {
 	})
 
 	t.Run("successful delete", func(t *testing.T) {
+		utils.SetUpTables(connpool)
 		defer utils.SetUpTables(connpool)
 
-		path := fmt.Sprintf("/ear/%s", utils.TestEar2.ID)
+		path := fmt.Sprintf("/ear/%s", utils.TestEar.ID)
 		req, err := http.NewRequest("DELETE", path, nil)
 		if err != nil {
 			t.Fatal(err)

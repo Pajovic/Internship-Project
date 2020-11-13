@@ -2,10 +2,11 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/markbates/goth/gothic"
 	"internship_project/services"
 	"internship_project/utils"
 	"net/http"
+
+	"github.com/markbates/goth/gothic"
 )
 
 type UserController struct {
@@ -24,5 +25,5 @@ func (controller *UserController) GoogleSignIn(w http.ResponseWriter, r *http.Re
 		return
 	}
 	fmt.Println("\nYou are logged in as:")
-	fmt.Println("     ", u, "\n")
+	fmt.Println("     ", u)
 }

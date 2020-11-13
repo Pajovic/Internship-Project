@@ -2,9 +2,10 @@ package utils
 
 import (
 	"errors"
-	"github.com/jackc/pgconn"
 	"net/http"
 	"strings"
+
+	"github.com/jackc/pgconn"
 )
 
 var (
@@ -15,7 +16,7 @@ var (
 func GetErrorMsg(err error) (string, int) {
 	var pgErr *pgconn.PgError
 	if !errors.As(err, &pgErr) {
-		return err.Error(), 500
+		return err.Error(), 400
 	}
 	switch pgErr.Code {
 	case "22P02":
