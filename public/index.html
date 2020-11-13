@@ -4,22 +4,63 @@
 <head>
     <script src="https://apis.google.com/js/platform.js" async defer></script>
     <link rel="icon" href="favicon.ico">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
-    <!-- load bulma css -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- load fontawesome -->
     <title>AVA Internship Project - Single Sign On</title>
+    <meta name="google-signin-client_id"
+          content="964074182446-j5nvqao6o5rhvs5c3374bcrrckip111h.apps.googleusercontent.com">
 </head>
 
 <body>
-    <div class="wrapper">
-        <div class="title">
-            <h2>Single Sign On Demo</h2>
-        </div>
-        <a href="/auth/google" class="btn btn-danger"><span class="fa fa-google"></span> Sign In with Google</a>
+<div class="wrapper">
+    <div class="title">
+        <h2>Single Sign On Demo</h2>
     </div>
+    <div class="g-signin2" data-onsuccess="onSignIn"></div>
+    <a href="#" id="signout" onclick="signOut()">Sign Out</a>
+    <div class="jwttitle">
+        <h3 id="JWT">TEST</h3>
+    </div>
+</div>
 
 </body>
+
+<script>
+    function onSignIn(googleUser) {
+        console.log(googleUser.getAuthResponse().id_token);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'http://localhost:8000/auth/google');
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onload = function() {
+            let jwtDisplay = document.getElementById('JWT')
+            jwtDisplay.style.display = 'block';
+            jwtDisplay.innerText = "Your JWT is: " + xhr.responseText
+        };
+        xhr.send(JSON.stringify({"token" : googleUser.getAuthResponse().id_token}));
+
+        let signinBtn = document.getElementsByClassName('g-signin2')[0]
+        let signoutBtn = document.getElementById('signout')
+        let jwtDisplay = document.getElementById('JWT')
+        if (signinBtn.style.display === 'none') {
+            signinBtn.style.display = 'block';
+            signoutBtn.style.display = 'none';
+        } else {
+            signinBtn.style.display = 'none';
+            signoutBtn.style.display = 'block';
+        }
+    }
+
+    function signOut() {
+        let signinBtn = document.getElementsByClassName('g-signin2')[0]
+        let signoutBtn = document.getElementById('signout')
+
+        var auth2 = gapi.auth2.getAuthInstance();
+        auth2.signOut().then(function () {
+            console.log('User signed out.');
+            window.history.go()
+        });
+    }
+
+
+</script>
 
 <style>
     body {
@@ -35,6 +76,22 @@
         margin-top: 120px;
         position: relative;
         right: 2%;
+    }
+
+    #signout {
+        display: none;
+        text-decoration: none;
+    }
+
+    .jwttitle {
+        width: 50%;
+        margin: 0 auto;
+    }
+
+    #JWT {
+        width: 20%;
+        display: none;
+        text-decoration: none;
     }
 </style>
 

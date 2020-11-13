@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 var hmacSampleSecret []byte = []byte("my_secret_key")
 
 func ParseJWT(jwt_string string) (jwt.MapClaims, error) {
@@ -35,9 +34,9 @@ func CreateJWT(u models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": u.ID,
 		"name": u.Name,
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Hour * 2).Unix(),
-		"nbf": time.Now().Add(time.Second * 5).Unix(),
+		"iat": time.Now().Unix(), // Issued at
+		"exp": time.Now().Add(time.Hour * 2).Unix(), // Expires
+		"nbf": time.Now().Add(time.Second * 5).Unix(), // Not before
 	})
 	tokenString, err := token.SignedString(hmacSampleSecret)
 	return tokenString, err

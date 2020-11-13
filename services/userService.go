@@ -4,8 +4,7 @@ import (
 	"errors"
 	"internship_project/models"
 	"internship_project/repositories"
-
-	"github.com/markbates/goth"
+	"internship_project/utils"
 )
 
 type UserService struct {
@@ -22,24 +21,31 @@ func (service *UserService) GetUser(id string) (models.User, error) {
 	return user, nil
 }
 
-func (service *UserService) GoogleSignIn(u goth.User) (models.User, error) {
+func (service *UserService) GoogleSignIn(token string) (models.User, error) {
 	var user models.User
-	exists, err := service.Repository.DoesUserExists(u.UserID)
+
+	claims, err := utils.ValidateGoogleJWT(token)
+	if err != nil {
+		return user, err
+	}
+
+	exists, err := service.Repository.DoesUserExists(claims.Sub)
 	if err != nil {
 		return user, err
 	}
 	if !exists {
 		user = models.User{
-			ID:    u.UserID,
-			Email: u.Email,
-			Name:  u.FirstName + " " + u.LastName,
+			ID:    claims.Sub,
+			Email: claims.Email,
+			Name:  claims.FirstName + " " + claims.LastName,
 		}
 		err = service.Repository.AddUser(user)
 	} else {
-		user, err = service.Repository.GetUser(u.UserID)
+		user, err = service.Repository.GetUser(claims.Sub)
 	}
 	if err != nil {
 		return user, err
 	}
 	return user, nil
 }
+

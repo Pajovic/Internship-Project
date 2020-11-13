@@ -2,12 +2,11 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"internship_project/services"
 	"internship_project/utils"
 	"net/http"
-
-	"github.com/markbates/goth/gothic"
 )
 
 type UserController struct {
@@ -16,18 +15,27 @@ type UserController struct {
 
 
 func (controller *UserController) GoogleSignIn(w http.ResponseWriter, r *http.Request) {
-	user, err := gothic.CompleteUserAuth(w, r)
+
+}
+
+func (controller *UserController) GoogleAuth(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Token string
+	}
+	decoder := json.NewDecoder(r.Body)
+	var params parameters
+	err := decoder.Decode(&params)
 	if err != nil {
-		utils.WriteErrToClient(w, err)
+		utils.WriteErrToClient(w, errors.New("Couldn't decode parameters"))
 		return
 	}
-	u, err := controller.Service.GoogleSignIn(user)
+
+	u, err := controller.Service.GoogleSignIn(params.Token)
 	if err != nil {
 		utils.WriteErrToClient(w, err)
 		return
 	}
 	jwt, err := utils.CreateJWT(u)
-	fmt.Println(user)
 	fmt.Println("\nYou are logged in as:", u)
 	fmt.Println("Your JWT is: ", jwt, "\n")
 	w.Header().Set("Content-Type", "application/json")
