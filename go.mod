@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/araddon/gou v0.0.0-20190110011759-c797efecbb61 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgconn v1.7.0

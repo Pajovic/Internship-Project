@@ -132,16 +132,15 @@ func main() {
 func googleAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		idToken := r.Header.Get("id_token")
-
-		_, err := userService.GetUser(idToken)
+		claims, err := utils.ParseJWT(idToken)
 
 		if err != nil {
 			utils.WriteErrToClient(w, err)
-			// http.Redirect(w, r, "/static/", 404)
 			return
+		} else {
+			fmt.Println("You are logged in as user", claims)
+			next.ServeHTTP(w, r)
 		}
-
-		next.ServeHTTP(w, r)
 	})
 }
 
