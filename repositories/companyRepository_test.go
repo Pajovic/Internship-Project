@@ -160,7 +160,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		err := CompanyRepo.ChangeExternalRightApproveStatus(utils.TestEar1.ID, true)
+		err := CompanyRepo.ChangeExternalRightApproveStatus(utils.Ear1to2Disapproved.ID, true)
 		assert.NoError(err, "Ear was not approved.")
 	})
 }

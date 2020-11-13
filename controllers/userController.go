@@ -3,10 +3,11 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/markbates/goth/gothic"
 	"internship_project/services"
 	"internship_project/utils"
 	"net/http"
+
+	"github.com/markbates/goth/gothic"
 )
 
 type UserController struct {
@@ -32,3 +33,4 @@ func (controller *UserController) GoogleSignIn(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jwt)
 }
+

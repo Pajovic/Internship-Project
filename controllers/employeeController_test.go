@@ -23,7 +23,7 @@ func TestGetAllEmployees(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req.Header.Set("employeeID", utils.TestAdmin.ID)
+	req.Header.Set("employeeID", utils.AdminCompany1.ID)
 
 	handler := http.HandlerFunc(EmployeeCont.GetAllEmployees)
 
@@ -34,6 +34,8 @@ func TestGetAllEmployees(t *testing.T) {
 		rr := httptest.NewRecorder()
 
 		handler.ServeHTTP(rr, req)
+
+		fmt.Println(rr.Body)
 
 		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
 		assert.Equal(`The table you wish to work with, employees, does not exist.`, rr.Body.String(), "Error message is not correct")
@@ -64,13 +66,13 @@ func TestGetEmployeeById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Set("employeeID", utils.TestAdmin.ID)
+		req.Header.Set("employeeID", utils.AdminCompany1.ID)
 
 		rr := httptest.NewRecorder()
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("invalid uuid", func(t *testing.T) {
@@ -80,13 +82,13 @@ func TestGetEmployeeById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Set("employeeID", utils.TestAdmin.ID)
+		req.Header.Set("employeeID", utils.AdminCompany1.ID)
 
 		rr := httptest.NewRecorder()
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -96,23 +98,23 @@ func TestGetEmployeeById(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		req.Header.Set("employeeID", utils.TestAdmin.ID)
+		req.Header.Set("employeeID", utils.AdminCompany1.ID)
 
 		rr := httptest.NewRecorder()
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful get", func(t *testing.T) {
-		path := fmt.Sprintf("/employee/%s", utils.TestAdmin.ID)
+		path := fmt.Sprintf("/employee/%s", utils.AdminCompany1.ID)
 		req, err := http.NewRequest("GET", path, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		req.Header.Set("employeeID", utils.TestAdmin.ID)
+		req.Header.Set("employeeID", utils.AdminCompany1.ID)
 
 		rr := httptest.NewRecorder()
 
@@ -157,7 +159,7 @@ func TestDeleteEmployee(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -177,7 +179,7 @@ func TestDeleteEmployee(t *testing.T) {
 	t.Run("successful delete", func(t *testing.T) {
 		defer utils.SetUpTables(connpool)
 
-		path := fmt.Sprintf("/employee/%s", utils.TestEmployee1.ID)
+		path := fmt.Sprintf("/employee/%s", utils.Employee1Company2.ID)
 		req, err := http.NewRequest("DELETE", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -200,7 +202,7 @@ func TestAddEmployee(t *testing.T) {
 		utils.DropTables(connpool)
 		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(utils.TestEmployee)
+		body, err := json.Marshal(utils.Employee1Company1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -221,7 +223,7 @@ func TestAddEmployee(t *testing.T) {
 	t.Run("successful add", func(t *testing.T) {
 		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(utils.TestEmployee)
+		body, err := json.Marshal(utils.Employee1Company1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -249,7 +251,7 @@ func TestUpdateEmployee(t *testing.T) {
 		utils.DropTables(connpool)
 		defer utils.SetUpTables(connpool)
 
-		body, err := json.Marshal(utils.TestAdmin)
+		body, err := json.Marshal(utils.AdminCompany1)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -287,7 +289,7 @@ func TestUpdateEmployee(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -309,13 +311,13 @@ func TestUpdateEmployee(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful update", func(t *testing.T) {
-		utils.TestAdmin.FirstName = "UPDATED"
+		utils.AdminCompany1.FirstName = "UPDATED"
 
-		body, err := json.Marshal(utils.TestAdmin)
+		body, err := json.Marshal(utils.AdminCompany1)
 		if err != nil {
 			t.Fatal(err)
 		}

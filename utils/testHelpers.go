@@ -2,12 +2,13 @@ package utils
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"internship_project/models"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 var (
-	TestAdmin models.Employee = models.Employee{
+	AdminCompany1 models.Employee = models.Employee{
 		ID:        "9d6ffd16-89e1-4ece-9e7c-09d4bf390838",
 		FirstName: "Admin",
 		LastName:  "Admin",
@@ -17,9 +18,9 @@ var (
 		U:         true,
 		D:         true,
 	}
-	TestEmployee models.Employee = models.Employee{
+	Employee1Company1 models.Employee = models.Employee{
 		ID:        "298dd516-9663-4b96-bc3c-8e0b2b9be469",
-		FirstName: "Test Name",
+		FirstName: "Test Name Company 1",
 		LastName:  "Test Surname",
 		CompanyID: TestCompany1.ID,
 		C:         false,
@@ -27,9 +28,9 @@ var (
 		U:         true,
 		D:         true,
 	}
-	TestEmployee1 models.Employee = models.Employee{
+	Employee1Company2 models.Employee = models.Employee{
 		ID:        "3f17c2bb-d65c-4ac5-aadd-1f3d933ae860",
-		FirstName: "Preadded",
+		FirstName: "Preadded to Company 2",
 		LastName:  "Test Surname",
 		CompanyID: TestCompany2.ID,
 		C:         false,
@@ -38,22 +39,56 @@ var (
 		D:         true,
 	}
 
-	TestProduct  models.Product = models.Product{
+	Employee1Company3 models.Employee = models.Employee{
+		ID:        "2417f2ab-d56c-4ac5-a1dc-1f3d933ae860",
+		FirstName: "Preadded to Company 3",
+		LastName:  "Test Surname",
+		CompanyID: TestCompany3.ID,
+		C:         false,
+		R:         true,
+		U:         false,
+		D:         false,
+	}
+
+	TestProduct models.Product = models.Product{
 		ID:       "",
 		Name:     "TEST_PRODUCT",
 		Price:    99,
 		Quantity: 10,
 		IDC:      TestCompany1.ID,
 	}
-	TestProduct1 models.Product = models.Product{
+	Product1Company1 models.Product = models.Product{
 		ID:       "a8451090-9e22-4fc2-832b-c65d0fc080c8",
-		Name:     "Inserted Product",
+		Name:     "Company 1 Inserted Product 1",
 		Price:    99,
-		Quantity: 10,
+		Quantity: 11,
+		IDC:      TestCompany1.ID,
+	}
+	Product2Company1 models.Product = models.Product{
+		ID:       "864dc34a-e4a0-42f2-aa06-d6c80c097990",
+		Name:     "Company 1 Inserted Product 2",
+		Price:    149,
+		Quantity: 5,
 		IDC:      TestCompany1.ID,
 	}
 
-	TestCompany  models.Company = models.Company{
+	Product1Company2 models.Product = models.Product{
+		ID:       "4a45342b-8e51-4646-abb2-70c3ece7ff87",
+		Name:     "Company 2 Inserted Product 1",
+		Price:    99,
+		Quantity: 15,
+		IDC:      TestCompany2.ID,
+	}
+
+	Product1Company3 models.Product = models.Product{
+		ID:       "edca2687-d5f3-4b3a-8641-fd5d5f8acaa4",
+		Name:     "Company 3 Inserted Product",
+		Price:    99,
+		Quantity: 10,
+		IDC:      TestCompany3.ID,
+	}
+
+	TestCompany models.Company = models.Company{
 		ID:     "",
 		Name:   "SpaceX",
 		IsMain: false,
@@ -68,6 +103,11 @@ var (
 		Name:   "Test Kompanija 2",
 		IsMain: false,
 	}
+	TestCompany3 models.Company = models.Company{
+		ID:     "f4051d42-b05b-4ba6-a802-083f02f4307c",
+		Name:   "Test Kompanija 3",
+		IsMain: false,
+	}
 	MainCompany1 models.Company = models.Company{
 		ID:     "91f88893-5cef-4d3c-9d6a-ed120f7e449e",
 		Name:   "Main Kompanija 1",
@@ -80,11 +120,32 @@ var (
 		Update:   false,
 		Delete:   false,
 		Approved: false,
+		IDSC:     TestCompany2.ID,
+		IDRC:     TestCompany1.ID,
+	}
+
+	Ear1to2Disapproved models.ExternalRights = models.ExternalRights{
+		ID:       "6b64bc14-01c5-4afa-8ff9-40545b8d0939",
+		Read:     true,
+		Update:   true,
+		Delete:   true,
+		Approved: false,
 		IDSC:     TestCompany1.ID,
 		IDRC:     TestCompany2.ID,
 	}
-	TestEar1 models.ExternalRights = models.ExternalRights{
-		ID:       "6b64bc14-01c5-4afa-8ff9-40545b8d0939",
+
+	Ear1to2ApprovedLess10 models.ExternalRights = models.ExternalRights{
+		ID:       "c9f8384b-1615-4117-a983-00d574c2614c",
+		Read:     false,
+		Update:   false,
+		Delete:   false,
+		Approved: true,
+		IDSC:     TestCompany1.ID,
+		IDRC:     TestCompany2.ID,
+	}
+
+	Ear1to2ApprovedMore10 models.ExternalRights = models.ExternalRights{
+		ID:       "5bc0cec9-6211-4012-be26-ee1a2d6435c7",
 		Read:     true,
 		Update:   true,
 		Delete:   true,
@@ -92,29 +153,38 @@ var (
 		IDSC:     TestCompany1.ID,
 		IDRC:     TestCompany2.ID,
 	}
-	TestEar2 models.ExternalRights = models.ExternalRights{
-		ID:       "c9f8384b-1615-4117-a983-00d574c2614c",
+
+	Ear1to3Approved models.ExternalRights = models.ExternalRights{
+		ID:       "0ee7813e-7afd-4219-973a-75d8578bdfb4",
 		Read:     true,
-		Update:   true,
-		Delete:   true,
-		Approved: false,
-		IDSC:     TestCompany2.ID,
-		IDRC:     TestCompany1.ID,
+		Update:   false,
+		Delete:   false,
+		Approved: true,
+		IDSC:     TestCompany1.ID,
+		IDRC:     TestCompany3.ID,
 	}
 
 	TestConstraint models.AccessConstraint = models.AccessConstraint{
 		ID:            "",
-		IDEAR:         TestEar1.ID,
+		IDEAR:         Ear1to3Approved.ID,
 		OperatorID:    2,
 		PropertyID:    1,
-		PropertyValue: 15,
+		PropertyValue: 10,
+	}
+
+	TestConstraint1 models.AccessConstraint = models.AccessConstraint{
+		ID:            "ecfbd6cc-5b49-46d6-952f-c371d2b9c646",
+		IDEAR:         Ear1to2ApprovedMore10.ID,
+		OperatorID:    2,
+		PropertyID:    1,
+		PropertyValue: 10,
 	}
 	TestConstraint2 models.AccessConstraint = models.AccessConstraint{
 		ID:            "d70583a4-d5a3-4d6e-847f-dfba98bd3a27",
-		IDEAR:         TestEar1.ID,
+		IDEAR:         Ear1to2ApprovedLess10.ID,
 		OperatorID:    3,
 		PropertyID:    1,
-		PropertyValue: 20,
+		PropertyValue: 9,
 	}
 )
 
@@ -219,25 +289,49 @@ func insertMockData(db *pgxpool.Pool) {
 		TestCompany2.ID, TestCompany2.Name, TestCompany2.IsMain)
 
 	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
+		TestCompany3.ID, TestCompany3.Name, TestCompany3.IsMain)
+
+	db.Exec(context.Background(), "insert into companies (id, name, ismain) values ($1, $2, $3)",
 		MainCompany1.ID, MainCompany1.Name, MainCompany1.IsMain)
 
 	// Insert Product
 	db.Exec(context.Background(), "insert into products (id, name, price, quantity, idc) VALUES($1, $2, $3, $4, $5)",
-		TestProduct1.ID, TestProduct1.Name, TestProduct1.Price, TestProduct1.Quantity, TestProduct1.IDC)
+		Product1Company1.ID, Product1Company1.Name, Product1Company1.Price, Product1Company1.Quantity, Product1Company1.IDC)
+
+	db.Exec(context.Background(), "insert into products (id, name, price, quantity, idc) VALUES($1, $2, $3, $4, $5)",
+		Product2Company1.ID, Product2Company1.Name, Product2Company1.Price, Product2Company1.Quantity, Product2Company1.IDC)
+
+	db.Exec(context.Background(), "insert into products (id, name, price, quantity, idc) VALUES($1, $2, $3, $4, $5)",
+		Product1Company2.ID, Product1Company2.Name, Product1Company2.Price, Product1Company2.Quantity, Product1Company2.IDC)
+
+	db.Exec(context.Background(), "insert into products (id, name, price, quantity, idc) VALUES($1, $2, $3, $4, $5)",
+		Product1Company3.ID, Product1Company3.Name, Product1Company3.Price, Product1Company3.Quantity, Product1Company3.IDC)
 
 	// Insert Users
 	db.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
-		TestAdmin.ID, TestAdmin.FirstName, TestAdmin.LastName, TestAdmin.CompanyID, TestAdmin.C, TestAdmin.R, TestAdmin.U, TestAdmin.D)
+		AdminCompany1.ID, AdminCompany1.FirstName, AdminCompany1.LastName, AdminCompany1.CompanyID, AdminCompany1.C, AdminCompany1.R, AdminCompany1.U, AdminCompany1.D)
 
 	db.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
-		TestEmployee1.ID, TestEmployee1.FirstName, TestEmployee1.LastName, TestEmployee1.CompanyID, TestEmployee1.C, TestEmployee1.R, TestEmployee1.U, TestEmployee1.D)
+		Employee1Company2.ID, Employee1Company2.FirstName, Employee1Company2.LastName, Employee1Company2.CompanyID, Employee1Company2.C, Employee1Company2.R, Employee1Company2.U, Employee1Company2.D)
+
+	db.Exec(context.Background(), "insert into employees (id, firstname, lastname, idc, c, r, u, d) values ($1, $2, $3, $4, $5, $6, $7, $8)",
+		Employee1Company3.ID, Employee1Company3.FirstName, Employee1Company3.LastName, Employee1Company3.CompanyID, Employee1Company3.C, Employee1Company3.R, Employee1Company3.U, Employee1Company3.D)
 
 	// Insert external access rights
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
-		TestEar1.ID, TestEar1.IDSC, TestEar1.IDRC, TestEar1.Read, TestEar1.Update, TestEar1.Delete, TestEar1.Approved)
+		TestEar.ID, TestEar.IDSC, TestEar.IDRC, TestEar.Read, TestEar.Update, TestEar.Delete, TestEar.Approved)
 
 	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
-		TestEar2.ID, TestEar2.IDSC, TestEar2.IDRC, TestEar2.Read, TestEar2.Update, TestEar2.Delete, TestEar2.Approved)
+		Ear1to2Disapproved.ID, Ear1to2Disapproved.IDSC, Ear1to2Disapproved.IDRC, Ear1to2Disapproved.Read, Ear1to2Disapproved.Update, Ear1to2Disapproved.Delete, Ear1to2Disapproved.Approved)
+
+	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
+		Ear1to2ApprovedLess10.ID, Ear1to2ApprovedLess10.IDSC, Ear1to2ApprovedLess10.IDRC, Ear1to2ApprovedLess10.Read, Ear1to2ApprovedLess10.Update, Ear1to2ApprovedLess10.Delete, Ear1to2ApprovedLess10.Approved)
+
+	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
+		Ear1to2ApprovedMore10.ID, Ear1to2ApprovedMore10.IDSC, Ear1to2ApprovedMore10.IDRC, Ear1to2ApprovedMore10.Read, Ear1to2ApprovedMore10.Update, Ear1to2ApprovedMore10.Delete, Ear1to2ApprovedMore10.Approved)
+
+	db.Exec(context.Background(), `insert into external_access_rights (id, idsc, idrc, r, u, d, approved) values ($1, $2, $3, $4, $5, $6, $7)`,
+		Ear1to3Approved.ID, Ear1to3Approved.IDSC, Ear1to3Approved.IDRC, Ear1to3Approved.Read, Ear1to3Approved.Update, Ear1to3Approved.Delete, Ear1to3Approved.Approved)
 
 	// Insert Properties
 	db.Exec(context.Background(), "insert into properties (id, name) values ($1, $2)",
@@ -260,6 +354,9 @@ func insertMockData(db *pgxpool.Pool) {
 		"4", "<=")
 
 	// Insert Constraints
+	db.Exec(context.Background(), "insert into access_constraints (id, idear, operator_id, property_id, property_value) VALUES($1, $2, $3, $4, $5)",
+		TestConstraint1.ID, TestConstraint1.IDEAR, TestConstraint1.OperatorID, TestConstraint1.PropertyID, TestConstraint1.PropertyValue)
+
 	db.Exec(context.Background(), "insert into access_constraints (id, idear, operator_id, property_id, property_value) VALUES($1, $2, $3, $4, $5)",
 		TestConstraint2.ID, TestConstraint2.IDEAR, TestConstraint2.OperatorID, TestConstraint2.PropertyID, TestConstraint2.PropertyValue)
 }
