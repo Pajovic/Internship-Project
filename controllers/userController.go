@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"internship_project/services"
 	"internship_project/utils"
 	"net/http"
@@ -12,7 +11,6 @@ import (
 type UserController struct {
 	Service services.UserService
 }
-
 
 func (controller *UserController) GoogleSignIn(w http.ResponseWriter, r *http.Request) {
 
@@ -36,9 +34,8 @@ func (controller *UserController) GoogleAuth(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	jwt, err := utils.CreateJWT(u)
-	fmt.Println("\nYou are logged in as:", u)
-	fmt.Println("Your JWT is: ", jwt, "\n")
+	/* fmt.Println("\nYou are logged in as:", u)
+	fmt.Println("Your JWT is: ", jwt, "\n") */
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jwt)
 }
-

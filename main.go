@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 
+	"strings"
+
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lytics/confl"
@@ -114,14 +116,18 @@ func main() {
 
 func googleAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.String(), "favicon.ico") {
+			// Allow favicon.ico to load
+			next.ServeHTTP(w, r)
+		}
+
 		idToken := r.Header.Get("jwt")
-		claims, err := utils.ParseJWT(idToken)
+		_, err := utils.ParseJWT(idToken)
 
 		if err != nil {
 			utils.WriteErrToClient(w, err)
 			return
 		} else {
-			fmt.Println("You are logged in as user", claims)
 			next.ServeHTTP(w, r)
 		}
 	})
@@ -145,8 +151,6 @@ func getConnectionPool() *pgxpool.Pool {
 
 	return connection
 }
-
-
 
 func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) controllers.ProductController {
 

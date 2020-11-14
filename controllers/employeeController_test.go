@@ -35,8 +35,6 @@ func TestGetAllEmployees(t *testing.T) {
 
 		handler.ServeHTTP(rr, req)
 
-		fmt.Println(rr.Body)
-
 		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
 		assert.Equal(`The table you wish to work with, employees, does not exist.`, rr.Body.String(), "Error message is not correct")
 	})
