@@ -16,21 +16,21 @@ func TestAddEmployee(t *testing.T) {
 		defer utils.SetUpTables(Connpool)
 
 		assert.False(DoesTableExist("employees", Connpool))
-		err := EmployeeRepo.AddEmployee(&utils.TestEmployee)
+		err := EmployeeRepo.AddEmployee(&utils.Employee1Company1)
 		assert.Error(err)
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		oldEmployees, _ := EmployeeRepo.GetAllEmployees(utils.TestAdmin.CompanyID)
-		err := EmployeeRepo.AddEmployee(&utils.TestEmployee)
-		newEmployees, _ := EmployeeRepo.GetAllEmployees(utils.TestAdmin.CompanyID)
+		oldEmployees, _ := EmployeeRepo.GetAllEmployees(utils.AdminCompany1.CompanyID)
+		err := EmployeeRepo.AddEmployee(&utils.Employee1Company1)
+		newEmployees, _ := EmployeeRepo.GetAllEmployees(utils.AdminCompany1.CompanyID)
 
 		assert.NoError(err)
 		assert.Equal(1, len(newEmployees)-len(oldEmployees), "Employee was not added.")
 	})
 
 	t.Run("add an existing employee", func(t *testing.T) {
-		existingEmployee := &models.Employee{ID: utils.TestEmployee.ID}
+		existingEmployee := &models.Employee{ID: utils.Employee1Company1.ID}
 		err := EmployeeRepo.AddEmployee(existingEmployee)
 
 		assert.Error(err)
@@ -41,7 +41,7 @@ func TestGetAllEmployees(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("successful GetAll query", func(t *testing.T) {
-		allEmployees, err := EmployeeRepo.GetAllEmployees(utils.TestAdmin.ID)
+		allEmployees, err := EmployeeRepo.GetAllEmployees(utils.AdminCompany1.ID)
 
 		assert.NoError(err)
 		assert.NotNil(allEmployees, "Employees returned were nil.")
@@ -68,7 +68,7 @@ func TestGetEmployeeByID(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		testID := utils.TestEmployee.ID
+		testID := utils.Employee1Company1.ID
 		employee, err := EmployeeRepo.GetEmployeeByID(testID)
 
 		assert.NoError(err)
@@ -84,7 +84,7 @@ func TestUpdateEmployee(t *testing.T) {
 
 	t.Run("invalid id", func(t *testing.T) {
 		invalidID := "123-asd-321"
-		invalidEmployee := models.Employee{ID: invalidID, FirstName: "Test", LastName: "Test", CompanyID: utils.TestEmployee.CompanyID}
+		invalidEmployee := models.Employee{ID: invalidID, FirstName: "Test", LastName: "Test", CompanyID: utils.Employee1Company1.CompanyID}
 		assert.False(IsValidUUID(invalidID))
 		err := EmployeeRepo.UpdateEmployee(invalidEmployee)
 		assert.Error(err)
@@ -92,14 +92,14 @@ func TestUpdateEmployee(t *testing.T) {
 
 	t.Run("id does not exist", func(t *testing.T) {
 		randomUUID := "7d91a563-3386-4069-b785-09c52b5201b5"
-		randomEmployee := models.Employee{ID: randomUUID, FirstName: "Test", LastName: "Test", CompanyID: utils.TestEmployee.CompanyID}
+		randomEmployee := models.Employee{ID: randomUUID, FirstName: "Test", LastName: "Test", CompanyID: utils.Employee1Company1.CompanyID}
 		assert.True(IsValidUUID(randomUUID))
 		err := EmployeeRepo.UpdateEmployee(randomEmployee)
 		assert.Error(err)
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		employeeForUpdate, _ := EmployeeRepo.GetEmployeeByID(utils.TestEmployee.ID)
+		employeeForUpdate, _ := EmployeeRepo.GetEmployeeByID(utils.Employee1Company1.ID)
 		employeeForUpdate.LastName = "UPDATED Last Name"
 
 		err := EmployeeRepo.UpdateEmployee(employeeForUpdate)
@@ -126,7 +126,7 @@ func TestDeleteEmployee(t *testing.T) {
 	})
 
 	t.Run("successful query", func(t *testing.T) {
-		err := EmployeeRepo.DeleteEmployee(utils.TestEmployee.ID)
+		err := EmployeeRepo.DeleteEmployee(utils.Employee1Company1.ID)
 
 		assert.NoError(err, "Employee was not deleted.")
 	})

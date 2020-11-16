@@ -81,7 +81,7 @@ func TestGetConstraintById(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestGetConstraintById(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("successful get", func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestUpdateConstraint(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 		t.Log(rr.Body.String())
 	})
 
@@ -249,7 +249,7 @@ func TestDeleteConstraint(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {

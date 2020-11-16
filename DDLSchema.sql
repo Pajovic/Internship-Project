@@ -93,3 +93,16 @@ ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_idear FO
 ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_operator_id FOREIGN KEY (operator_id) REFERENCES operators(id);
 ALTER TABLE public.access_constraints ADD CONSTRAINT access_constraints_property_id FOREIGN KEY (property_id) REFERENCES properties(id);
 
+-- public.users definition
+
+-- Drop table
+
+-- DROP TABLE public.users;
+
+CREATE TABLE public.users (
+	id varchar NOT NULL,
+	email varchar NOT NULL,
+	"name" varchar NOT NULL,
+	CONSTRAINT users_pk PRIMARY KEY (id)
+);
+

@@ -29,7 +29,7 @@ func NewProductRepo(db *pgxpool.Pool) ProductRepository {
 	if db == nil {
 		panic("ProductRepository not created, pgxpool is nil")
 	}
-	return &productRepository {
+	return &productRepository{
 		DB: db,
 	}
 }
@@ -37,8 +37,9 @@ func NewProductRepo(db *pgxpool.Pool) ProductRepository {
 func (repository *productRepository) GetAllProducts(employeeIdc string) ([]models.Product, error) {
 	earConstraints := []models.EarConstraint{}
 
-	query := `select ear.id "idear", ear.idrc, ear.idsc, p.name "property", o2.name "operator", ac.property_value from external_access_rights ear
-	left outer join access_constraints ac on ear.id = ac.idear
+	query := `select ear.id "idear", ear.idrc, ear.idsc, coalesce(p.name::varchar(20), '') as "property",
+	coalesce(o2.name::varchar(5), '') as "operator", coalesce(ac.property_value::int4, 0)
+    from external_access_rights ear left outer join access_constraints ac on ear.id = ac.idear
 	left outer join operators o2 on o2.id = ac.operator_id 
 	left outer join properties p on p.id = ac.property_id 
 	where ear.idrc = $1 and ear.r = true and ear.approved = true;`
@@ -48,6 +49,7 @@ func (repository *productRepository) GetAllProducts(employeeIdc string) ([]model
 	if err != nil {
 		return nil, err
 	}
+
 	for rows.Next() {
 		var earConstraint models.EarConstraint
 		err := rows.Scan(&earConstraint.IDEAR, &earConstraint.IDRC, &earConstraint.IDSC, &earConstraint.Property, &earConstraint.Operator, &earConstraint.PropertyValue)
@@ -77,6 +79,7 @@ func (repository *productRepository) GetAllProducts(employeeIdc string) ([]model
 	if err != nil {
 		return nil, err
 	}
+
 	for rowsProducts.Next() {
 		var productPers persistence.Products
 		productPers.Scan(&rowsProducts)
@@ -93,7 +96,7 @@ func (repository *productRepository) GetAllProducts(employeeIdc string) ([]model
 			return nil, err
 		}
 
-		var product = models.Product{
+		product := models.Product{
 			ID:       productUUID,
 			Name:     productPers.Name,
 			Price:    productPers.Price,

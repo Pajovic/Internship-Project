@@ -80,7 +80,7 @@ func TestGetCompanyById(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -147,7 +147,7 @@ func TestDeleteCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(http.StatusInternalServerError, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 	})
 
 	t.Run("non-existing uuid", func(t *testing.T) {
@@ -274,7 +274,7 @@ func TestUpdateCompany(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 		t.Log(rr.Body.String())
 	})
 
@@ -361,7 +361,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 	})
 
 	t.Run("successful update", func(t *testing.T) {
-		path := fmt.Sprintf("/company/approve/%s", utils.TestEar2.ID)
+		path := fmt.Sprintf("/company/approve/%s", utils.Ear1to2ApprovedMore10.ID)
 		req, err := http.NewRequest("PATCH", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -376,7 +376,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 	})
 
 	t.Run("no permission to update", func(t *testing.T) {
-		path := fmt.Sprintf("/company/approve/%s", utils.TestEar2.ID)
+		path := fmt.Sprintf("/company/approve/%s", utils.Ear1to2ApprovedMore10.ID)
 		req, err := http.NewRequest("PATCH", path, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -387,7 +387,7 @@ func TestChangeExternalRightApproveStatus(t *testing.T) {
 
 		router.ServeHTTP(rr, req)
 
-		assert.Equal(500, rr.Code, "Response code is not correct")
+		assert.Equal(http.StatusBadRequest, rr.Code, "Response code is not correct")
 		assert.Equal(`Your company does not have permission to approve sharing`, rr.Body.String(), "Error message is not correct")
 	})
 }

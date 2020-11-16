@@ -6,8 +6,11 @@ import (
 	"internship_project/controllers"
 	"internship_project/repositories"
 	"internship_project/services"
+	"internship_project/utils"
 	"net/http"
 	"os"
+
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -21,6 +24,11 @@ type Config struct {
 	TestDatabaseURL string `json:"test_database_url"`
 }
 
+var (
+	userRepository repositories.UserRepository
+	userService    services.UserService
+)
+
 func main() {
 	connpool := getConnectionPool()
 	employeeController := getEmployeeController(connpool)
@@ -28,10 +36,19 @@ func main() {
 	companyController := GetCompanyController(connpool)
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
+	userController := getUserController(connpool)
+
+	userRepository = repositories.NewUserRepo(connpool)
+	userService = services.UserService{Repository: userRepository}
 
 	defer connpool.Close()
 
 	r := mux.NewRouter()
+	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./public/")))
+	r.PathPrefix("/static/").Handler(s)
+
+	// Sign In Routes
+	r.HandleFunc("/auth/google", userController.GoogleAuth).Methods("POST")
 
 	// Product Routes
 	productRouter := r.PathPrefix("/product").Subrouter()
@@ -87,8 +104,33 @@ func main() {
 	constraintRouter.HandleFunc("", constraintController.UpdateConstraint).Methods("PUT")
 	constraintRouter.HandleFunc("/{id}", constraintController.DeleteConstraint).Methods("DELETE")
 
+	companyRouter.Use(googleAuthMiddleware)
+	constraintRouter.Use(googleAuthMiddleware)
+	employeeRouter.Use(googleAuthMiddleware)
+	earRouter.Use(googleAuthMiddleware)
+	productRouter.Use(googleAuthMiddleware)
+
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
+}
+
+func googleAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.String(), "favicon.ico") {
+			// Allow favicon.ico to load
+			next.ServeHTTP(w, r)
+		}
+
+		idToken := r.Header.Get("jwt")
+		_, err := utils.ParseJWT(idToken)
+
+		if err != nil {
+			utils.WriteErrToClient(w, err)
+			return
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
 }
 
 func getConnectionPool() *pgxpool.Pool {
@@ -159,4 +201,14 @@ func getConstraintController(connpool *pgxpool.Pool) controllers.ConstraintContr
 	fmt.Println("Constraints controller up and running.")
 
 	return constraintController
+}
+
+func getUserController(connpool *pgxpool.Pool) controllers.UserController {
+	userRepository := repositories.NewUserRepo(connpool)
+	userService := services.UserService{Repository: userRepository}
+	userController := controllers.UserController{Service: userService}
+
+	fmt.Println("User controller up and running.")
+
+	return userController
 }
