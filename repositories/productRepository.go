@@ -2,15 +2,19 @@ package repositories
 
 import (
 	"context"
+	json "encoding/json"
 	"errors"
+	"internship_project/kafkaHelpers"
 	"internship_project/models"
 	"internship_project/persistence"
 	"internship_project/utils"
+	"log"
 	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
+	"github.com/segmentio/kafka-go"
 )
 
 type ProductRepository interface {
@@ -22,15 +26,23 @@ type ProductRepository interface {
 }
 
 type productRepository struct {
-	DB *pgxpool.Pool
+	DB    *pgxpool.Pool
+	kafka *kafkaHelpers.KafkaObject
 }
 
-func NewProductRepo(db *pgxpool.Pool) ProductRepository {
+func NewProductRepo(db *pgxpool.Pool, writer *kafka.Writer) ProductRepository {
 	if db == nil {
 		panic("ProductRepository not created, pgxpool is nil")
 	}
+	if writer == nil {
+		panic("ProductRepository not created, kafkaWriter is nil")
+	}
+
 	return &productRepository{
 		DB: db,
+		kafka: &kafkaHelpers.KafkaObject{
+			Writer: writer,
+		},
 	}
 }
 
@@ -177,6 +189,14 @@ func (repository *productRepository) AddProduct(product *models.Product) error {
 		return err
 	}
 
+	productStr, err := json.Marshal(product)
+	message := "CREATED product -> " + string(productStr)
+	if err != nil {
+		log.Fatal("An error has occured during marshaling the product, ", err)
+	}
+
+	repository.kafka.WriteMessage("ava-internship", string(message))
+
 	return tx.Commit(context.Background())
 }
 
@@ -203,6 +223,14 @@ func (repository *productRepository) UpdateProduct(product models.Product) error
 		return utils.NoDataError
 	}
 
+	productStr, err := json.Marshal(product)
+	message := "UPDATED product -> " + string(productStr)
+	if err != nil {
+		log.Fatal("An error has occured during marshaling the product, ", err)
+	}
+
+	repository.kafka.WriteMessage("ava-internship", string(message))
+
 	return tx.Commit(context.Background())
 }
 
@@ -223,6 +251,9 @@ func (repository *productRepository) DeleteProduct(id string) error {
 	if commandTag != 1 {
 		return utils.NoDataError
 	}
+
+	message := "DELETED product ID=" + id
+	repository.kafka.WriteMessage("ava-internship", string(message))
 
 	return tx.Commit(context.Background())
 }

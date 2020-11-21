@@ -21,14 +21,13 @@ type CompanyRepository interface {
 
 type companyRepository struct {
 	DB *pgxpool.Pool
-
 }
 
 func NewCompanyRepo(db *pgxpool.Pool) CompanyRepository {
 	if db == nil {
 		panic("CompanyRepository not created, pgxpool is nil")
 	}
-	return &companyRepository {
+	return &companyRepository{
 		DB: db,
 	}
 }

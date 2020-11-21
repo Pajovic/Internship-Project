@@ -15,6 +15,7 @@ require (
 	github.com/lytics/confl v0.0.0-20200313154245-08c6aed5f53f
 	github.com/markbates/goth v1.66.0
 	github.com/satori/go.uuid v1.2.0
+	github.com/segmentio/kafka-go v0.4.8
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/tools v0.0.0-20201014231627-1610a49f37af // indirect
 	google.golang.org/api v0.35.0

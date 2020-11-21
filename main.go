@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"internship_project/controllers"
+	"internship_project/kafkaHelpers"
 	"internship_project/repositories"
 	"internship_project/services"
 	"internship_project/utils"
@@ -15,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lytics/confl"
+	"github.com/segmentio/kafka-go"
 )
 
 type Config struct {
@@ -31,8 +33,13 @@ var (
 
 func main() {
 	connpool := getConnectionPool()
+	defer connpool.Close()
+
+	kafkaWriter := kafkaHelpers.GetWriter("ava-internship")
+	defer kafkaWriter.Close()
+
 	employeeController := getEmployeeController(connpool)
-	productController := getProductController(connpool, &employeeController.Service.Repository)
+	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter)
 	companyController := GetCompanyController(connpool)
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
@@ -40,8 +47,6 @@ func main() {
 
 	userRepository = repositories.NewUserRepo(connpool)
 	userService = services.UserService{Repository: userRepository}
-
-	defer connpool.Close()
 
 	r := mux.NewRouter()
 	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./public/")))
@@ -152,9 +157,9 @@ func getConnectionPool() *pgxpool.Pool {
 	return connection
 }
 
-func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) controllers.ProductController {
+func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository, kafkaWriter *kafka.Writer) controllers.ProductController {
 
-	productRepository := repositories.NewProductRepo(connpool)
+	productRepository := repositories.NewProductRepo(connpool, kafkaWriter)
 	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: *employeeRepo}
 	productController := controllers.ProductController{Service: productService}
 
