@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"internship_project/controllers"
-	"internship_project/kafkaHelpers"
+	"internship_project/kafkahelpers"
 	"internship_project/repositories"
 	"internship_project/services"
 	"internship_project/utils"
@@ -35,10 +35,10 @@ func main() {
 	connpool := getConnectionPool()
 	defer connpool.Close()
 
-	kafkaWriter := kafkaHelpers.GetWriter("ava-internship")
+	kafkaWriter := kafkahelpers.GetWriter("ava-internship")
 	defer kafkaWriter.Close()
 
-	kafkaConsumer := kafkaHelpers.NewConsumer("ava-internship")
+	kafkaConsumer := kafkahelpers.NewConsumer("ava-internship")
 	go kafkaConsumer.Consume()
 
 	employeeController := getEmployeeController(connpool)
