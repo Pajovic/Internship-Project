@@ -38,9 +38,6 @@ func main() {
 	kafkaWriter := kafkahelpers.GetWriter("ava-internship")
 	defer kafkaWriter.Close()
 
-	kafkaConsumer := kafkahelpers.NewConsumer("ava-internship")
-	go kafkaConsumer.Consume()
-
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter)
 	companyController := GetCompanyController(connpool)
