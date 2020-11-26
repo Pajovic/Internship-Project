@@ -190,7 +190,7 @@ func (repository *productRepository) AddProduct(product *models.Product) error {
 	}
 
 	productStr, err := json.Marshal(product)
-	message := "CREATED product -> " + string(productStr)
+	message := "CREATED product " + string(productStr)
 	if err != nil {
 		log.Fatal("An error has occured during marshaling the product, ", err)
 	}
@@ -224,7 +224,7 @@ func (repository *productRepository) UpdateProduct(product models.Product) error
 	}
 
 	productStr, err := json.Marshal(product)
-	message := "UPDATED product -> " + string(productStr)
+	message := "UPDATED product " + string(productStr)
 	if err != nil {
 		log.Fatal("An error has occured during marshaling the product, ", err)
 	}
