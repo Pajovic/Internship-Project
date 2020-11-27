@@ -195,7 +195,7 @@ func (repository *productRepository) AddProduct(product *models.Product) error {
 		log.Fatal("An error has occured during marshaling the product, ", err)
 	}
 
-	repository.kafka.WriteMessage("ava-internship", string(message))
+	repository.kafka.WriteMessage("ava-internship", string(message), product.ID)
 
 	return tx.Commit(context.Background())
 }
@@ -229,7 +229,7 @@ func (repository *productRepository) UpdateProduct(product models.Product) error
 		log.Fatal("An error has occured during marshaling the product, ", err)
 	}
 
-	repository.kafka.WriteMessage("ava-internship", string(message))
+	repository.kafka.WriteMessage("ava-internship", string(message), product.ID)
 
 	return tx.Commit(context.Background())
 }
@@ -253,7 +253,7 @@ func (repository *productRepository) DeleteProduct(id string) error {
 	}
 
 	message := "DELETED product ID=" + id
-	repository.kafka.WriteMessage("ava-internship", string(message))
+	repository.kafka.WriteMessage("ava-internship", string(message), id)
 
 	return tx.Commit(context.Background())
 }

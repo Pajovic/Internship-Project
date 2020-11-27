@@ -1,10 +1,11 @@
-package elastic_kafkahelpers
+package kafkaHelpers
 
 import (
 	"github.com/segmentio/kafka-go"
+	"internship_project/elasticsearch_service/elasticsearchHelpers"
 )
 
-func NewConsumer(topicName string) KafkaConsumer {
+func NewConsumer(topicName string, EsClient elasticsearchHelpers.ElasticsearchClient) KafkaConsumer {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   []string{"localhost:9092"},
 		Topic:     topicName,
@@ -17,6 +18,7 @@ func NewConsumer(topicName string) KafkaConsumer {
 
 	consumer := KafkaConsumer{
 		Reader: r,
+		EsClient: EsClient,
 	}
 
 	return consumer

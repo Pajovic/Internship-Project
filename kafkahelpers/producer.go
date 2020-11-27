@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -12,9 +11,9 @@ type KafkaProducer struct {
 	Writer *kafka.Writer
 }
 
-func (producer *KafkaProducer) WriteMessage(topicName string, message string) error {
+func (producer *KafkaProducer) WriteMessage(topicName string, message string, id string) error {
 	kafkaMessage := kafka.Message{
-		Key:   []byte(uuid.NewV4().String()),
+		Key:   []byte(id),
 		Value: []byte(message),
 	}
 
