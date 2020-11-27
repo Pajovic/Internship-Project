@@ -14,7 +14,7 @@ func NewConsumer(topicName string, EsClient elasticsearchHelpers.ElasticsearchCl
 		MaxBytes:  10e6, // 10MB
 	})
 
-	r.SetOffset(0)
+	r.SetOffset(kafka.LastOffset)
 
 	consumer := KafkaConsumer{
 		Reader: r,
