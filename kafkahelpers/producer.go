@@ -23,9 +23,5 @@ func (producer *KafkaProducer) WriteMessage(topicName string, message string, id
 		log.Fatal("failed to write messages:", err)
 	}
 
-	if err := producer.Writer.Close(); err != nil {
-		log.Fatal("failed to close writer:", err)
-	}
-
 	return err
 }

@@ -28,7 +28,11 @@ func (consumer *KafkaConsumer) Consume() {
 
 		s := strings.Split(string(m.Value), " ")
 
-		go consumer.EsClient.AddNewIndex(string(m.Key), s[2])
+		if s[0] == "CREATED" || s[0] == "UPDATED" {
+			go consumer.EsClient.IndexDocument(string(m.Key), s[2])
+		} else if s[0] == "DELETED" {
+			go consumer.EsClient.DeleteDocument(string(m.Key))
+		}
 	}
 
 	if err := consumer.Reader.Close(); err != nil {
