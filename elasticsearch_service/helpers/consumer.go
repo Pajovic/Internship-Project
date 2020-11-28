@@ -1,17 +1,16 @@
-package kafkaHelpers
+package helpers
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"github.com/segmentio/kafka-go"
-	"internship_project/elasticsearch_service/elasticsearchHelpers"
+	"log"
 	"strings"
 )
 
 type KafkaConsumer struct {
-	Reader *kafka.Reader
-	EsClient elasticsearchHelpers.ElasticsearchClient
+	Reader   *kafka.Reader
+	EsClient ElasticsearchClient
 }
 
 func (consumer *KafkaConsumer) Consume() {

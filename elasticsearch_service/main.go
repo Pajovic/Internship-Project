@@ -1,8 +1,7 @@
 package main
 
 import (
-	elkafka "internship_project/elasticsearch_service/kafkaHelpers"
-	"internship_project/elasticsearch_service/elasticsearchHelpers"
+	"internship_project/elasticsearch_service/helpers"
 	"sync"
 )
 
@@ -12,8 +11,8 @@ var (
 )
 
 func main() {
-	EsClient := elasticsearchHelpers.GetElasticsearchClient()
+	EsClient := helpers.GetElasticsearchClient()
 
-	kafkaConsumer := elkafka.NewConsumer("ava-internship", EsClient)
+	kafkaConsumer := helpers.NewConsumer("ava-internship", EsClient)
 	kafkaConsumer.Consume()
 }

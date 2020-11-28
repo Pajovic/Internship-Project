@@ -1,4 +1,4 @@
-package kafkahelpers
+package kafka_helpers
 
 import (
 	"context"

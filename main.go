@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"internship_project/elasticsearch_helpers"
 	"internship_project/controllers"
-	"internship_project/kafkahelpers"
+	"internship_project/kafka_helpers"
 	"internship_project/repositories"
 	"internship_project/services"
 	"internship_project/utils"
@@ -35,7 +36,7 @@ func main() {
 	connpool := getConnectionPool()
 	defer connpool.Close()
 
-	kafkaWriter := kafkahelpers.GetWriter("ava-internship")
+	kafkaWriter := kafka_helpers.GetWriter("ava-internship")
 	defer kafkaWriter.Close()
 
 	employeeController := getEmployeeController(connpool)
@@ -54,6 +55,8 @@ func main() {
 
 	// Sign In Routes
 	r.HandleFunc("/auth/google", userController.GoogleAuth).Methods("POST")
+
+	r.HandleFunc("/search", productController.SearchProducts).Methods("GET")
 
 	// Product Routes
 	productRouter := r.PathPrefix("/product").Subrouter()
@@ -158,10 +161,10 @@ func getConnectionPool() *pgxpool.Pool {
 }
 
 func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository, kafkaWriter *kafka.Writer) controllers.ProductController {
-
 	productRepository := repositories.NewProductRepo(connpool, kafkaWriter)
 	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: *employeeRepo}
-	productController := controllers.ProductController{Service: productService}
+	elasticsearchClient := elasticsearch_helpers.GetElasticsearchClient()
+	productController := controllers.ProductController{Service: productService, ElasticsearchClient: elasticsearchClient}
 
 	fmt.Println("Product controller up and running.")
 

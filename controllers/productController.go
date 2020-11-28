@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"internship_project/elasticsearch_helpers"
 	"internship_project/models"
 	"internship_project/services"
 	"internship_project/utils"
@@ -12,6 +13,7 @@ import (
 
 type ProductController struct {
 	Service services.ProductService
+	ElasticsearchClient elasticsearch_helpers.ElasticsearchClient
 }
 
 func (controller *ProductController) GetAllProducts(w http.ResponseWriter, r *http.Request) {
@@ -81,4 +83,12 @@ func (controller *ProductController) DeleteProduct(w http.ResponseWriter, r *htt
 		return
 	}
 	w.WriteHeader(200)
+}
+
+func (controller *ProductController) SearchProducts(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	json := controller.ElasticsearchClient.SearchDocument(name)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(json)
 }

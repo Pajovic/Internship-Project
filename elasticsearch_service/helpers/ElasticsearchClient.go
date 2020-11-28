@@ -1,4 +1,4 @@
-package elasticsearchHelpers
+package helpers
 
 import (
 	"context"
