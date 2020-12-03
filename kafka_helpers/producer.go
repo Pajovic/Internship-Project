@@ -20,7 +20,7 @@ func (producer *KafkaProducer) WriteMessage(topicName string, message string, id
 	err := producer.Writer.WriteMessages(context.Background(), kafkaMessage)
 
 	if err != nil {
-		log.Fatal("failed to write messages:", err)
+		log.Printf("failed to write messages:", err)
 	}
 
 	return err

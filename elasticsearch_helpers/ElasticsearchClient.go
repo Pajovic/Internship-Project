@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"log"
@@ -29,7 +31,7 @@ func GetElasticsearchClient() ElasticsearchClient {
 	}
 }
 
-func (esclient *ElasticsearchClient) SearchDocument(term string) []byte {
+func (esclient *ElasticsearchClient) SearchDocument(term string) ([]byte, error) {
 	var buf bytes.Buffer
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
@@ -39,7 +41,7 @@ func (esclient *ElasticsearchClient) SearchDocument(term string) []byte {
 		},
 	}
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		log.Fatalf("Error encoding query: %s", err)
+		return nil, err
 	}
 
 	res, err := esclient.client.Search(
@@ -50,28 +52,26 @@ func (esclient *ElasticsearchClient) SearchDocument(term string) []byte {
 		esclient.client.Search.WithPretty(),
 	)
 	if err != nil {
-		log.Fatalf("Error getting response: %s", err)
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
 		var e map[string]interface{}
 		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			log.Fatalf("Error parsing the response body: %s", err)
+			return nil, err
 		} else {
-			// Print the response status and error information.
-			log.Fatalf("[%s] %s: %s",
+			return nil, errors.New(fmt.Sprintf("[%s] %s: %s",
 				res.Status(),
 				e["error"].(map[string]interface{})["type"],
-				e["error"].(map[string]interface{})["reason"],
-			)
+				e["error"].(map[string]interface{})["reason"],))
 		}
 	}
 
 	var r map[string]interface{}
 
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-		log.Fatalf("Error parsing the response body: %s", err)
+		return nil, err
 	}
 
 	var final []map[string]interface{}
@@ -83,7 +83,7 @@ func (esclient *ElasticsearchClient) SearchDocument(term string) []byte {
 
 	json, _ := json.MarshalIndent(final, "", "    ")
 
-	return json
+	return json, nil
 }
 
 func (esclient *ElasticsearchClient) IndexDocument(id string, body string) {
@@ -96,7 +96,7 @@ func (esclient *ElasticsearchClient) IndexDocument(id string, body string) {
 
 	res, err := req.Do(context.Background(), esclient.client)
 	if err != nil {
-		log.Fatalf("Error getting response: %s", err)
+		log.Printf("Error getting response: %s", err)
 	}
 	defer res.Body.Close()
 	if res.IsError() {
@@ -119,7 +119,7 @@ func (esclient *ElasticsearchClient) DeleteDocument(id string) {
 	}
 	res, err := req.Do(context.Background(), esclient.client)
 	if err != nil {
-		log.Fatalf("Error getting response: %s", err)
+		log.Printf("Error getting response: %s", err)
 	}
 	defer res.Body.Close()
 	if res.IsError() {

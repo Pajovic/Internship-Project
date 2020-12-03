@@ -8,6 +8,7 @@ import (
 func NewConsumer(topicName string, EsClient elasticsearch_helpers.ElasticsearchClient) KafkaConsumer {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   []string{"localhost:9092"},
+		GroupID:   "consumer-group-id",
 		Topic:     topicName,
 		Partition: 0,
 		MinBytes:  10e2, // 10KB

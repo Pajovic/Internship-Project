@@ -87,7 +87,12 @@ func (controller *ProductController) DeleteProduct(w http.ResponseWriter, r *htt
 
 func (controller *ProductController) SearchProducts(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
-	json := controller.ElasticsearchClient.SearchDocument(name)
+	json, err := controller.ElasticsearchClient.SearchDocument(name)
+
+	if err != nil {
+		utils.WriteErrToClient(w, err)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(json)
