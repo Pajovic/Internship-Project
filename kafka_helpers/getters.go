@@ -1,21 +1,27 @@
 package kafka_helpers
 
 import (
-	"context"
-	"log"
-
 	"github.com/segmentio/kafka-go"
+	"internship_project/elasticsearch_helpers"
 )
 
-func GetConnection() *kafka.Conn {
-	topic := "ava-internship"
-	partition := 0
-	conn, err := kafka.DialLeader(context.Background(), "tcp", "localhost:9092", topic, partition)
-	if err != nil {
-		log.Fatal("failed to dial leader:", err)
+func NewConsumer(topicName string, EsClient elasticsearch_helpers.ElasticsearchClient) KafkaConsumer {
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:   []string{"localhost:9092"},
+		Topic:     topicName,
+		Partition: 0,
+		MinBytes:  10e2, // 10KB
+		MaxBytes:  10e6, // 10MB
+	})
+
+	r.SetOffset(kafka.LastOffset)
+
+	consumer := KafkaConsumer{
+		Reader: r,
+		EsClient: EsClient,
 	}
 
-	return conn
+	return consumer
 }
 
 func GetWriter(topicName string) *kafka.Writer {

@@ -39,6 +39,10 @@ func main() {
 	kafkaWriter := kafka_helpers.GetWriter("ava-internship")
 	defer kafkaWriter.Close()
 
+	EsClient := elasticsearch_helpers.GetElasticsearchClient()
+	kafkaConsumer := kafka_helpers.NewConsumer("ava-internship", EsClient)
+	go kafkaConsumer.Consume()
+
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter)
 	companyController := GetCompanyController(connpool)

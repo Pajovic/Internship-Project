@@ -4,7 +4,7 @@ import (
 	"context"
 	json "encoding/json"
 	"errors"
-	"internship_project/kafka_helpers"
+	kafka2 "internship_project/kafka_helpers"
 	"internship_project/models"
 	"internship_project/persistence"
 	"internship_project/utils"
@@ -27,7 +27,7 @@ type ProductRepository interface {
 
 type productRepository struct {
 	DB    *pgxpool.Pool
-	kafka *kafka_helpers.KafkaProducer
+	kafka *kafka2.KafkaProducer
 }
 
 func NewProductRepo(db *pgxpool.Pool, writer *kafka.Writer) ProductRepository {
@@ -40,7 +40,7 @@ func NewProductRepo(db *pgxpool.Pool, writer *kafka.Writer) ProductRepository {
 
 	return &productRepository{
 		DB: db,
-		kafka: &kafka_helpers.KafkaProducer{
+		kafka: &kafka2.KafkaProducer{
 			Writer: writer,
 		},
 	}

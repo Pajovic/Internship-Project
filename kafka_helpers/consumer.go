@@ -1,20 +1,20 @@
-package helpers
+package kafka_helpers
 
 import (
 	"context"
 	"fmt"
 	"github.com/segmentio/kafka-go"
+	"internship_project/elasticsearch_helpers"
 	"log"
 	"strings"
 )
 
 type KafkaConsumer struct {
 	Reader   *kafka.Reader
-	EsClient ElasticsearchClient
+	EsClient elasticsearch_helpers.ElasticsearchClient
 }
 
 func (consumer *KafkaConsumer) Consume() {
-	//go func() {
 	fmt.Println("KafkaConsumer is ready to consume new messages.")
 	for {
 
@@ -37,5 +37,4 @@ func (consumer *KafkaConsumer) Consume() {
 	if err := consumer.Reader.Close(); err != nil {
 		log.Fatal("failed to close reader: ", err)
 	}
-	//}()
 }

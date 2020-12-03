@@ -12,7 +12,7 @@ import (
 )
 
 type ProductController struct {
-	Service services.ProductService
+	Service             services.ProductService
 	ElasticsearchClient elasticsearch_helpers.ElasticsearchClient
 }
 
