@@ -40,7 +40,7 @@ func main() {
 	defer kafkaWriter.Close()
 
 	EsClient := elasticsearch_helpers.GetElasticsearchClient()
-	kafkaConsumer := kafka_helpers.NewConsumer("ava-internship", EsClient)
+	kafkaConsumer := kafka_helpers.NewConsumer("ava-internship", "localhost:9092", "group_id", EsClient)
 	go kafkaConsumer.Consume()
 
 	employeeController := getEmployeeController(connpool)

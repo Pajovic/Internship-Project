@@ -5,10 +5,10 @@ import (
 	"internship_project/elasticsearch_helpers"
 )
 
-func NewConsumer(topicName string, EsClient elasticsearch_helpers.ElasticsearchClient) KafkaConsumer {
+func NewConsumer(topicName string, address string, groupId string, EsClient elasticsearch_helpers.ElasticsearchClient) KafkaConsumer {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   []string{"localhost:9092"},
-		GroupID:   "consumer-group-id",
+		Brokers:   []string{address},
+		GroupID:   groupId,
 		Topic:     topicName,
 		Partition: 0,
 		MinBytes:  10e2, // 10KB
