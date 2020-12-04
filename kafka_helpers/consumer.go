@@ -2,11 +2,11 @@ package kafka_helpers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/segmentio/kafka-go"
 	"internship_project/elasticsearch_helpers"
 	"log"
-	"strings"
 )
 
 type KafkaConsumer struct {
@@ -25,16 +25,23 @@ func (consumer *KafkaConsumer) Consume() {
 
 		fmt.Printf("message at offset %d: %s = %s\n", m.Offset, string(m.Key), string(m.Value))
 
-		s := strings.Split(string(m.Value), " ")
+		var jsonMessage map[string]interface{}
+		err = json.Unmarshal(m.Value, &jsonMessage)
+		if err != nil {
+			fmt.Printf("Unable to parse Kafka message")
+			continue
+		}
 
-		if len(s) == 3 {
-			if s[0] == OperationEnumString(Created) || s[0] == OperationEnumString(Updated) {
-				go consumer.EsClient.IndexDocument(string(m.Key), s[2])
-			} else if s[0] == OperationEnumString(Deleted) {
-				go consumer.EsClient.DeleteDocument(string(m.Key))
+		if jsonMessage["operation"] == OperationEnumString(Created) || jsonMessage["operation"] == OperationEnumString(Updated) {
+			product, err := json.Marshal(jsonMessage["product"])
+			if err != nil {
+				fmt.Println(err)
+				continue
 			}
-		} else {
-			log.Printf("Failed to parse Kafka message")
+
+			consumer.EsClient.IndexDocument(string(m.Key), string(product))
+		} else if jsonMessage["operation"] == OperationEnumString(Deleted) {
+			consumer.EsClient.DeleteDocument(string(m.Key))
 		}
 
 		err = consumer.Reader.CommitMessages(context.Background(), m)

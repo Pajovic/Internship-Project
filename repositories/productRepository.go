@@ -189,14 +189,17 @@ func (repository *productRepository) AddProduct(product *models.Product) error {
 		return err
 	}
 
-	productStr, err := json.Marshal(product)
+	message := make(map[string]interface{})
 
-	message := kafka_helpers.OperationEnumString(kafka_helpers.Created) + " product " + string(productStr)
+	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Created)
+	message["product"] = product
+
+	jsonMessage, err := json.Marshal(message)
 	if err != nil {
 		log.Fatal("An error has occured during marshaling the product, ", err)
 	}
 
-	repository.kafka.WriteMessage("ava-internship", string(message), product.ID)
+	repository.kafka.WriteMessage("ava-internship", string(jsonMessage), product.ID)
 
 	return tx.Commit(context.Background())
 }
@@ -223,14 +226,17 @@ func (repository *productRepository) UpdateProduct(product models.Product) error
 	if commandTag != 1 {
 		return utils.NoDataError
 	}
+	message := make(map[string]interface{})
 
-	productStr, err := json.Marshal(product)
-	message := kafka_helpers.OperationEnumString(kafka_helpers.Updated) + " product " + string(productStr)
+	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Updated)
+	message["product"] = product
+
+	jsonMessage, err := json.Marshal(message)
 	if err != nil {
 		log.Fatal("An error has occured during marshaling the product, ", err)
 	}
 
-	repository.kafka.WriteMessage("ava-internship", string(message), product.ID)
+	repository.kafka.WriteMessage("ava-internship", string(jsonMessage), product.ID)
 
 	return tx.Commit(context.Background())
 }
@@ -253,8 +259,17 @@ func (repository *productRepository) DeleteProduct(id string) error {
 		return utils.NoDataError
 	}
 
-	message := kafka_helpers.OperationEnumString(kafka_helpers.Deleted) + " product ID=" + id
-	repository.kafka.WriteMessage("ava-internship", string(message), id)
+	message := make(map[string]interface{})
+
+	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Deleted)
+	message["id"] = id
+
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		log.Fatal("An error has occured during marshaling the product, ", err)
+	}
+
+	repository.kafka.WriteMessage("ava-internship", string(jsonMessage), id)
 
 	return tx.Commit(context.Background())
 }
