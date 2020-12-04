@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"internship_project/models"
 	"log"
 	"strings"
 )
@@ -74,11 +75,22 @@ func (esclient *ElasticsearchClient) SearchDocument(term string) ([]byte, error)
 		return nil, err
 	}
 
-	var final []map[string]interface{}
+	var final []models.Product
 
-	// Print the ID and document source for each hit.
 	for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
-		final = append(final, hit.(map[string]interface{})["_source"].(map[string]interface{}))
+		jsonProduct, err := json.Marshal(hit.(map[string]interface{})["_source"])
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		product := models.Product{}
+		if err := json.Unmarshal(jsonProduct, &product); err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		final = append(final, product)
 	}
 
 	json, _ := json.MarshalIndent(final, "", "    ")
