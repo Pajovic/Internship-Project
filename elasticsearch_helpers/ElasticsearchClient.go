@@ -98,7 +98,7 @@ func (esclient *ElasticsearchClient) SearchDocument(term string) ([]byte, error)
 	return json, nil
 }
 
-func (esclient *ElasticsearchClient) IndexDocument(id string, body string) {
+func (esclient *ElasticsearchClient) IndexDocument(id string, body string) error {
 	req := esapi.IndexRequest{
 		Index:      "product",
 		DocumentID: id,
@@ -109,22 +109,25 @@ func (esclient *ElasticsearchClient) IndexDocument(id string, body string) {
 	res, err := req.Do(context.Background(), esclient.client)
 	if err != nil {
 		log.Printf("Error getting response: %s", err)
+		return err
 	}
 	defer res.Body.Close()
 	if res.IsError() {
 		log.Printf("[%s] Error indexing document ID=%s", res.Status(), id)
-		return
+		return err
 	}
 
 	var r map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		log.Printf("Error parsing the response body: %s", err)
+		return err
 	} else {
 		log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
 	}
+	return nil
 }
 
-func (esclient *ElasticsearchClient) DeleteDocument(id string) {
+func (esclient *ElasticsearchClient) DeleteDocument(id string) error {
 	req := esapi.DeleteRequest{
 		Index: "product",
 		DocumentID: id,
@@ -133,16 +136,21 @@ func (esclient *ElasticsearchClient) DeleteDocument(id string) {
 	res, err := req.Do(context.Background(), esclient.client)
 	if err != nil {
 		log.Printf("Error getting response: %s", err)
+		return err
 	}
 	defer res.Body.Close()
 	if res.IsError() {
-		log.Printf("[%s] Error deleting document ID=%s", res.Status(), id)
+		err := fmt.Sprint("[%s] Error deleting document ID=%s", res.Status(), id)
+		log.Printf(err)
+		return errors.New(err)
 	} else {
 		var r map[string]interface{}
 		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 			log.Printf("Error parsing the response body: %s", err)
+			return err
 		} else {
 			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
 		}
 	}
+	return nil
 }

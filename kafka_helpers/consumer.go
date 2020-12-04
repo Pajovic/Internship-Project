@@ -39,9 +39,17 @@ func (consumer *KafkaConsumer) Consume() {
 				continue
 			}
 
-			consumer.EsClient.IndexDocument(string(m.Key), string(product))
+			err = consumer.EsClient.IndexDocument(string(m.Key), string(product))
+			if err != nil {
+				fmt.Printf("Error while indexing new Elasticsearch document")
+				continue
+			}
 		} else if jsonMessage["operation"] == OperationEnumString(Deleted) {
-			consumer.EsClient.DeleteDocument(string(m.Key))
+			err = consumer.EsClient.DeleteDocument(string(m.Key))
+			if err != nil {
+				fmt.Printf("Error while deleting Elasticsearch document")
+				continue
+			}
 		}
 
 		err = consumer.Reader.CommitMessages(context.Background(), m)
