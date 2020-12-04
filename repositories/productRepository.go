@@ -4,7 +4,7 @@ import (
 	"context"
 	json "encoding/json"
 	"errors"
-	kafka2 "internship_project/kafka_helpers"
+	"internship_project/kafka_helpers"
 	"internship_project/models"
 	"internship_project/persistence"
 	"internship_project/utils"
@@ -27,7 +27,7 @@ type ProductRepository interface {
 
 type productRepository struct {
 	DB    *pgxpool.Pool
-	kafka *kafka2.KafkaProducer
+	kafka *kafka_helpers.KafkaProducer
 }
 
 func NewProductRepo(db *pgxpool.Pool, writer *kafka.Writer) ProductRepository {
@@ -40,7 +40,7 @@ func NewProductRepo(db *pgxpool.Pool, writer *kafka.Writer) ProductRepository {
 
 	return &productRepository{
 		DB: db,
-		kafka: &kafka2.KafkaProducer{
+		kafka: &kafka_helpers.KafkaProducer{
 			Writer: writer,
 		},
 	}
@@ -190,7 +190,8 @@ func (repository *productRepository) AddProduct(product *models.Product) error {
 	}
 
 	productStr, err := json.Marshal(product)
-	message := "CREATED product " + string(productStr)
+
+	message := kafka_helpers.OperationEnumString(kafka_helpers.Created) + " product " + string(productStr)
 	if err != nil {
 		log.Fatal("An error has occured during marshaling the product, ", err)
 	}
@@ -224,7 +225,7 @@ func (repository *productRepository) UpdateProduct(product models.Product) error
 	}
 
 	productStr, err := json.Marshal(product)
-	message := "UPDATED product " + string(productStr)
+	message := kafka_helpers.OperationEnumString(kafka_helpers.Updated) + " product " + string(productStr)
 	if err != nil {
 		log.Fatal("An error has occured during marshaling the product, ", err)
 	}
@@ -252,7 +253,7 @@ func (repository *productRepository) DeleteProduct(id string) error {
 		return utils.NoDataError
 	}
 
-	message := "DELETED product ID=" + id
+	message := kafka_helpers.OperationEnumString(kafka_helpers.Deleted) + " product ID=" + id
 	repository.kafka.WriteMessage("ava-internship", string(message), id)
 
 	return tx.Commit(context.Background())

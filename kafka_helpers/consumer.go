@@ -28,9 +28,9 @@ func (consumer *KafkaConsumer) Consume() {
 		s := strings.Split(string(m.Value), " ")
 
 		if len(s) == 3 {
-			if s[0] == "CREATED" || s[0] == "UPDATED" {
+			if s[0] == OperationEnumString(Created) || s[0] == OperationEnumString(Updated) {
 				go consumer.EsClient.IndexDocument(string(m.Key), s[2])
-			} else if s[0] == "DELETED" {
+			} else if s[0] == OperationEnumString(Deleted) {
 				go consumer.EsClient.DeleteDocument(string(m.Key))
 			}
 		} else {

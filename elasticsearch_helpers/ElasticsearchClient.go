@@ -113,13 +113,14 @@ func (esclient *ElasticsearchClient) IndexDocument(id string, body string) {
 	defer res.Body.Close()
 	if res.IsError() {
 		log.Printf("[%s] Error indexing document ID=%s", res.Status(), id)
+		return
+	}
+
+	var r map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+		log.Printf("Error parsing the response body: %s", err)
 	} else {
-		var r map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
-			log.Printf("Error parsing the response body: %s", err)
-		} else {
-			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
-		}
+		log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
 	}
 }
 
