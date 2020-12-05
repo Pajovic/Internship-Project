@@ -11,7 +11,7 @@ type KafkaProducer struct {
 	Writer *kafka.Writer
 }
 
-func (producer *KafkaProducer) WriteMessage(topicName string, message string, id string) error {
+func (producer *KafkaProducer) WriteMessage(message string, id string) error {
 	kafkaMessage := kafka.Message{
 		Key:   []byte(id),
 		Value: []byte(message),

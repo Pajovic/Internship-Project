@@ -40,8 +40,11 @@ func main() {
 	defer kafkaWriter.Close()
 
 	EsClient := elasticsearch_helpers.GetElasticsearchClient()
-	kafkaConsumer := kafka_helpers.NewConsumer("ava-internship", "localhost:9092", "group_id", EsClient)
+	kafkaConsumer := kafka_helpers.NewConsumer("ava-internship", "localhost:9092", "group_id", EsClient, 500)
 	go kafkaConsumer.Consume()
+
+	retryConsumer := kafka_helpers.NewConsumer("retry", "localhost:9092", "group_id", EsClient, 15000)
+	go retryConsumer.Consume()
 
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter)

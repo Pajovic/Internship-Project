@@ -3,9 +3,10 @@ package kafka_helpers
 import (
 	"github.com/segmentio/kafka-go"
 	"internship_project/elasticsearch_helpers"
+	"time"
 )
 
-func NewConsumer(topicName string, address string, groupId string, EsClient elasticsearch_helpers.ElasticsearchClient) KafkaConsumer {
+func NewConsumer(topicName string, address string, groupId string, EsClient elasticsearch_helpers.ElasticsearchClient, miliseconds int) KafkaConsumer {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   []string{address},
 		GroupID:   groupId,
@@ -13,6 +14,7 @@ func NewConsumer(topicName string, address string, groupId string, EsClient elas
 		Partition: 0,
 		MinBytes:  10e2, // 10KB
 		MaxBytes:  10e6, // 10MB
+		MaxWait: time.Duration(miliseconds) * time.Millisecond,
 	})
 
 	r.SetOffset(kafka.LastOffset)
