@@ -21,10 +21,17 @@ import (
 )
 
 type Config struct {
-	Username        string `json:"username"`
-	Password        string `json:"password"`
+	DbUsername      string `json:"db_username"`
+	DbPassword      string `json:"db_password"`
 	DatabaseURL     string `json:"database_url"`
 	TestDatabaseURL string `json:"test_database_url"`
+	MainKafkaTopic  string `json:"main_kafka_topic"`
+	RetryKafkaTopic string `json:"retry_kafka_topic"`
+	MainTopicTime	int	   `json:"main_topic_time"`
+	RetryTopicTime	int	   `json:"retry_topic_time"`
+	KafkaAddress    string `json:"kafka_address"`
+	KafkaGroupId	string `json:"kafka_group_id"`
+	EsAddress		string `json:"es_address"`
 }
 
 var (
@@ -33,21 +40,28 @@ var (
 )
 
 func main() {
-	connpool := getConnectionPool()
+	var conf Config
+	if _, err := confl.DecodeFile("dbconfig.conf", &conf); err != nil {
+		panic(err)
+	}
+
+	connpool := getConnectionPool(conf)
 	defer connpool.Close()
 
 	kafkaWriter := kafka_helpers.GetWriter("ava-internship")
 	defer kafkaWriter.Close()
 
-	EsClient := elasticsearch_helpers.GetElasticsearchClient()
-	kafkaConsumer := kafka_helpers.NewConsumer("ava-internship", "localhost:9092", "group_id", EsClient, 500)
+	EsClient := elasticsearch_helpers.GetElasticsearchClient(conf.EsAddress)
+	kafkaConsumer := kafka_helpers.NewConsumer(conf.MainKafkaTopic, conf.KafkaAddress, conf.KafkaGroupId, EsClient, conf.MainTopicTime)
 	go kafkaConsumer.Consume()
+	defer kafkaConsumer.Reader.Close()
 
-	retryConsumer := kafka_helpers.NewConsumer("retry", "localhost:9092", "group_id", EsClient, 15000)
+	retryConsumer := kafka_helpers.NewConsumer(conf.RetryKafkaTopic, conf.KafkaAddress, conf.KafkaGroupId, EsClient, conf.RetryTopicTime)
 	go retryConsumer.Consume()
+	defer retryConsumer.Reader.Close()
 
 	employeeController := getEmployeeController(connpool)
-	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter)
+	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter, EsClient)
 	companyController := GetCompanyController(connpool)
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
@@ -148,12 +162,7 @@ func googleAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getConnectionPool() *pgxpool.Pool {
-	var conf Config
-	if _, err := confl.DecodeFile("dbconfig.conf", &conf); err != nil {
-		panic(err)
-	}
-
+func getConnectionPool(conf Config) *pgxpool.Pool {
 	poolConfig, _ := pgxpool.ParseConfig(conf.DatabaseURL)
 
 	connection, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
@@ -167,11 +176,10 @@ func getConnectionPool() *pgxpool.Pool {
 	return connection
 }
 
-func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository, kafkaWriter *kafka.Writer) controllers.ProductController {
+func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository, kafkaWriter *kafka.Writer, esclient elasticsearch_helpers.ElasticsearchClient) controllers.ProductController {
 	productRepository := repositories.NewProductRepo(connpool, kafkaWriter)
 	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: *employeeRepo}
-	elasticsearchClient := elasticsearch_helpers.GetElasticsearchClient()
-	productController := controllers.ProductController{Service: productService, ElasticsearchClient: elasticsearchClient}
+	productController := controllers.ProductController{Service: productService, ElasticsearchClient: esclient}
 
 	fmt.Println("Product controller up and running.")
 

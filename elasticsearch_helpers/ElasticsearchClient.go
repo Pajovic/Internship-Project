@@ -17,10 +17,10 @@ type ElasticsearchClient struct {
 	client *elasticsearch.Client
 }
 
-func GetElasticsearchClient() ElasticsearchClient {
+func GetElasticsearchClient(address string) ElasticsearchClient {
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"http://localhost:9200",
+			address,
 		},
 	}
 	es, err := elasticsearch.NewClient(cfg)

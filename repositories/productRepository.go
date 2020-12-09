@@ -189,14 +189,14 @@ func (repository *productRepository) AddProduct(product *models.Product) error {
 		return err
 	}
 
-	message := make(map[string]interface{})
+	message := make(map[string]interface{}, 2)
 
 	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Created)
 	message["product"] = product
 
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {
-		log.Fatal("An error has occured during marshaling the product, ", err)
+		log.Println("An error has occured during marshaling the product, ", err)
 	}
 
 	repository.kafka.WriteMessage(string(jsonMessage), product.ID)
@@ -226,14 +226,14 @@ func (repository *productRepository) UpdateProduct(product models.Product) error
 	if commandTag != 1 {
 		return utils.NoDataError
 	}
-	message := make(map[string]interface{})
+	message := make(map[string]interface{}, 2)
 
 	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Updated)
 	message["product"] = product
 
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {
-		log.Fatal("An error has occured during marshaling the product, ", err)
+		log.Println("An error has occured during marshaling the product, ", err)
 	}
 
 	repository.kafka.WriteMessage(string(jsonMessage), product.ID)
@@ -259,14 +259,14 @@ func (repository *productRepository) DeleteProduct(id string) error {
 		return utils.NoDataError
 	}
 
-	message := make(map[string]interface{})
+	message := make(map[string]interface{}, 2)
 
 	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Deleted)
 	message["id"] = id
 
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {
-		log.Fatal("An error has occured during marshaling the product, ", err)
+		log.Println("An error has occured during marshaling the product, ", err)
 	}
 
 	repository.kafka.WriteMessage(string(jsonMessage), id)

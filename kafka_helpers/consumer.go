@@ -70,10 +70,6 @@ func (consumer *KafkaConsumer) Consume() {
 		}
 
 	}
-
-	if err := consumer.Reader.Close(); err != nil {
-		log.Println("failed to close reader: ", err)
-	}
 }
 
 func (consumer *KafkaConsumer) resolveError(producer KafkaProducer, message kafka.Message) {
