@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"internship_project/models"
 	"log"
 	"strings"
+
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 type ElasticsearchClient struct {
@@ -65,7 +66,7 @@ func (esclient *ElasticsearchClient) SearchDocument(term string) ([]byte, error)
 			return nil, errors.New(fmt.Sprintf("[%s] %s: %s",
 				res.Status(),
 				e["error"].(map[string]interface{})["type"],
-				e["error"].(map[string]interface{})["reason"],))
+				e["error"].(map[string]interface{})["reason"]))
 		}
 	}
 
@@ -75,9 +76,14 @@ func (esclient *ElasticsearchClient) SearchDocument(term string) ([]byte, error)
 		return nil, err
 	}
 
-	var final []models.Product
+	resultSet, resultSetOkay := r["hits"].(map[string]interface{})["hits"].([]interface{})
 
-	for _, hit := range r["hits"].(map[string]interface{})["hits"].([]interface{}) {
+	if !resultSetOkay {
+		return []byte{}, errors.New("An error occurred when extracting the result set")
+	}
+
+	var final []models.Product
+	for _, hit := range resultSet {
 		jsonProduct, err := json.Marshal(hit.(map[string]interface{})["_source"])
 		if err != nil {
 			fmt.Println(err)
@@ -129,9 +135,9 @@ func (esclient *ElasticsearchClient) IndexDocument(id string, body string) error
 
 func (esclient *ElasticsearchClient) DeleteDocument(id string) error {
 	req := esapi.DeleteRequest{
-		Index: "product",
+		Index:      "product",
 		DocumentID: id,
-		Refresh: "true",
+		Refresh:    "true",
 	}
 	res, err := req.Do(context.Background(), esclient.client)
 	if err != nil {
