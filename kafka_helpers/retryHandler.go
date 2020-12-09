@@ -18,7 +18,7 @@ type RetryHandler struct {
 
 const (
 	contextDeadlineExceeded = "context deadline exceeded"
-	badRunsLimit            = 5
+	badRunsLimit            = 4
 )
 
 func (handler *RetryHandler) TransferToMainTopic(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +96,7 @@ func determineBadRunError(fetchNum int, transferNum int, commitNum int) (string,
 }
 
 func (handler *RetryHandler) fetchWithTimeout(ctx context.Context) (kafka.Message, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(5)*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(3)*time.Second)
 	defer cancel()
 	return handler.Reader.FetchMessage(ctx)
 }
