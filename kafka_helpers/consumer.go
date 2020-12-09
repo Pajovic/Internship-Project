@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/segmentio/kafka-go"
 	"internship_project/elasticsearch_helpers"
 	"log"
+
+	"github.com/segmentio/kafka-go"
 )
 
 type KafkaConsumer struct {
@@ -22,10 +23,9 @@ func (consumer *KafkaConsumer) Consume() {
 		Writer: retryWriter,
 	}
 	for {
-
 		m, err := consumer.Reader.FetchMessage(context.Background())
 		if err != nil {
-			log.Println("Error while fetching message")
+			fmt.Println("Error while fetching message")
 			consumer.resolveError(retryProducer, m)
 			continue
 		}
@@ -90,5 +90,3 @@ func writeToRetry(producer KafkaProducer, message kafka.Message) {
 		fmt.Println("Successfuly written to retry topic")
 	}
 }
-
-

@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"internship_project/elasticsearch_helpers"
 	"internship_project/controllers"
+	"internship_project/elasticsearch_helpers"
 	"internship_project/kafka_helpers"
 	"internship_project/repositories"
 	"internship_project/services"
@@ -27,11 +27,11 @@ type Config struct {
 	TestDatabaseURL string `json:"test_database_url"`
 	MainKafkaTopic  string `json:"main_kafka_topic"`
 	RetryKafkaTopic string `json:"retry_kafka_topic"`
-	MainTopicTime	int	   `json:"main_topic_time"`
-	RetryTopicTime	int	   `json:"retry_topic_time"`
+	MainTopicTime   int    `json:"main_topic_time"`
+	RetryTopicTime  int    `json:"retry_topic_time"`
 	KafkaAddress    string `json:"kafka_address"`
-	KafkaGroupId	string `json:"kafka_group_id"`
-	EsAddress		string `json:"es_address"`
+	KafkaGroupId    string `json:"kafka_group_id"`
+	EsAddress       string `json:"es_address"`
 }
 
 var (
@@ -56,9 +56,7 @@ func main() {
 	go kafkaConsumer.Consume()
 	defer kafkaConsumer.Reader.Close()
 
-	retryConsumer := kafka_helpers.NewConsumer(conf.RetryKafkaTopic, conf.KafkaAddress, conf.KafkaGroupId, EsClient, conf.RetryTopicTime)
-	go retryConsumer.Consume()
-	defer retryConsumer.Reader.Close()
+	kafkaRetryHandler := kafka_helpers.GetRetryHandler(conf.RetryKafkaTopic, conf.MainKafkaTopic, conf.KafkaAddress, conf.KafkaGroupId, conf.RetryTopicTime)
 
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter, EsClient)
@@ -78,6 +76,10 @@ func main() {
 	r.HandleFunc("/auth/google", userController.GoogleAuth).Methods("POST")
 
 	r.HandleFunc("/search", productController.SearchProducts).Methods("GET")
+
+	// Kafka routes
+	kafkaRouter := r.PathPrefix("/kafka").Subrouter()
+	kafkaRouter.HandleFunc("/retry", kafkaRetryHandler.TransferToMainTopic).Methods("POST")
 
 	// Product Routes
 	productRouter := r.PathPrefix("/product").Subrouter()
@@ -138,6 +140,7 @@ func main() {
 	employeeRouter.Use(googleAuthMiddleware)
 	earRouter.Use(googleAuthMiddleware)
 	productRouter.Use(googleAuthMiddleware)
+	kafkaRouter.Use(googleAuthMiddleware)
 
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)

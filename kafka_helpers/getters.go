@@ -1,12 +1,26 @@
 package kafka_helpers
 
 import (
-	"github.com/segmentio/kafka-go"
 	"internship_project/elasticsearch_helpers"
 	"time"
+
+	"github.com/segmentio/kafka-go"
 )
 
 func NewConsumer(topicName string, address string, groupId string, EsClient elasticsearch_helpers.ElasticsearchClient, miliseconds int) KafkaConsumer {
+	r := GetReader(topicName, address, groupId, miliseconds)
+
+	r.SetOffset(kafka.LastOffset)
+
+	consumer := KafkaConsumer{
+		Reader:   r,
+		EsClient: EsClient,
+	}
+
+	return consumer
+}
+
+func GetReader(topicName string, address string, groupId string, miliseconds int) *kafka.Reader {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   []string{address},
 		GroupID:   groupId,
@@ -14,17 +28,10 @@ func NewConsumer(topicName string, address string, groupId string, EsClient elas
 		Partition: 0,
 		MinBytes:  10e2, // 10KB
 		MaxBytes:  10e6, // 10MB
-		MaxWait: time.Duration(miliseconds) * time.Millisecond,
+		MaxWait:   time.Duration(miliseconds) * time.Millisecond,
 	})
 
-	r.SetOffset(kafka.LastOffset)
-
-	consumer := KafkaConsumer{
-		Reader: r,
-		EsClient: EsClient,
-	}
-
-	return consumer
+	return r
 }
 
 func GetWriter(topicName string) *kafka.Writer {
@@ -35,4 +42,15 @@ func GetWriter(topicName string) *kafka.Writer {
 	})
 
 	return w
+}
+
+func GetRetryHandler(retryTopic string, mainTopic string, address string, groupId string, miliseconds int) *RetryHandler {
+	handler := &RetryHandler{
+		Reader: GetReader(retryTopic, address, groupId, miliseconds),
+		Writer: &KafkaProducer{
+			Writer: GetWriter(mainTopic),
+		},
+	}
+
+	return handler
 }

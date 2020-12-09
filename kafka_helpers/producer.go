@@ -2,6 +2,7 @@ package kafka_helpers
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/segmentio/kafka-go"
@@ -18,9 +19,10 @@ func (producer *KafkaProducer) WriteMessage(message string, id string) error {
 	}
 
 	err := producer.Writer.WriteMessages(context.Background(), kafkaMessage)
+	fmt.Println(fmt.Sprintf("Written message to %s topic", producer.Writer.Topic))
 
 	if err != nil {
-		log.Printf("failed to write messages:", err)
+		log.Println("failed to write messages:", err)
 	}
 
 	return err
