@@ -20,11 +20,14 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type Config struct {
+type DbConfig struct {
 	DbUsername      string `json:"db_username"`
 	DbPassword      string `json:"db_password"`
 	DatabaseURL     string `json:"database_url"`
 	TestDatabaseURL string `json:"test_database_url"`
+}
+
+type KafkaEsConfig struct {
 	MainKafkaTopic  string `json:"main_kafka_topic"`
 	RetryKafkaTopic string `json:"retry_kafka_topic"`
 	MainTopicTime   int    `json:"main_topic_time"`
@@ -40,23 +43,28 @@ var (
 )
 
 func main() {
-	var conf Config
-	if _, err := confl.DecodeFile("dbconfig.conf", &conf); err != nil {
+	var db_conf DbConfig
+	if _, err := confl.DecodeFile("dbconfig.conf", &db_conf); err != nil {
 		panic(err)
 	}
 
-	connpool := getConnectionPool(conf)
+	var kafka_es_conf KafkaEsConfig
+	if _, err := confl.DecodeFile("kafka_es_cofig.conf", &kafka_es_conf); err != nil {
+		panic(err)
+	}
+
+	connpool := getConnectionPool(db_conf)
 	defer connpool.Close()
 
 	kafkaWriter := kafka_helpers.GetWriter("ava-internship")
 	defer kafkaWriter.Close()
 
-	EsClient := elasticsearch_helpers.GetElasticsearchClient(conf.EsAddress)
-	kafkaConsumer := kafka_helpers.NewConsumer(conf.MainKafkaTopic, conf.KafkaAddress, conf.KafkaGroupId, EsClient, conf.MainTopicTime)
+	EsClient := elasticsearch_helpers.GetElasticsearchClient(kafka_es_conf.EsAddress)
+	kafkaConsumer := kafka_helpers.NewConsumer(kafka_es_conf.MainKafkaTopic, kafka_es_conf.KafkaAddress, kafka_es_conf.KafkaGroupId, EsClient, kafka_es_conf.MainTopicTime)
 	go kafkaConsumer.Consume()
 	defer kafkaConsumer.Reader.Close()
 
-	kafkaRetryHandler := kafka_helpers.GetRetryHandler(conf.RetryKafkaTopic, conf.MainKafkaTopic, conf.KafkaAddress, conf.KafkaGroupId, conf.RetryTopicTime)
+	kafkaRetryHandler := kafka_helpers.GetRetryHandler(kafka_es_conf.RetryKafkaTopic, kafka_es_conf.MainKafkaTopic, kafka_es_conf.KafkaAddress, kafka_es_conf.KafkaGroupId, kafka_es_conf.RetryTopicTime)
 
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter, EsClient)
@@ -165,7 +173,7 @@ func googleAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getConnectionPool(conf Config) *pgxpool.Pool {
+func getConnectionPool(conf DbConfig) *pgxpool.Pool {
 	poolConfig, _ := pgxpool.ParseConfig(conf.DatabaseURL)
 
 	connection, err := pgxpool.ConnectConfig(context.Background(), poolConfig)

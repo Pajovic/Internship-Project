@@ -19,11 +19,10 @@ func (producer *KafkaProducer) WriteMessage(message string, id string) error {
 	}
 
 	err := producer.Writer.WriteMessages(context.Background(), kafkaMessage)
-	fmt.Println(fmt.Sprintf("Written message to %s topic", producer.Writer.Topic))
-
 	if err != nil {
 		log.Println("failed to write messages:", err)
 	}
 
+	fmt.Println(fmt.Sprintf("Written message to %s topic", producer.Writer.Topic))
 	return err
 }

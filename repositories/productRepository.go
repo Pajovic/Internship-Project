@@ -196,12 +196,15 @@ func (repository *productRepository) AddProduct(product *models.Product) error {
 
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {
-		log.Println("An error has occured during marshaling the product, ", err)
+		return err
 	}
 
-	repository.kafka.WriteMessage(string(jsonMessage), product.ID)
-
-	return tx.Commit(context.Background())
+	err = repository.kafka.WriteMessage(string(jsonMessage), product.ID)
+	if err != nil {
+		return err
+	} else {
+		return tx.Commit(context.Background())
+	}
 }
 
 func (repository *productRepository) UpdateProduct(product models.Product) error {
@@ -236,9 +239,12 @@ func (repository *productRepository) UpdateProduct(product models.Product) error
 		log.Println("An error has occured during marshaling the product, ", err)
 	}
 
-	repository.kafka.WriteMessage(string(jsonMessage), product.ID)
-
-	return tx.Commit(context.Background())
+	err = repository.kafka.WriteMessage(string(jsonMessage), product.ID)
+	if err != nil {
+		return err
+	} else {
+		return tx.Commit(context.Background())
+	}
 }
 
 func (repository *productRepository) DeleteProduct(id string) error {
@@ -269,7 +275,10 @@ func (repository *productRepository) DeleteProduct(id string) error {
 		log.Println("An error has occured during marshaling the product, ", err)
 	}
 
-	repository.kafka.WriteMessage(string(jsonMessage), id)
-
-	return tx.Commit(context.Background())
+	err = repository.kafka.WriteMessage(string(jsonMessage), id)
+	if err != nil {
+		return err
+	} else {
+		return tx.Commit(context.Background())
+	}
 }
