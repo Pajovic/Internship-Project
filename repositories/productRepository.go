@@ -1,13 +1,14 @@
 package repositories
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"internship_project/models"
 	"internship_project/persistence"
 	"internship_project/utils"
-	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
@@ -59,26 +60,35 @@ func (repository *productRepository) GetAllProducts(employeeIdc string) ([]model
 		earConstraints = append(earConstraints, earConstraint)
 	}
 
-	var finalQuery strings.Builder
+	finalQueryTemplate := `
+	select * from products p where p.idc = $1
+	{{- range . -}}	
+		{{- if .Operator}}
+			or (p.idc = '{{.IDSC}}' and p.{{.Property}} {{.Operator}} {{.PropertyValue}})
+		{{- else}}
+			or (p.idc = '{{.IDSC}})'
+		{{- end -}}
+	{{- end -}}
+	;`
 
-	finalQuery.WriteString("select * from products p where p.idc = $1")
+	var buff bytes.Buffer
+	t := template.Must(template.New("getProducts").Parse(finalQueryTemplate))
 
-	for _, earc := range earConstraints {
-		if earc.Operator != "" && earc.Property != "" {
-			finalQuery.WriteString(" or (p.idc = '" + earc.IDSC + "' and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue) + ")")
-		} else {
-			finalQuery.WriteString(" or p.idc = '" + earc.IDSC + "'")
-		}
-	}
-	finalQuery.WriteString(";")
-
-	products := []models.Product{}
-
-	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery.String(), employeeIdc)
-	defer rowsProducts.Close()
+	err = t.Execute(&buff, earConstraints)
 	if err != nil {
 		return nil, err
 	}
+
+	finalQuery := strings.TrimSpace(buff.String())
+
+	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery, employeeIdc)
+	defer rowsProducts.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	products := []models.Product{}
 
 	for rowsProducts.Next() {
 		var productPers persistence.Products
