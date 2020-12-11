@@ -20,6 +20,7 @@ type ProductRepository interface {
 	AddProduct(*models.Product) error
 	UpdateProduct(models.Product) error
 	DeleteProduct(string) error
+	DeleteProductsFromCompany(string) error
 }
 
 type productRepository struct {
@@ -232,6 +233,24 @@ func (repository *productRepository) DeleteProduct(id string) error {
 	}
 	if commandTag != 1 {
 		return utils.NoDataError
+	}
+
+	return tx.Commit(context.Background())
+}
+
+func (repository *productRepository) DeleteProductsFromCompany(idc string) error {
+	tx, err := repository.DB.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	query := `DELETE FROM products WHERE idc=$1`
+
+	_, err = tx.Exec(context.Background(), query, idc)
+
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit(context.Background())

@@ -17,6 +17,7 @@ type ConstraintRepository interface {
 	AddConstraint(*models.AccessConstraint) error
 	UpdateConstraint(models.AccessConstraint) error
 	DeleteConstraint(string) error
+	DeleteConstraintsForCompany(string) error
 }
 
 type constraintRepository struct {
@@ -27,7 +28,7 @@ func NewConstraintRepo(db *pgxpool.Pool) ConstraintRepository {
 	if db == nil {
 		panic("ConstraintRepository not created, pgxpool is nil")
 	}
-	return &constraintRepository {
+	return &constraintRepository{
 		DB: db,
 	}
 }
@@ -181,5 +182,25 @@ func (repository *constraintRepository) DeleteConstraint(id string) error {
 	if commandTag != 1 {
 		return utils.NoDataError
 	}
+	return tx.Commit(context.Background())
+}
+
+func (repository *constraintRepository) DeleteConstraintsForCompany(idc string) error {
+	tx, err := repository.DB.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	query := `DELETE FROM access_constraints ac where ac.idear in
+	(select id from external_access_rights where idrc = $1
+	or idsc = $1);`
+
+	_, err = tx.Exec(context.Background(), query, idc)
+
+	if err != nil {
+		return err
+	}
+
 	return tx.Commit(context.Background())
 }

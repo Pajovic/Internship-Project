@@ -17,18 +17,21 @@ type ExternalRightRepository interface {
 	AddEar(ear *models.ExternalRights) error
 	UpdateEar(ear models.ExternalRights) error
 	DeleteEar(id string) error
+	DeleteExternalRightsForCompany(string) error
 }
 
 type externalRightRepository struct {
-	DB *pgxpool.Pool
+	DB              *pgxpool.Pool
+	ConstraintsRepo ConstraintRepository
 }
 
 func NewExternalRightRepo(db *pgxpool.Pool) ExternalRightRepository {
 	if db == nil {
 		panic("ExternalRightRepository not created, pgxpool is nil")
 	}
-	return &externalRightRepository {
-		DB: db,
+	return &externalRightRepository{
+		DB:              db,
+		ConstraintsRepo: NewConstraintRepo(db),
 	}
 }
 
@@ -201,5 +204,29 @@ func (repository *externalRightRepository) DeleteEar(id string) error {
 	if commandTag != 1 {
 		return utils.NoDataError
 	}
+	return tx.Commit(context.Background())
+}
+
+func (repository *externalRightRepository) DeleteExternalRightsForCompany(idc string) error {
+	tx, err := repository.DB.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	query := `DELETE FROM external_access_rights WHERE idsc=$1 or idrc = $1`
+
+	_, err = tx.Exec(context.Background(), query, idc)
+
+	if err != nil {
+		return err
+	}
+
+	err = repository.ConstraintsRepo.DeleteConstraintsForCompany(idc)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return err
+	}
+
 	return tx.Commit(context.Background())
 }
