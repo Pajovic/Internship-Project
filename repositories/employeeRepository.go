@@ -218,6 +218,11 @@ func (repository *employeeRepository) GetEmployeeExternalPermissions(idReceiving
 	if err != nil {
 		return rights, err
 	}
+
+	if !rows.Next() {
+		return rights, nil
+	}
+
 	for rows.Next() {
 		var ear persistence.ExternalAccessRights
 		ear.Scan(&rows)
@@ -321,6 +326,11 @@ func (repository *employeeRepository) CheckCompaniesSharingEmployeeData(idReceiv
 	if err != nil {
 		return err
 	}
+
+	if !rows.Next() {
+		return errors.New("Your company does not have rights needed")
+	}
+
 	for rows.Next() {
 		var ear persistence.ExternalAccessRights
 		ear.Scan(&rows)
