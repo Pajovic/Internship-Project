@@ -78,7 +78,7 @@ func (service *ProductService) UpdateProduct(updateProduct models.Product, emplo
 	}
 
 	if !employee.D {
-		return errors.New("You can't delete products")
+		return errors.New("You can't update products")
 	}
 
 	product, err := service.ProductRepository.GetProduct(updateProduct.ID, employee.CompanyID)
@@ -88,8 +88,8 @@ func (service *ProductService) UpdateProduct(updateProduct models.Product, emplo
 		if err != nil {
 			return err
 		}
-		if !externalAccessRights.Delete {
-			return errors.New("You can't delete this product")
+		if !externalAccessRights.Update {
+			return errors.New("You can't update this product")
 		}
 	}
 

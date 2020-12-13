@@ -149,19 +149,19 @@ func (repository *productRepository) GetProduct(id string, employeeIdc string) (
 		earConstraints = append(earConstraints, earConstraint)
 	}
 
+	fmt.Println(earConstraints)
+
 	finalQueryTemplate := `
-	select * from products p where p.idc = $1
+	select * from products p where p.id = $1
 	{{- range . -}}	
 		{{- if .Operator}}
 			or (p.idc = '{{.IDSC}}' and p.{{.Property}} {{.Operator}} {{.PropertyValue}})
-		{{- else}}
-			or (p.idc = '{{.IDSC}}')
 		{{- end -}}
 	{{- end -}}
 	;`
 
 	var buff bytes.Buffer
-	t := template.Must(template.New("getProducts").Parse(finalQueryTemplate))
+	t := template.Must(template.New("getProduct").Parse(finalQueryTemplate))
 
 	err = t.Execute(&buff, earConstraints)
 	if err != nil {
@@ -171,7 +171,7 @@ func (repository *productRepository) GetProduct(id string, employeeIdc string) (
 	finalQuery := strings.TrimSpace(buff.String())
 	fmt.Println(finalQuery)
 
-	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery, employeeIdc)
+	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery, id)
 	defer rowsProducts.Close()
 
 	if err != nil {
@@ -179,7 +179,7 @@ func (repository *productRepository) GetProduct(id string, employeeIdc string) (
 	}
 
 	if !rowsProducts.Next() {
-		return product, errors.New("There is no product with this ID")
+		return product, errors.New("There is no product with this ID or you cannot see it")
 	}
 
 	for rowsProducts.Next() {
