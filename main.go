@@ -37,6 +37,7 @@ func main() {
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
 	userController := getUserController(connpool)
+	shopController := getShopController(connpool)
 
 	userRepository = repositories.NewUserRepo(connpool)
 	userService = services.UserService{Repository: userRepository}
@@ -104,11 +105,21 @@ func main() {
 	constraintRouter.HandleFunc("", constraintController.UpdateConstraint).Methods("PUT")
 	constraintRouter.HandleFunc("/{id}", constraintController.DeleteConstraint).Methods("DELETE")
 
+	// Shop Routes
+	shopRouter := r.PathPrefix("/shop").Subrouter()
+
+	shopRouter.HandleFunc("", shopController.GetAllShops).Methods("GET")
+	shopRouter.HandleFunc("/{id}", shopController.GetShopById).Methods("GET")
+	shopRouter.HandleFunc("", shopController.AddShop).Methods("POST")
+	shopRouter.HandleFunc("", shopController.UpdateShop).Methods("PUT")
+	shopRouter.HandleFunc("/{id}", shopController.DeleteShop).Methods("DELETE")
+
 	companyRouter.Use(googleAuthMiddleware)
 	constraintRouter.Use(googleAuthMiddleware)
 	employeeRouter.Use(googleAuthMiddleware)
 	earRouter.Use(googleAuthMiddleware)
 	productRouter.Use(googleAuthMiddleware)
+	shopRouter.Use(googleAuthMiddleware)
 
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
@@ -211,4 +222,14 @@ func getUserController(connpool *pgxpool.Pool) controllers.UserController {
 	fmt.Println("User controller up and running.")
 
 	return userController
+}
+
+func getShopController(connpool *pgxpool.Pool) controllers.ShopController {
+	shopRepository := repositories.NewShopRepo(connpool)
+	shopService := services.ShopService{Repository: shopRepository}
+	shopController := controllers.ShopController{Service: shopService}
+
+	fmt.Println("Shop controller up and running.")
+
+	return shopController
 }
