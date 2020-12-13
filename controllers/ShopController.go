@@ -73,3 +73,16 @@ func (controller *ShopController) DeleteShop(w http.ResponseWriter, r *http.Requ
 	}
 	w.WriteHeader(204)
 }
+
+func (controller *ShopController) GetAddress(w http.ResponseWriter, r *http.Request) {
+	var shopId string = mux.Vars(r)["id"]
+
+	address, err := controller.Service.GetAddress(shopId)
+	if err != nil {
+		utils.WriteErrToClient(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(address)
+}

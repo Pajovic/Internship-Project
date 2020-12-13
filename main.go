@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/codingsince1985/geo-golang/mapquest/nominatim"
 	"internship_project/controllers"
 	"internship_project/repositories"
 	"internship_project/services"
@@ -113,6 +114,7 @@ func main() {
 	shopRouter.HandleFunc("", shopController.AddShop).Methods("POST")
 	shopRouter.HandleFunc("", shopController.UpdateShop).Methods("PUT")
 	shopRouter.HandleFunc("/{id}", shopController.DeleteShop).Methods("DELETE")
+	shopRouter.HandleFunc("/{id}/address", shopController.GetAddress).Methods("GET")
 
 	companyRouter.Use(googleAuthMiddleware)
 	constraintRouter.Use(googleAuthMiddleware)
@@ -226,7 +228,8 @@ func getUserController(connpool *pgxpool.Pool) controllers.UserController {
 
 func getShopController(connpool *pgxpool.Pool) controllers.ShopController {
 	shopRepository := repositories.NewShopRepo(connpool)
-	shopService := services.ShopService{Repository: shopRepository}
+	geocoder := nominatim.Geocoder("1bRhz4g0DLgvAuz340MTh3DAtqZdVOPz")
+	shopService := services.ShopService{Repository: shopRepository, Geocoder: geocoder}
 	shopController := controllers.ShopController{Service: shopService}
 
 	fmt.Println("Shop controller up and running.")

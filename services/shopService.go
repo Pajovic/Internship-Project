@@ -1,12 +1,14 @@
 package services
 
 import (
+	"github.com/codingsince1985/geo-golang"
 	"internship_project/models"
 	"internship_project/repositories"
 )
 
 type ShopService struct {
 	Repository repositories.ShopRepository
+	Geocoder geo.Geocoder
 }
 
 func (service *ShopService) GetAllShops() ([]models.Shop, error) {
@@ -27,4 +29,19 @@ func (service *ShopService) UpdateShop(updateShop models.Shop) error {
 
 func (service *ShopService) DeleteShop(id string) error {
 	return service.Repository.DeleteShop(id)
+}
+
+func (service *ShopService) GetAddress(id string) (*geo.Address, error) {
+	shop, err := service.Repository.GetShop(id)
+	if err != nil {
+		return nil, err
+	}
+
+	address, err := service.Geocoder.ReverseGeocode(shop.Lat, shop.Lon)
+	if err != nil {
+		return nil, err
+	}
+
+	return address, nil
+
 }
