@@ -25,6 +25,10 @@ type Config struct {
 	TestDatabaseURL string `json:"test_database_url"`
 }
 
+type NominativConfig struct {
+	Key				string `json:"nominatim_key"`
+}
+
 var (
 	userRepository repositories.UserRepository
 	userService    services.UserService
@@ -227,8 +231,13 @@ func getUserController(connpool *pgxpool.Pool) controllers.UserController {
 }
 
 func getShopController(connpool *pgxpool.Pool) controllers.ShopController {
+	var conf NominativConfig
+	if _, err := confl.DecodeFile("nominatim_config.conf", &conf); err != nil {
+		panic(err)
+	}
+
 	shopRepository := repositories.NewShopRepo(connpool)
-	geocoder := nominatim.Geocoder("1bRhz4g0DLgvAuz340MTh3DAtqZdVOPz")
+	geocoder := nominatim.Geocoder(conf.Key)
 	shopService := services.ShopService{Repository: shopRepository, Geocoder: geocoder}
 	shopController := controllers.ShopController{Service: shopService}
 

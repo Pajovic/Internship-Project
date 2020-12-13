@@ -15,6 +15,15 @@ func (service *ShopService) GetAllShops() ([]models.Shop, error) {
 	return service.Repository.GetAllShops()
 }
 
+func (service *ShopService) SearchShopsByAddress(address string) ([]models.Shop, error) {
+	location, err := service.Geocoder.Geocode(address)
+	if err != nil {
+		return nil, err
+	}
+
+	return service.Repository.GetShopsByLatLon(location.Lat, location.Lng)
+}
+
 func (service *ShopService) GetShop(id string) (models.Shop, error) {
 	return service.Repository.GetShop(id)
 }
@@ -43,5 +52,4 @@ func (service *ShopService) GetAddress(id string) (*geo.Address, error) {
 	}
 
 	return address, nil
-
 }

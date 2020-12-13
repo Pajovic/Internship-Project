@@ -11,6 +11,7 @@ import (
 
 type ShopRepository interface {
 	GetAllShops() ([]models.Shop, error)
+	GetShopsByLatLon(float64, float64) ([]models.Shop, error)
 	GetShop(string) (models.Shop, error)
 	AddShop(*models.Shop) error
 	UpdateShop(models.Shop) error
@@ -33,6 +34,42 @@ func NewShopRepo(db *pgxpool.Pool) ShopRepository {
 func (repository *shopRepository) GetAllShops() ([]models.Shop, error) {
 	shops := []models.Shop{}
 	rows, err := repository.DB.Query(context.Background(), "select * from public.shops")
+	defer rows.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var shop persistence.Shops
+		shop.Scan(&rows)
+
+		var stringUUID_ID string
+		err := shop.Id.AssignTo(&stringUUID_ID)
+		if err != nil {
+			return shops, err
+		}
+
+		var stringUUID_IDC string
+		err = shop.Idc.AssignTo(&stringUUID_IDC)
+		if err != nil {
+			return shops, err
+		}
+
+		shops = append(shops, models.Shop{
+			ID:     stringUUID_ID,
+			Name:	shop.Name,
+			IDC:	stringUUID_IDC,
+			Lat:	shop.Lat,
+			Lon:	shop.Lon,
+		})
+	}
+	return shops, nil
+}
+
+func (repository *shopRepository) GetShopsByLatLon(lat, lon float64) ([]models.Shop, error) {
+	shops := []models.Shop{}
+	rows, err := repository.DB.Query(context.Background(), "select * from public.shops where lat=$1 and lon=$2", lat, lon)
 	defer rows.Close()
 
 	if err != nil {

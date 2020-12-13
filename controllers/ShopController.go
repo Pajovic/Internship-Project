@@ -15,7 +15,17 @@ type ShopController struct {
 }
 
 func (controller *ShopController) GetAllShops(w http.ResponseWriter, r *http.Request) {
-	shops, err := controller.Service.GetAllShops()
+	address := r.URL.Query().Get("address")
+
+	var shops []models.Shop
+	var err error
+
+	if address != "" {
+		shops, err = controller.Service.SearchShopsByAddress(address)
+	} else {
+		shops, err = controller.Service.GetAllShops()
+	}
+
 	if err != nil {
 		utils.WriteErrToClient(w, err)
 		return
