@@ -25,7 +25,7 @@ type Config struct {
 	TestDatabaseURL string `json:"test_database_url"`
 }
 
-type NominativConfig struct {
+type NominatimConfig struct {
 	Key				string `json:"nominatim_key"`
 }
 
@@ -231,7 +231,7 @@ func getUserController(connpool *pgxpool.Pool) controllers.UserController {
 }
 
 func getShopController(connpool *pgxpool.Pool) controllers.ShopController {
-	var conf NominativConfig
+	var conf NominatimConfig
 	if _, err := confl.DecodeFile("nominatim_config.conf", &conf); err != nil {
 		panic(err)
 	}
