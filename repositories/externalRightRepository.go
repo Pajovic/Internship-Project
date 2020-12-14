@@ -27,7 +27,7 @@ func NewExternalRightRepo(db *pgxpool.Pool) ExternalRightRepository {
 	if db == nil {
 		panic("ExternalRightRepository not created, pgxpool is nil")
 	}
-	return &externalRightRepository {
+	return &externalRightRepository{
 		DB: db,
 	}
 }

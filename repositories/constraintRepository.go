@@ -27,7 +27,7 @@ func NewConstraintRepo(db *pgxpool.Pool) ConstraintRepository {
 	if db == nil {
 		panic("ConstraintRepository not created, pgxpool is nil")
 	}
-	return &constraintRepository {
+	return &constraintRepository{
 		DB: db,
 	}
 }

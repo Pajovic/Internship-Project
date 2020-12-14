@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"context"
+	json "encoding/json"
 	"errors"
+	"internship_project/kafka_helpers"
 	"internship_project/models"
 	"internship_project/persistence"
 	"internship_project/utils"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
+	"github.com/segmentio/kafka-go"
 )
 
 type ProductRepository interface {
@@ -22,15 +25,23 @@ type ProductRepository interface {
 }
 
 type productRepository struct {
-	DB *pgxpool.Pool
+	DB    *pgxpool.Pool
+	kafka *kafka_helpers.KafkaProducer
 }
 
-func NewProductRepo(db *pgxpool.Pool) ProductRepository {
+func NewProductRepo(db *pgxpool.Pool, writer *kafka.Writer) ProductRepository {
 	if db == nil {
 		panic("ProductRepository not created, pgxpool is nil")
 	}
+	if writer == nil {
+		panic("ProductRepository not created, kafkaWriter is nil")
+	}
+
 	return &productRepository{
 		DB: db,
+		kafka: &kafka_helpers.KafkaProducer{
+			Writer: writer,
+		},
 	}
 }
 
@@ -177,6 +188,21 @@ func (repository *productRepository) AddProduct(product *models.Product) error {
 		return err
 	}
 
+	message := make(map[string]interface{}, 2)
+
+	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Created)
+	message["product"] = product
+
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	err = repository.kafka.WriteMessage(string(jsonMessage), product.ID)
+	if err != nil {
+		return err
+	}
+
 	return tx.Commit(context.Background())
 }
 
@@ -202,6 +228,20 @@ func (repository *productRepository) UpdateProduct(product models.Product) error
 	if commandTag != 1 {
 		return utils.NoDataError
 	}
+	message := make(map[string]interface{}, 2)
+
+	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Updated)
+	message["product"] = product
+
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	err = repository.kafka.WriteMessage(string(jsonMessage), product.ID)
+	if err != nil {
+		return err
+	}
 
 	return tx.Commit(context.Background())
 }
@@ -222,6 +262,21 @@ func (repository *productRepository) DeleteProduct(id string) error {
 	}
 	if commandTag != 1 {
 		return utils.NoDataError
+	}
+
+	message := make(map[string]interface{}, 2)
+
+	message["operation"] = kafka_helpers.OperationEnumString(kafka_helpers.Deleted)
+	message["id"] = id
+
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	err = repository.kafka.WriteMessage(string(jsonMessage), id)
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit(context.Background())
