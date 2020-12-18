@@ -1,4 +1,6 @@
-*.conf
+dbconfig.conf
+nominatim_config.conf
+googleauth.conf
 # Binaries for programs and plugins
 *.exe
 *.exe~

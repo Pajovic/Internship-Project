@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
 	"internship_project/models"
@@ -143,6 +144,9 @@ func (repository *shopRepository) GetShop(id string) (models.Shop, error) {
 }
 
 func (repository *shopRepository) AddShop(shop *models.Shop) error {
+	if shop == nil {
+		return errors.New("Shop parameter was nil")
+	}
 	tx, err := repository.DB.Begin(context.Background())
 	if err != nil {
 		return err

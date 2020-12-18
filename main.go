@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/codingsince1985/geo-golang/mapquest/nominatim"
 	"internship_project/controllers"
+	"internship_project/elasticsearch_helpers"
+	"internship_project/kafka_helpers"
 	"internship_project/repositories"
 	"internship_project/services"
 	"internship_project/utils"
@@ -16,17 +18,29 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lytics/confl"
+	"github.com/segmentio/kafka-go"
 )
 
-type Config struct {
-	Username        string `json:"username"`
-	Password        string `json:"password"`
+type DbConfig struct {
+	DbUsername      string `json:"db_username"`
+	DbPassword      string `json:"db_password"`
 	DatabaseURL     string `json:"database_url"`
 	TestDatabaseURL string `json:"test_database_url"`
 }
 
+
 type NominatimConfig struct {
-	Key				string `json:"nominatim_key"`
+	Key string `json:"nominatim_key"`
+}
+
+type KafkaEsConfig struct {
+	MainKafkaTopic  string `json:"main_kafka_topic"`
+	RetryKafkaTopic string `json:"retry_kafka_topic"`
+	MainTopicTime   int    `json:"main_topic_time"`
+	RetryTopicTime  int    `json:"retry_topic_time"`
+	KafkaAddress    string `json:"kafka_address"`
+	KafkaGroupId    string `json:"kafka_group_id"`
+	EsAddress       string `json:"es_address"`
 }
 
 var (
@@ -35,9 +49,31 @@ var (
 )
 
 func main() {
-	connpool := getConnectionPool()
+	var db_conf DbConfig
+	if _, err := confl.DecodeFile("dbconfig.conf", &db_conf); err != nil {
+		panic(err)
+	}
+
+	var kafka_es_conf KafkaEsConfig
+	if _, err := confl.DecodeFile("kafka_es_cofig.conf", &kafka_es_conf); err != nil {
+		panic(err)
+	}
+
+	connpool := getConnectionPool(db_conf)
+	defer connpool.Close()
+
+	kafkaWriter := kafka_helpers.GetWriter("ava-internship")
+	defer kafkaWriter.Close()
+
+	EsClient := elasticsearch_helpers.GetElasticsearchClient(kafka_es_conf.EsAddress)
+	kafkaConsumer := kafka_helpers.NewConsumer(kafka_es_conf.MainKafkaTopic, kafka_es_conf.KafkaAddress, kafka_es_conf.KafkaGroupId, EsClient, kafka_es_conf.MainTopicTime)
+	go kafkaConsumer.Consume()
+	defer kafkaConsumer.Reader.Close()
+
+	kafkaRetryHandler := kafka_helpers.GetRetryHandler(kafka_es_conf.RetryKafkaTopic, kafka_es_conf.MainKafkaTopic, kafka_es_conf.KafkaAddress, kafka_es_conf.KafkaGroupId, kafka_es_conf.RetryTopicTime)
+
 	employeeController := getEmployeeController(connpool)
-	productController := getProductController(connpool, &employeeController.Service.Repository)
+	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter, EsClient)
 	companyController := GetCompanyController(connpool)
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
@@ -47,14 +83,18 @@ func main() {
 	userRepository = repositories.NewUserRepo(connpool)
 	userService = services.UserService{Repository: userRepository}
 
-	defer connpool.Close()
-
 	r := mux.NewRouter()
 	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./public/")))
 	r.PathPrefix("/static/").Handler(s)
 
 	// Sign In Routes
 	r.HandleFunc("/auth/google", userController.GoogleAuth).Methods("POST")
+
+	r.HandleFunc("/search", productController.SearchProducts).Methods("GET")
+
+	// Kafka routes
+	kafkaRouter := r.PathPrefix("/kafka").Subrouter()
+	kafkaRouter.HandleFunc("/retry", kafkaRetryHandler.TransferToMainTopic).Methods("POST")
 
 	// Product Routes
 	productRouter := r.PathPrefix("/product").Subrouter()
@@ -126,6 +166,7 @@ func main() {
 	earRouter.Use(googleAuthMiddleware)
 	productRouter.Use(googleAuthMiddleware)
 	shopRouter.Use(googleAuthMiddleware)
+	kafkaRouter.Use(googleAuthMiddleware)
 
 	http.Handle("/", r)
 	http.ListenAndServe(":8000", r)
@@ -150,12 +191,7 @@ func googleAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getConnectionPool() *pgxpool.Pool {
-	var conf Config
-	if _, err := confl.DecodeFile("dbconfig.conf", &conf); err != nil {
-		panic(err)
-	}
-
+func getConnectionPool(conf DbConfig) *pgxpool.Pool {
 	poolConfig, _ := pgxpool.ParseConfig(conf.DatabaseURL)
 
 	connection, err := pgxpool.ConnectConfig(context.Background(), poolConfig)
@@ -169,11 +205,10 @@ func getConnectionPool() *pgxpool.Pool {
 	return connection
 }
 
-func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) controllers.ProductController {
-
-	productRepository := repositories.NewProductRepo(connpool)
+func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository, kafkaWriter *kafka.Writer, esclient elasticsearch_helpers.ElasticsearchClient) controllers.ProductController {
+	productRepository := repositories.NewProductRepo(connpool, kafkaWriter)
 	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: *employeeRepo}
-	productController := controllers.ProductController{Service: productService}
+	productController := controllers.ProductController{Service: productService, ElasticsearchClient: esclient}
 
 	fmt.Println("Product controller up and running.")
 
