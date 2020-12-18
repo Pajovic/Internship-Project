@@ -40,9 +40,10 @@
 
                 console.log(googleUser.getBasicProfile())
                 const userInfo = googleUser.getBasicProfile()
-                document.getElementById("name").innerText = userInfo.Ad;
-                document.getElementById("email").innerText = userInfo.$t;
-                document.getElementById("image").src = userInfo.OJ;
+                console.log(userInfo)
+                document.getElementById("name").innerText = userInfo.getName();
+                document.getElementById("email").innerText = userInfo.getEmail();
+                document.getElementById("image").src = userInfo.getImageUrl();
 
                 let signinBtn = document.getElementsByClassName('g-signin2')[0]
                 let signoutBtn = document.getElementById('signout')
