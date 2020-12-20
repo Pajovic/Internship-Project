@@ -20,7 +20,10 @@ type CompanyRepository interface {
 }
 
 type companyRepository struct {
-	DB *pgxpool.Pool
+	DB                 *pgxpool.Pool
+	ProductRepo        ProductRepository
+	ExternalRightsRepo ExternalRightRepository
+	EmployeeRepo       EmployeeRepository
 }
 
 func NewCompanyRepo(db *pgxpool.Pool) CompanyRepository {
@@ -28,7 +31,10 @@ func NewCompanyRepo(db *pgxpool.Pool) CompanyRepository {
 		panic("CompanyRepository not created, pgxpool is nil")
 	}
 	return &companyRepository{
-		DB: db,
+		DB:                 db,
+		ProductRepo:        NewProductRepo(db),
+		ExternalRightsRepo: NewExternalRightRepo(db),
+		EmployeeRepo:       NewEmployeeRepo(db),
 	}
 }
 
@@ -160,6 +166,26 @@ func (repository *companyRepository) DeleteCompany(id string) error {
 	if commandTag != 1 {
 		return utils.NoDataError
 	}
+
+	// Fallback
+	err = repository.ProductRepo.DeleteProductsFromCompany(id)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return err
+	}
+
+	err = repository.EmployeeRepo.DeleteEmployeesFromCompany(id)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return err
+	}
+
+	err = repository.ExternalRightsRepo.DeleteExternalRightsForCompany(id)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return err
+	}
+
 	return tx.Commit(context.Background())
 }
 

@@ -1,15 +1,17 @@
 package repositories
 
 import (
+	"bytes"
 	"context"
 	json "encoding/json"
 	"errors"
+	"fmt"
 	"internship_project/kafka_helpers"
 	"internship_project/models"
 	"internship_project/persistence"
 	"internship_project/utils"
-	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	uuid "github.com/satori/go.uuid"
@@ -18,10 +20,11 @@ import (
 
 type ProductRepository interface {
 	GetAllProducts(string) ([]models.Product, error)
-	GetProduct(string) (models.Product, error)
+	GetProduct(string, string) (models.Product, error)
 	AddProduct(*models.Product) error
 	UpdateProduct(models.Product) error
 	DeleteProduct(string) error
+	DeleteProductsFromCompany(string) error
 }
 
 type productRepository struct {
@@ -70,26 +73,36 @@ func (repository *productRepository) GetAllProducts(employeeIdc string) ([]model
 		earConstraints = append(earConstraints, earConstraint)
 	}
 
-	var finalQuery strings.Builder
+	finalQueryTemplate := `
+	select * from products p where p.idc = $1
+	{{- range . -}}	
+		{{- if .Operator}}
+			or (p.idc = '{{.IDSC}}' and p.{{.Property}} {{.Operator}} {{.PropertyValue}})
+		{{- else}}
+			or (p.idc = '{{.IDSC}}')
+		{{- end -}}
+	{{- end -}}
+	;`
 
-	finalQuery.WriteString("select * from products p where p.idc = $1")
+	var buff bytes.Buffer
+	t := template.Must(template.New("getProducts").Parse(finalQueryTemplate))
 
-	for _, earc := range earConstraints {
-		if earc.Operator != "" && earc.Property != "" {
-			finalQuery.WriteString(" or (p.idc = '" + earc.IDSC + "' and p." + earc.Property + earc.Operator + strconv.Itoa(earc.PropertyValue) + ")")
-		} else {
-			finalQuery.WriteString(" or p.idc = '" + earc.IDSC + "'")
-		}
-	}
-	finalQuery.WriteString(";")
-
-	products := []models.Product{}
-
-	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery.String(), employeeIdc)
-	defer rowsProducts.Close()
+	err = t.Execute(&buff, earConstraints)
 	if err != nil {
 		return nil, err
 	}
+
+	finalQuery := strings.TrimSpace(buff.String())
+	fmt.Println(finalQuery)
+
+	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery, employeeIdc)
+	defer rowsProducts.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	products := []models.Product{}
 
 	for rowsProducts.Next() {
 		var productPers persistence.Products
@@ -121,46 +134,88 @@ func (repository *productRepository) GetAllProducts(employeeIdc string) ([]model
 	return products, nil
 }
 
-func (repository *productRepository) GetProduct(id string) (models.Product, error) {
-	var product models.Product
+func (repository *productRepository) GetProduct(id string, employeeIdc string) (models.Product, error) {
+	product := models.Product{}
+	earConstraints := []models.EarConstraint{}
 
-	Uuid, err := uuid.FromString(id)
-	if err != nil {
-		return product, err
-	}
+	query := `select ear.id "idear", ear.idrc, ear.idsc, coalesce(p.name::varchar(20), '') as "property",
+	coalesce(o2.name::varchar(5), '') as "operator", coalesce(ac.property_value::int4, 0)
+    from external_access_rights ear left outer join access_constraints ac on ear.id = ac.idear
+	left outer join operators o2 on o2.id = ac.operator_id 
+	left outer join properties p on p.id = ac.property_id 
+	where ear.idrc = $1 and ear.r = true and ear.approved = true;`
 
-	rows, err := repository.DB.Query(context.Background(), "select * from products where id=$1", Uuid)
+	rows, err := repository.DB.Query(context.Background(), query, employeeIdc)
 	defer rows.Close()
+	if err != nil {
+		return product, err
+	}
+
+	for rows.Next() {
+		var earConstraint models.EarConstraint
+		err := rows.Scan(&earConstraint.IDEAR, &earConstraint.IDRC, &earConstraint.IDSC, &earConstraint.Property, &earConstraint.Operator, &earConstraint.PropertyValue)
+		if err != nil {
+			return product, err
+		}
+		earConstraints = append(earConstraints, earConstraint)
+	}
+
+	fmt.Println(earConstraints)
+
+	finalQueryTemplate := `
+	select * from products p where p.id = $1
+	{{- range . -}}	
+		{{- if .Operator}}
+			or (p.idc = '{{.IDSC}}' and p.{{.Property}} {{.Operator}} {{.PropertyValue}})
+		{{- end -}}
+	{{- end -}}
+	;`
+
+	var buff bytes.Buffer
+	t := template.Must(template.New("getProduct").Parse(finalQueryTemplate))
+
+	err = t.Execute(&buff, earConstraints)
+	if err != nil {
+		return product, err
+	}
+
+	finalQuery := strings.TrimSpace(buff.String())
+	fmt.Println(finalQuery)
+
+	rowsProducts, err := repository.DB.Query(context.Background(), finalQuery, id)
+	defer rowsProducts.Close()
 
 	if err != nil {
 		return product, err
 	}
 
-	if !rows.Next() {
-		return product, errors.New("There is no product with this id")
+	if !rowsProducts.Next() {
+		return product, errors.New("There is no product with this ID or you cannot see it")
 	}
 
-	var productPers persistence.Products
-	productPers.Scan(&rows)
+	for rowsProducts.Next() {
+		var productPers persistence.Products
+		productPers.Scan(&rowsProducts)
 
-	var productUUID string
-	err = productPers.Id.AssignTo(&productUUID)
-	if err != nil {
-		return product, err
-	}
+		var productUUID string
+		err = productPers.Id.AssignTo(&productUUID)
+		if err != nil {
+			return product, err
+		}
 
-	var companyUUID string
-	err = productPers.Idc.AssignTo(&companyUUID)
-	if err != nil {
-		return product, err
-	}
+		var companyUUID string
+		err = productPers.Idc.AssignTo(&companyUUID)
+		if err != nil {
+			return product, err
+		}
 
-	product = models.Product{
-		ID:       productUUID,
-		Name:     productPers.Name,
-		Price:    productPers.Price,
-		Quantity: productPers.Quantity,
-		IDC:      companyUUID,
+		product = models.Product{
+			ID:       productUUID,
+			Name:     productPers.Name,
+			Price:    productPers.Price,
+			Quantity: productPers.Quantity,
+			IDC:      companyUUID,
+		}
 	}
 
 	return product, nil
@@ -275,6 +330,24 @@ func (repository *productRepository) DeleteProduct(id string) error {
 	}
 
 	err = repository.kafka.WriteMessage(string(jsonMessage), id)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(context.Background())
+}
+
+func (repository *productRepository) DeleteProductsFromCompany(idc string) error {
+	tx, err := repository.DB.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	query := `DELETE FROM products WHERE idc=$1`
+
+	_, err = tx.Exec(context.Background(), query, idc)
+
 	if err != nil {
 		return err
 	}

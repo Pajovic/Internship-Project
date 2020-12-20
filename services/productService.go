@@ -33,13 +33,10 @@ func (service *ProductService) GetAllProducts(employeeID string) ([]models.Produ
 	return allProducts, nil
 }
 
-func (service *ProductService) GetProduct(productID string, employeeID string) (models.Product, error) {
-	product, err := service.ProductRepository.GetProduct(productID)
-	if err != nil {
-		return product, err
-	}
+func (service *ProductService) GetProduct(productId string, employeeId string) (models.Product, error) {
+	product := models.Product{}
 
-	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeID)
+	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeId)
 	if err != nil {
 		return product, err
 	}
@@ -48,11 +45,10 @@ func (service *ProductService) GetProduct(productID string, employeeID string) (
 		return product, errors.New("You can't see products")
 	}
 
-	if employee.CompanyID != product.IDC {
-		_, err := service.EmployeeRepository.GetEmployeeExternalPermissions(employee.CompanyID, product)
-		if err != nil {
-			return product, err
-		}
+	product, err = service.ProductRepository.GetProduct(productId, employee.CompanyID)
+
+	if err != nil {
+		return product, err
 	}
 
 	return product, nil
@@ -75,20 +71,17 @@ func (service *ProductService) AddNewProduct(product *models.Product, employeeID
 	return service.ProductRepository.AddProduct(product)
 }
 
-func (service *ProductService) UpdateProduct(updateProduct models.Product, employeeID string) error {
-	product, err := service.ProductRepository.GetProduct(updateProduct.ID)
+func (service *ProductService) UpdateProduct(updateProduct models.Product, employeeId string) error {
+	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeId)
 	if err != nil {
 		return err
 	}
 
-	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeID)
-	if err != nil {
-		return err
-	}
-
-	if !employee.U {
+	if !employee.D {
 		return errors.New("You can't update products")
 	}
+
+	product, err := service.ProductRepository.GetProduct(updateProduct.ID, employee.CompanyID)
 
 	if employee.CompanyID != product.IDC {
 		externalAccessRights, err := service.EmployeeRepository.GetEmployeeExternalPermissions(employee.CompanyID, product)
@@ -103,13 +96,8 @@ func (service *ProductService) UpdateProduct(updateProduct models.Product, emplo
 	return service.ProductRepository.UpdateProduct(updateProduct)
 }
 
-func (service *ProductService) DeleteProduct(productID string, employeeID string) error {
-	product, err := service.ProductRepository.GetProduct(productID)
-	if err != nil {
-		return err
-	}
-
-	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeID)
+func (service *ProductService) DeleteProduct(productId string, employeeId string) error {
+	employee, err := service.EmployeeRepository.GetEmployeeByID(employeeId)
 	if err != nil {
 		return err
 	}
@@ -117,6 +105,8 @@ func (service *ProductService) DeleteProduct(productID string, employeeID string
 	if !employee.D {
 		return errors.New("You can't delete products")
 	}
+
+	product, err := service.ProductRepository.GetProduct(productId, employee.CompanyID)
 
 	if employee.CompanyID != product.IDC {
 		externalAccessRights, err := service.EmployeeRepository.GetEmployeeExternalPermissions(employee.CompanyID, product)
@@ -128,5 +118,5 @@ func (service *ProductService) DeleteProduct(productID string, employeeID string
 		}
 	}
 
-	return service.ProductRepository.DeleteProduct(productID)
+	return service.ProductRepository.DeleteProduct(productId)
 }

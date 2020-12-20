@@ -19,6 +19,7 @@ type EmployeeRepository interface {
 	DeleteEmployee(string) error
 	GetEmployeeExternalPermissions(string, models.Product) (models.ExternalRights, error)
 	CheckCompaniesSharingEmployeeData(string, string) error
+	DeleteEmployeesFromCompany(string) error
 }
 
 type employeeRepository struct {
@@ -217,6 +218,11 @@ func (repository *employeeRepository) GetEmployeeExternalPermissions(idReceiving
 	if err != nil {
 		return rights, err
 	}
+
+	if !rows.Next() {
+		return rights, nil
+	}
+
 	for rows.Next() {
 		var ear persistence.ExternalAccessRights
 		ear.Scan(&rows)
@@ -320,6 +326,11 @@ func (repository *employeeRepository) CheckCompaniesSharingEmployeeData(idReceiv
 	if err != nil {
 		return err
 	}
+
+	if !rows.Next() {
+		return errors.New("Your company does not have rights needed")
+	}
+
 	for rows.Next() {
 		var ear persistence.ExternalAccessRights
 		ear.Scan(&rows)
@@ -373,4 +384,22 @@ func checkConstraint(accessConstraint models.AccessConstraint, product models.Pr
 	default:
 		return product.Quantity <= quantity
 	}
+}
+
+func (repository *employeeRepository) DeleteEmployeesFromCompany(idc string) error {
+	tx, err := repository.DB.Begin(context.Background())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.Background())
+
+	query := `DELETE FROM employees WHERE idc=$1`
+
+	_, err = tx.Exec(context.Background(), query, idc)
+
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(context.Background())
 }
