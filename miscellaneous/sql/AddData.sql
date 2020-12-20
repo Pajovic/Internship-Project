@@ -96,3 +96,19 @@ VALUES('f87b85d8-9037-41a5-8d2b-6861cde17c18', 'fa71c166-980f-4a17-aa7c-b85df4be
 INSERT INTO public.access_constraints
 (id, idear, operator_id, property_id, property_value)
 VALUES('8120ea1b-5823-4100-8bd5-80f9cb0db831', 'de7cc1b1-d858-4bd6-92cf-abf2274731ac', 3, 1, 10);
+
+
+-- Shopovi
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('00dc77bb-dc44-44cc-b67e-d5898473efa8', 'Shop A1', '1051258e-88e9-4168-a889-5c222eaa152c', 45.2557574, 19.7991444);
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('c37e43f1-2d37-4b1e-903f-cbf5aa14fab5', 'Shop A2', '1051258e-88e9-4168-a889-5c222eaa152c', 45.2486656, 19.8003948);
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('d941e519-b945-4e91-a6d3-380ddba212f9', 'Shop A3', '1051258e-88e9-4168-a889-5c222eaa152c', 45.2569771, 19.8429574);
+
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('f7d74e8b-3156-48e2-a10d-4946596d1f48', 'Shop B1', '5f46ed8c-03d1-11eb-adc1-0242ac120002', 45.2510673, 19.8469573);
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('5e093b01-4e2f-4575-a3c7-29ebef3ee18d', 'Shop B2', '5f46ed8c-03d1-11eb-adc1-0242ac120002', 44.8179712, 20.4645126);
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('56ed3225-b18e-4e20-853b-7e96f9fe3938', 'Shop B3', '5f46ed8c-03d1-11eb-adc1-0242ac120002', 45.2465339, 19.8309882);
+
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('bb613f38-0347-46a3-8b26-b16b6259def7', 'Shop C1', 'bb099b7e-03d1-11eb-adc1-0242ac120002', 45.250041, 19.837633);
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('3b3d9497-1624-4aee-ae30-ede45a73a370', 'Shop C2', 'bb099b7e-03d1-11eb-adc1-0242ac120002', 45.2507975, 19.8351926);
+INSERT INTO public.shops (id, "name", idc, lat, lon) VALUES('e29c2fa0-c21f-4239-9272-682d2c13ddb6', 'Shop C3', 'bb099b7e-03d1-11eb-adc1-0242ac120002', 44.791952550000005, 20.501376549999996);
+
+

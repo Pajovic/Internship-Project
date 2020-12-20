@@ -106,3 +106,23 @@ CREATE TABLE public.users (
 	CONSTRAINT users_pk PRIMARY KEY (id)
 );
 
+-- public.shops definition
+
+-- Drop table
+
+-- DROP TABLE public.shops;
+
+CREATE TABLE public.shops (
+	id uuid NOT NULL,
+	"name" varchar NOT NULL,
+	idc uuid NOT NULL,
+	lat float8 NOT NULL,
+	lon float8 NOT NULL,
+	CONSTRAINT shops_pk PRIMARY KEY (id)
+);
+
+
+-- public.shops foreign keys
+
+ALTER TABLE public.shops ADD CONSTRAINT shops_fk FOREIGN KEY (idc) REFERENCES companies(id);
+

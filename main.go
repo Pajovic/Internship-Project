@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/codingsince1985/geo-golang/mapquest/nominatim"
 	"internship_project/controllers"
 	"internship_project/elasticsearch_helpers"
 	"internship_project/kafka_helpers"
@@ -25,6 +26,11 @@ type DbConfig struct {
 	DbPassword      string `json:"db_password"`
 	DatabaseURL     string `json:"database_url"`
 	TestDatabaseURL string `json:"test_database_url"`
+}
+
+
+type NominatimConfig struct {
+	Key string `json:"nominatim_key"`
 }
 
 type KafkaEsConfig struct {
@@ -72,6 +78,7 @@ func main() {
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
 	userController := getUserController(connpool)
+	shopController := getShopController(connpool)
 
 	userRepository = repositories.NewUserRepo(connpool)
 	userService = services.UserService{Repository: userRepository}
@@ -143,11 +150,22 @@ func main() {
 	constraintRouter.HandleFunc("", constraintController.UpdateConstraint).Methods("PUT")
 	constraintRouter.HandleFunc("/{id}", constraintController.DeleteConstraint).Methods("DELETE")
 
+	// Shop Routes
+	shopRouter := r.PathPrefix("/shop").Subrouter()
+
+	shopRouter.HandleFunc("", shopController.GetAllShops).Methods("GET")
+	shopRouter.HandleFunc("/{id}", shopController.GetShopById).Methods("GET")
+	shopRouter.HandleFunc("", shopController.AddShop).Methods("POST")
+	shopRouter.HandleFunc("", shopController.UpdateShop).Methods("PUT")
+	shopRouter.HandleFunc("/{id}", shopController.DeleteShop).Methods("DELETE")
+	shopRouter.HandleFunc("/{id}/address", shopController.GetAddress).Methods("GET")
+
 	companyRouter.Use(googleAuthMiddleware)
 	constraintRouter.Use(googleAuthMiddleware)
 	employeeRouter.Use(googleAuthMiddleware)
 	earRouter.Use(googleAuthMiddleware)
 	productRouter.Use(googleAuthMiddleware)
+	shopRouter.Use(googleAuthMiddleware)
 	kafkaRouter.Use(googleAuthMiddleware)
 
 	http.Handle("/", r)
@@ -245,4 +263,20 @@ func getUserController(connpool *pgxpool.Pool) controllers.UserController {
 	fmt.Println("User controller up and running.")
 
 	return userController
+}
+
+func getShopController(connpool *pgxpool.Pool) controllers.ShopController {
+	var conf NominatimConfig
+	if _, err := confl.DecodeFile("nominatim_config.conf", &conf); err != nil {
+		panic(err)
+	}
+
+	shopRepository := repositories.NewShopRepo(connpool)
+	geocoder := nominatim.Geocoder(conf.Key)
+	shopService := services.ShopService{Repository: shopRepository, Geocoder: geocoder}
+	shopController := controllers.ShopController{Service: shopService}
+
+	fmt.Println("Shop controller up and running.")
+
+	return shopController
 }

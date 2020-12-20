@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/araddon/gou v0.0.0-20190110011759-c797efecbb61 // indirect
+	github.com/codingsince1985/geo-golang v1.6.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
