@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"github.com/segmentio/kafka-go"
 	"internship_project/models"
 	"internship_project/persistence"
 	"internship_project/utils"
@@ -26,13 +27,13 @@ type companyRepository struct {
 	EmployeeRepo       EmployeeRepository
 }
 
-func NewCompanyRepo(db *pgxpool.Pool) CompanyRepository {
+func NewCompanyRepo(db *pgxpool.Pool, writer *kafka.Writer) CompanyRepository {
 	if db == nil {
 		panic("CompanyRepository not created, pgxpool is nil")
 	}
 	return &companyRepository{
 		DB:                 db,
-		ProductRepo:        NewProductRepo(db),
+		ProductRepo:        NewProductRepo(db, writer),
 		ExternalRightsRepo: NewExternalRightRepo(db),
 		EmployeeRepo:       NewEmployeeRepo(db),
 	}

@@ -12,10 +12,6 @@ type UserController struct {
 	Service services.UserService
 }
 
-func (controller *UserController) GoogleSignIn(w http.ResponseWriter, r *http.Request) {
-
-}
-
 func (controller *UserController) GoogleAuth(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Token string

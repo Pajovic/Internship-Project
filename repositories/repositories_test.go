@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"internship_project/kafka_helpers"
 	"internship_project/utils"
 	"os"
 	"testing"
@@ -33,9 +34,12 @@ func TestMain(m *testing.M) {
 	Connpool = getConnPool()
 	defer Connpool.Close()
 
+	kafkaWriter := kafka_helpers.GetWriter("ava-internship")
+	defer kafkaWriter.Close()
+
 	EmployeeRepo = NewEmployeeRepo(Connpool)
-	ProductRepo = NewProductRepo(Connpool)
-	CompanyRepo = NewCompanyRepo(Connpool)
+	ProductRepo = NewProductRepo(Connpool, kafkaWriter)
+	CompanyRepo = NewCompanyRepo(Connpool, kafkaWriter)
 	EarRepo = NewExternalRightRepo(Connpool)
 	ConstraintRepo = NewConstraintRepo(Connpool)
 

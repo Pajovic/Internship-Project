@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"internship_project/models"
 	"internship_project/repositories"
 	"internship_project/utils"
@@ -9,16 +8,6 @@ import (
 
 type UserService struct {
 	Repository repositories.UserRepository
-}
-
-func (service *UserService) GetUser(id string) (models.User, error) {
-	user, err := service.Repository.GetUser(id)
-
-	if err != nil {
-		return models.User{}, errors.New("You are not authenticated. Please sign in with Google to continue")
-	}
-
-	return user, nil
 }
 
 func (service *UserService) GoogleSignIn(token string) (models.User, error) {
