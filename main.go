@@ -74,7 +74,7 @@ func main() {
 
 	employeeController := getEmployeeController(connpool)
 	productController := getProductController(connpool, &employeeController.Service.Repository, kafkaWriter, EsClient)
-	companyController := GetCompanyController(connpool)
+	companyController := GetCompanyController(connpool, kafkaWriter)
 	ExternalRightController := getExternalRightController(connpool)
 	constraintController := getConstraintController(connpool)
 	userController := getUserController(connpool)
@@ -215,8 +215,8 @@ func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.Emp
 	return productController
 }
 
-func GetCompanyController(connpool *pgxpool.Pool) controllers.CompanyController {
-	companyRepository := repositories.NewCompanyRepo(connpool)
+func GetCompanyController(connpool *pgxpool.Pool, kafkaWriter *kafka.Writer) controllers.CompanyController {
+	companyRepository := repositories.NewCompanyRepo(connpool, kafkaWriter)
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := controllers.CompanyController{Service: companyService}
 

@@ -3,6 +3,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"github.com/segmentio/kafka-go"
+	"internship_project/kafka_helpers"
 	"internship_project/repositories"
 	"internship_project/services"
 	"internship_project/utils"
@@ -34,9 +36,12 @@ func TestMain(m *testing.M) {
 	connpool = GetTestConnectionPool()
 	defer connpool.Close()
 
-	CompanyCont = GetCompanyController(connpool)
+	kafkaWriter := kafka_helpers.GetWriter("ava-internship")
+	defer kafkaWriter.Close()
+
+	CompanyCont = GetCompanyController(connpool, kafkaWriter)
 	EmployeeCont = GetEmployeeController(connpool)
-	ProductCont = getProductController(connpool, &EmployeeCont.Service.Repository)
+	ProductCont = getProductController(connpool, kafkaWriter, &EmployeeCont.Service.Repository)
 	ConstraintCont = GetConstraintController(connpool)
 	ExternalRightCont = GetExternalRightController(connpool)
 
@@ -64,8 +69,8 @@ func GetTestConnectionPool() *pgxpool.Pool {
 	return connection
 }
 
-func GetCompanyController(connpool *pgxpool.Pool) CompanyController {
-	companyRepository := repositories.NewCompanyRepo(connpool)
+func GetCompanyController(connpool *pgxpool.Pool, kafkaWriter *kafka.Writer) CompanyController {
+	companyRepository := repositories.NewCompanyRepo(connpool, kafkaWriter)
 	companyService := services.CompanyService{Repository: companyRepository}
 	companyController := CompanyController{Service: companyService}
 
@@ -104,9 +109,9 @@ func GetEmployeeController(connpool *pgxpool.Pool) EmployeeController {
 	return employeeController
 }
 
-func getProductController(connpool *pgxpool.Pool, employeeRepo *repositories.EmployeeRepository) ProductController {
+func getProductController(connpool *pgxpool.Pool, kafkaWriter *kafka.Writer, employeeRepo *repositories.EmployeeRepository) ProductController {
 
-	productRepository := repositories.NewProductRepo(connpool)
+	productRepository := repositories.NewProductRepo(connpool, kafkaWriter)
 	productService := services.ProductService{ProductRepository: productRepository, EmployeeRepository: *employeeRepo}
 	productController := ProductController{Service: productService}
 
